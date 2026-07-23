@@ -27,11 +27,17 @@ def extract_json_data_ind(html_file, output_file):
         sys.exit(1)
 
 
+_URL_PATTERN = re.compile(
+    r'https?://|ftp://|ftps://|www\.',
+    re.IGNORECASE
+)
+
+
 def is_url(value):
-    """Check if a string value looks like a URL."""
+    """Check if a string value contains a URL."""
     if not isinstance(value, str):
         return False
-    return value.startswith(("http://", "https://", "ftp://", "ftps://"))
+    return bool(_URL_PATTERN.search(value))
 
 
 def remove_null_values(data):
@@ -61,6 +67,29 @@ def remove_null_json(input_file, output_file):
 
     print(f"Successfully saved cleaned JSON to {output_file}")
     return cleaned_data
+
+
+def extract_selected_keys(input_file, output_file):
+    """Load JSON from input file and extract only the specified keys."""
+
+    with open(input_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    selected_keys = [
+        "ostQueryExecutionResult",
+        "matchComparisonResult",
+        "oneGraphMatchComparison",
+        "jobSeekerSuidsToFactIds",
+    ]
+
+    filtered_data = {k: v for k, v in data.items() if k in selected_keys}
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(filtered_data, f, indent=2, ensure_ascii=False)
+
+    print(f"Successfully saved filtered JSON to {output_file}")
+    print(f"Extracted keys: {list(filtered_data.keys())}")
+    return filtered_data
 
 
 def main():
