@@ -76,7 +76,7 @@ def extract_selected_keys(input_file, output_file):
         data = json.load(f)
 
     selected_keys = [
-        "ostQueryExecutionResult",
+        "hostQueryExecutionResult",
         "matchComparisonResult",
         "oneGraphMatchComparison",
         "jobSeekerSuidsToFactIds",
@@ -113,6 +113,13 @@ def main():
         os.path.splitext(os.path.basename(output_file))[0] + "_pass1.json"
     )
     remove_null_json(output_file, pass1_output)
+
+    # Extract selected keys and save to pass2 file
+    pass2_output = os.path.join(
+        os.path.dirname(pass1_output) or ".",
+        os.path.splitext(os.path.basename(pass1_output))[0] + "_pass2.json"
+    )
+    extract_selected_keys(pass1_output, pass2_output)
 
     # Your primary code logic goes here
     print("Hello from the main function!")

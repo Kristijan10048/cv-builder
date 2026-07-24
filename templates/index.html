@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A private workspace for tailored job applications.">
+  <title>ApplyKit · Job application workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" data-view="dashboard" aria-label="ApplyKit home">
+        <span class="brand-mark">A</span>
+        <span><strong>ApplyKit</strong><small>Application workspace</small></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <p class="nav-label">Workspace</p>
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Overview</button>
+        <button class="nav-item" data-view="editor"><span>＋</span> New application</button>
+        <button class="nav-item" data-view="applications"><span>▤</span> Applications</button>
+        <p class="nav-label">Library</p>
+        <button class="nav-item" data-view="templates"><span>◫</span> Base documents</button>
+        <button class="nav-item" data-view="settings"><span>⚙</span> Settings</button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="pulse"></span>
+        <div><strong>Private by default</strong><small>Data stays in your local SQLite file.</small></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="menuButton" aria-label="Open menu">☰</button>
+        <div>
+          <p class="eyebrow">APPLICATION WORKSPACE</p>
+          <h1 id="pageTitle">Overview</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="save-state" id="saveState">All changes saved</span>
+          <button class="primary small" data-action="new">New application</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="view active" id="dashboardView">
+          <div class="hero">
+            <div>
+              <span class="kicker">Your next move</span>
+              <h2>Turn a promising role into a focused application.</h2>
+              <p>Bring the job description. ApplyKit keeps the brief, your tailored documents, and every follow-up together.</p>
+              <button class="primary" data-action="new">Start an application <span>→</span></button>
+            </div>
+            <div class="hero-card" aria-hidden="true">
+              <div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line"></div>
+              <div class="match-ring"><strong>86</strong><small>role fit</small></div>
+              <div class="paper-line"></div><div class="paper-line medium"></div>
+            </div>
+          </div>
+          <div class="metrics">
+            <article><span class="metric-icon lavender">▤</span><div><strong id="metricTotal">0</strong><small>Total applications</small></div></article>
+            <article><span class="metric-icon amber">◷</span><div><strong id="metricDraft">0</strong><small>Drafts in progress</small></div></article>
+            <article><span class="metric-icon mint">✓</span><div><strong id="metricActive">0</strong><small>Active pipeline</small></div></article>
+          </div>
+          <div class="section-heading">
+            <div><p class="eyebrow">LATEST ACTIVITY</p><h3>Recent applications</h3></div>
+            <button class="text-button" data-view="applications">View all →</button>
+          </div>
+          <div class="application-list" id="recentList"></div>
+        </section>
+
+        <section class="view" id="editorView">
+          <div class="editor-header">
+            <div><p class="eyebrow">APPLICATION BUILDER</p><h2 id="editorHeading">Create a focused application</h2></div>
+            <div class="step-pills"><span class="active">1 Job</span><span>2 Tailor</span><span>3 Review</span></div>
+          </div>
+          <form id="applicationForm">
+            <input type="hidden" id="applicationId">
+            <div class="editor-grid">
+              <div class="editor-main">
+                <article class="panel">
+                  <div class="panel-heading"><span class="number">1</span><div><h3>Role details</h3><p>Paste the brief or import a public job page.</p></div></div>
+                  <div class="field-row">
+                    <label>Company<input id="company" maxlength="250" placeholder="e.g. Northstar Labs" required></label>
+                    <label>Role<input id="jobTitle" maxlength="250" placeholder="e.g. Product Designer" required></label>
+                  </div>
+                  <label>Job page URL<div class="input-action"><input id="sourceUrl" type="url" placeholder="https://…"><button type="button" class="secondary" id="importButton">Import</button></div></label>
+                  <label>Job description<textarea id="jobDescription" rows="12" placeholder="Paste the role responsibilities and requirements here…"></textarea></label>
+                </article>
+                <article class="panel">
+                  <div class="panel-heading"><span class="number">2</span><div><h3>Tailored documents</h3><p>Edit directly or ask your local LM Studio model for a first draft.</p></div></div>
+                  <div class="document-tabs" role="tablist">
+                    <button type="button" class="active" data-document="cv">Tailored CV</button>
+                    <button type="button" data-document="cover_letter">Cover letter</button>
+                  </div>
+                  <div class="document-pane active" id="cvPane">
+                    <div class="generate-row"><label>Optional AI direction<input id="cvInstructions" placeholder="Focus on backend systems and mentoring"></label><button type="button" class="ai-button" data-generate="cv">✦ Draft with LM Studio</button></div>
+                    <label class="sr-only" for="adjustedCv">Tailored CV</label>
+                    <textarea class="document-editor" id="adjustedCv" rows="20" placeholder="Your tailored CV will appear here…"></textarea>
+                  </div>
+                  <div class="document-pane" id="coverLetterPane">
+                    <div class="generate-row"><label>Optional AI direction<input id="coverInstructions" placeholder="Warm, concise, and specific"></label><button type="button" class="ai-button" data-generate="cover_letter">✦ Draft with LM Studio</button></div>
+                    <label class="sr-only" for="adjustedCoverLetter">Tailored cover letter</label>
+                    <textarea class="document-editor" id="adjustedCoverLetter" rows="20" placeholder="Your tailored cover letter will appear here…"></textarea>
+                  </div>
+                </article>
+              </div>
+              <aside class="editor-side">
+                <article class="panel sticky-panel">
+                  <h3>Application details</h3>
+                  <label>Status<select id="status"><option>Draft</option><option>Ready</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Closed</option></select></label>
+                  <label>Notes<textarea id="notes" rows="7" placeholder="Contact, deadline, interview notes…"></textarea></label>
+                  <button class="primary full" type="submit">Save application</button>
+                  <button class="secondary full hidden" type="button" id="deleteButton">Delete application</button>
+                </article>
+              </aside>
+            </div>
+          </form>
+        </section>
+
+        <section class="view" id="applicationsView">
+          <div class="section-heading page-heading">
+            <div><p class="eyebrow">YOUR PIPELINE</p><h2>Applications</h2><p class="subcopy">Every role and tailored document, in one searchable place.</p></div>
+            <button class="primary" data-action="new">New application</button>
+          </div>
+          <div class="filters">
+            <label class="search-field">⌕<input id="searchInput" placeholder="Search company, role, or description"></label>
+            <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option>Draft</option><option>Ready</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Closed</option></select>
+          </div>
+          <div class="application-list" id="applicationList"></div>
+        </section>
+
+        <section class="view" id="templatesView">
+          <div class="section-heading page-heading"><div><p class="eyebrow">SOURCE MATERIAL</p><h2>Base documents</h2><p class="subcopy">These are the truthful source documents used when tailoring an application.</p></div></div>
+          <form id="templateForm" class="template-grid">
+            <article class="panel"><div class="panel-heading"><span class="doc-icon">CV</span><div><h3>Template CV</h3><p>Keep this complete and factual.</p></div></div><textarea id="templateCv" rows="24" placeholder="Paste your base CV here…"></textarea></article>
+            <article class="panel"><div class="panel-heading"><span class="doc-icon">Aa</span><div><h3>Template cover letter</h3><p>Use a reusable starting structure.</p></div></div><textarea id="templateCoverLetter" rows="24" placeholder="Paste your base cover letter here…"></textarea></article>
+            <div class="form-actions"><button class="primary" type="submit">Save base documents</button></div>
+          </form>
+        </section>
+
+        <section class="view" id="settingsView">
+          <div class="section-heading page-heading"><div><p class="eyebrow">LOCAL AI</p><h2>Settings</h2><p class="subcopy">Connect ApplyKit to LM Studio’s OpenAI-compatible local server.</p></div></div>
+          <form id="settingsForm" class="panel settings-card">
+            <label>LM Studio server URL<input id="lmStudioUrl" type="url" placeholder="http://localhost:1234/v1"></label>
+            <label>Model identifier<input id="lmStudioModel" placeholder="Leave blank to use the loaded model"></label>
+            <div class="connection-row"><button class="secondary" type="button" id="testConnection">Test connection</button><span id="connectionState">Not tested</span></div>
+            <button class="primary" type="submit">Save settings</button>
+          </form>
+        </section>
+      </main>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
