@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -90,7 +90,9 @@ def overview():
 @app.get("/api/templates")
 def get_templates():
     with connect() as db:
-        rows = db.execute("SELECT kind, content, updated_at FROM document_templates")
+        rows = db.execute(
+            "SELECT kind, filename, content, updated_at FROM document_templates"
+        )
         return {row["kind"]: dict(row) for row in rows}
 
 
@@ -107,6 +109,49 @@ def save_templates(payload: TemplateUpdate):
                 (content, kind),
             )
     return {"ok": True}
+
+
+async def _read_latex_file(upload: UploadFile, label: str) -> tuple[str, str]:
+    filename = Path(upload.filename or "").name
+    if not filename.lower().endswith(".tex"):
+        raise HTTPException(400, f"{label} must be a .tex file.")
+    raw = await upload.read(2_000_001)
+    if len(raw) > 2_000_000:
+        raise HTTPException(400, f"{label} must be smaller than 2 MB.")
+    try:
+        content = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(400, f"{label} must use UTF-8 text encoding.") from exc
+    if not content.strip():
+        raise HTTPException(400, f"{label} is empty.")
+    return filename, content
+
+
+@app.post("/api/templates/upload")
+async def upload_templates(
+    cv: UploadFile | None = File(default=None),
+    cover_letter: UploadFile | None = File(default=None),
+):
+    if not cv and not cover_letter:
+        raise HTTPException(400, "Select at least one LaTeX file.")
+
+    uploads: list[tuple[str, str, str]] = []
+    if cv:
+        filename, content = await _read_latex_file(cv, "CV")
+        uploads.append(("cv", filename, content))
+    if cover_letter:
+        filename, content = await _read_latex_file(cover_letter, "Cover letter")
+        uploads.append(("cover_letter", filename, content))
+
+    with connect() as db:
+        for kind, filename, content in uploads:
+            db.execute(
+                """UPDATE document_templates
+                   SET filename = ?, content = ?, updated_at = CURRENT_TIMESTAMP
+                   WHERE kind = ?""",
+                (filename, content, kind),
+            )
+    return get_templates()
 
 
 @app.get("/api/applications")

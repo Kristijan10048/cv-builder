@@ -54,6 +54,14 @@ def init_db() -> None:
                 ('lm_studio_model', '');
             """
         )
+        template_columns = {
+            row["name"]
+            for row in db.execute("PRAGMA table_info(document_templates)")
+        }
+        if "filename" not in template_columns:
+            db.execute(
+                "ALTER TABLE document_templates ADD COLUMN filename TEXT NOT NULL DEFAULT ''"
+            )
 
 
 def row_to_dict(row: sqlite3.Row | None) -> dict | None:
