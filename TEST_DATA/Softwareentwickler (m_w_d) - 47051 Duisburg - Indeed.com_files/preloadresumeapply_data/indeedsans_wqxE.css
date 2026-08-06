@@ -1,0 +1,8 @@
+@font-face {
+  font-family: "Indeed Sans";
+  font-style: normal;
+  font-weight: 1 1000;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("https://prod.statics.indeed.com/ds/assets/fonts/indeedsans/v1/IndeedSansVF.woff2") format("woff2-variations");
+}
