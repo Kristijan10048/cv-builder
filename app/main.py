@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .database import BASE_DIR, connect, init_db, row_to_dict
 from .importer import download_page, parse_job_page
@@ -54,6 +54,34 @@ class ImportInput(BaseModel):
 class SettingsInput(BaseModel):
     lm_studio_url: str = Field(default="http://localhost:1234/v1", max_length=500)
     lm_studio_model: str = Field(default="", max_length=200)
+
+
+class PersonalDetailsInput(BaseModel):
+    first_name: str = Field(default="", max_length=100)
+    last_name: str = Field(default="", max_length=100)
+    email: str = Field(default="", max_length=320)
+    phone: str = Field(default="", max_length=50)
+    address_line1: str = Field(default="", max_length=250)
+    address_line2: str = Field(default="", max_length=250)
+    postal_code: str = Field(default="", max_length=30)
+    city: str = Field(default="", max_length=120)
+    state_region: str = Field(default="", max_length=120)
+    country: str = Field(default="", max_length=120)
+    linkedin_url: str = Field(default="", max_length=500)
+    website_url: str = Field(default="", max_length=500)
+    current_company: str = Field(default="", max_length=250)
+    current_job_title: str = Field(default="", max_length=250)
+    work_authorization: str = Field(default="", max_length=250)
+    notice_period: str = Field(default="", max_length=120)
+    salary_expectation: str = Field(default="", max_length=120)
+
+    @field_validator("linkedin_url", "website_url")
+    @classmethod
+    def validate_optional_url(cls, value: str) -> str:
+        value = value.strip()
+        if value and not value.startswith(("http://", "https://")):
+            raise ValueError("URLs must start with http:// or https://")
+        return value
 
 
 class GenerateInput(BaseModel):
@@ -245,7 +273,13 @@ def _settings() -> dict:
 
 @app.get("/api/settings")
 def get_settings():
-    return _settings()
+    settings = _settings()
+    return {
+        "lm_studio_url": settings.get(
+            "lm_studio_url", "http://localhost:1234/v1"
+        ),
+        "lm_studio_model": settings.get("lm_studio_model", ""),
+    }
 
 
 @app.put("/api/settings")
@@ -259,7 +293,37 @@ def save_settings(payload: SettingsInput):
                    ON CONFLICT(key) DO UPDATE SET value = excluded.value""",
                 (key, value.rstrip("/") if key == "lm_studio_url" else value),
             )
-    return _settings()
+    return get_settings()
+
+
+def _personal_details() -> PersonalDetailsInput:
+    with connect() as db:
+        row = db.execute(
+            "SELECT value FROM settings WHERE key = 'personal_details'"
+        ).fetchone()
+    if not row or not row["value"]:
+        return PersonalDetailsInput()
+    try:
+        return PersonalDetailsInput.model_validate(json.loads(row["value"]))
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
+        raise HTTPException(500, "Stored personal details are invalid.") from exc
+
+
+@app.get("/api/personal-details")
+def get_personal_details():
+    return _personal_details().model_dump()
+
+
+@app.put("/api/personal-details")
+def save_personal_details(payload: PersonalDetailsInput):
+    data = payload.model_dump()
+    with connect() as db:
+        db.execute(
+            """INSERT INTO settings(key, value) VALUES ('personal_details', ?)
+               ON CONFLICT(key) DO UPDATE SET value = excluded.value""",
+            (json.dumps(data, ensure_ascii=False),),
+        )
+    return data
 
 
 @app.get("/api/lm-studio/models")

@@ -1,0 +1,68 @@
+"""Small, versioned SQLite migration runner for ApplyKit."""
+
+from collections.abc import Callable
+from dataclasses import dataclass
+import sqlite3
+
+from .v001_initial_schema import apply as apply_v001
+from .v002_personal_details import apply as apply_v002
+
+
+@dataclass(frozen=True)
+class Migration:
+    version: int
+    name: str
+    apply: Callable[[sqlite3.Connection], None]
+
+
+MIGRATIONS = (
+    Migration(1, "initial_schema", apply_v001),
+    Migration(2, "personal_details_setting", apply_v002),
+)
+
+
+def run_migrations(connection: sqlite3.Connection) -> None:
+    """Apply each pending migration exactly once, in version order."""
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS schema_migrations (
+               version INTEGER PRIMARY KEY,
+               name TEXT NOT NULL,
+               applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+           )"""
+    )
+    connection.commit()
+
+    recorded = {
+        row["version"]: row["name"]
+        for row in connection.execute(
+            "SELECT version, name FROM schema_migrations ORDER BY version"
+        )
+    }
+
+    known_versions = {migration.version for migration in MIGRATIONS}
+    unknown_versions = set(recorded) - known_versions
+    if unknown_versions:
+        versions = ", ".join(str(version) for version in sorted(unknown_versions))
+        raise RuntimeError(f"Database contains unknown migration version(s): {versions}")
+
+    for migration in MIGRATIONS:
+        recorded_name = recorded.get(migration.version)
+        if recorded_name:
+            if recorded_name != migration.name:
+                raise RuntimeError(
+                    f"Migration {migration.version} is recorded as {recorded_name!r}, "
+                    f"expected {migration.name!r}."
+                )
+            continue
+
+        try:
+            migration.apply(connection)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name) VALUES (?, ?)",
+                (migration.version, migration.name),
+            )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+

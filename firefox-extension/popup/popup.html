@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ApplyKit Autofill</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/applykit.svg" alt="">
+    <div><strong>ApplyKit Autofill</strong><small>Local profile connector</small></div>
+  </header>
+  <main>
+    <p id="connection" class="state">Checking ApplyKit…</p>
+    <button id="fillButton" type="button">Fill empty fields</button>
+    <label class="toggle">
+      <input id="autoFill" type="checkbox">
+      <span>Fill automatically on websites</span>
+    </label>
+    <p class="privacy">Forms are never submitted. Existing values are never replaced.</p>
+    <p id="result" class="result" role="status" aria-live="polite"></p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
+

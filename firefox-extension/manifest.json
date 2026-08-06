@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "ApplyKit Autofill",
+  "version": "0.1.0",
+  "description": "Fill job application fields with personal details stored in local ApplyKit.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "applykit-autofill@applykit.local",
+      "strict_min_version": "128.0"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "ApplyKit Autofill",
+    "default_popup": "popup/popup.html",
+    "default_icon": "icons/applykit.svg"
+  },
+  "icons": {
+    "48": "icons/applykit.svg",
+    "96": "icons/applykit.svg"
+  },
+  "commands": {
+    "fill-current-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Fill empty fields on the current page"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:*"
+  }
+}
+

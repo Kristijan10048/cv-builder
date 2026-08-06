@@ -163,13 +163,50 @@
         </section>
 
         <section class="view" id="settingsView">
-          <div class="section-heading page-heading"><div><p class="eyebrow">LOCAL AI</p><h2>Settings</h2><p class="subcopy">Connect ApplyKit to LM Studio’s OpenAI-compatible local server.</p></div></div>
-          <form id="settingsForm" class="panel settings-card">
-            <label>LM Studio server URL<input id="lmStudioUrl" type="url" placeholder="http://localhost:1234/v1"></label>
-            <label>Model identifier<input id="lmStudioModel" placeholder="Leave blank to use the loaded model"></label>
-            <div class="connection-row"><button class="secondary" type="button" id="testConnection">Test connection</button><span id="connectionState">Not tested</span></div>
-            <button class="primary" type="submit">Save settings</button>
-          </form>
+          <div class="section-heading page-heading"><div><p class="eyebrow">LOCAL CONFIGURATION</p><h2>Settings</h2><p class="subcopy">Manage your autofill profile and local AI connection.</p></div></div>
+          <div class="settings-stack">
+            <form id="personalDetailsForm" class="panel settings-card profile-card">
+              <div class="panel-heading"><span class="doc-icon">ID</span><div><h3>Personal details</h3><p>Stored locally and shared only when you activate the Firefox extension.</p></div></div>
+              <div class="field-row">
+                <label>First name<input id="profileFirstName" autocomplete="given-name" maxlength="100"></label>
+                <label>Last name<input id="profileLastName" autocomplete="family-name" maxlength="100"></label>
+              </div>
+              <div class="field-row">
+                <label>Email<input id="profileEmail" type="email" autocomplete="email" maxlength="320"></label>
+                <label>Phone<input id="profilePhone" type="tel" autocomplete="tel" maxlength="50"></label>
+              </div>
+              <label>Address line 1<input id="profileAddressLine1" autocomplete="address-line1" maxlength="250"></label>
+              <label>Address line 2<input id="profileAddressLine2" autocomplete="address-line2" maxlength="250"></label>
+              <div class="profile-location-grid">
+                <label>Postal code<input id="profilePostalCode" autocomplete="postal-code" maxlength="30"></label>
+                <label>City<input id="profileCity" autocomplete="address-level2" maxlength="120"></label>
+                <label>State / region<input id="profileStateRegion" autocomplete="address-level1" maxlength="120"></label>
+                <label>Country<input id="profileCountry" autocomplete="country-name" maxlength="120"></label>
+              </div>
+              <div class="field-row">
+                <label>LinkedIn URL<input id="profileLinkedinUrl" type="url" placeholder="https://linkedin.com/in/..." maxlength="500"></label>
+                <label>Website / portfolio<input id="profileWebsiteUrl" type="url" placeholder="https://..." maxlength="500"></label>
+              </div>
+              <div class="field-row">
+                <label>Current company<input id="profileCurrentCompany" autocomplete="organization" maxlength="250"></label>
+                <label>Current job title<input id="profileCurrentJobTitle" autocomplete="organization-title" maxlength="250"></label>
+              </div>
+              <label>Work authorization<input id="profileWorkAuthorization" placeholder="e.g. EU citizen / unrestricted" maxlength="250"></label>
+              <div class="field-row">
+                <label>Notice period<input id="profileNoticePeriod" placeholder="e.g. 4 weeks" maxlength="120"></label>
+                <label>Salary expectation<input id="profileSalaryExpectation" placeholder="e.g. EUR 70,000 gross/year" maxlength="120"></label>
+              </div>
+              <button class="primary" type="submit">Save personal details</button>
+            </form>
+
+            <form id="settingsForm" class="panel settings-card">
+              <div class="panel-heading"><span class="doc-icon">AI</span><div><h3>LM Studio</h3><p>Connect to an OpenAI-compatible model running on this computer.</p></div></div>
+              <label>LM Studio server URL<input id="lmStudioUrl" type="url" placeholder="http://localhost:1234/v1"></label>
+              <label>Model identifier<input id="lmStudioModel" placeholder="Leave blank to use the loaded model"></label>
+              <div class="connection-row"><button class="secondary" type="button" id="testConnection">Test connection</button><span id="connectionState">Not tested</span></div>
+              <button class="primary" type="submit">Save LM Studio settings</button>
+            </form>
+          </div>
         </section>
       </main>
     </section>

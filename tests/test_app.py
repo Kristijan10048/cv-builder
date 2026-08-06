@@ -1,5 +1,9 @@
+import sqlite3
+
 from fastapi.testclient import TestClient
 
+from app.database import connect
+from app.db_migrations import run_migrations
 from app.main import app
 
 
@@ -65,8 +69,67 @@ def test_template_upload_rejects_non_latex():
         assert result.status_code == 400
 
 
+def test_migrations_upgrade_legacy_database_and_are_repeatable():
+    db = sqlite3.connect(":memory:")
+    db.row_factory = sqlite3.Row
+    db.execute(
+        """CREATE TABLE document_templates (
+               kind TEXT PRIMARY KEY,
+               content TEXT NOT NULL DEFAULT '',
+               updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+           )"""
+    )
+    db.execute("CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    db.execute(
+        "INSERT INTO settings(key, value) VALUES ('lm_studio_model', 'keep-me')"
+    )
+
+    run_migrations(db)
+    run_migrations(db)
+
+    columns = {
+        row["name"] for row in db.execute("PRAGMA table_info(document_templates)")
+    }
+    assert "filename" in columns
+    assert db.execute(
+        "SELECT value FROM settings WHERE key = 'lm_studio_model'"
+    ).fetchone()[0] == "keep-me"
+    assert db.execute(
+        "SELECT value FROM settings WHERE key = 'personal_details'"
+    ).fetchone()[0] == "{}"
+    assert db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 2
+    db.close()
+
+
+def test_personal_details_are_stored_in_settings():
+    with TestClient(app) as client:
+        original = client.get("/api/personal-details").json()
+        payload = {
+            **original,
+            "first_name": "Ada",
+            "last_name": "Lovelace",
+            "email": "ada@example.test",
+            "city": "London",
+            "website_url": "https://example.test",
+        }
+        try:
+            saved = client.put("/api/personal-details", json=payload)
+            assert saved.status_code == 200
+            assert saved.json()["first_name"] == "Ada"
+            assert client.get("/api/personal-details").json()["city"] == "London"
+            with connect() as db:
+                stored = db.execute(
+                    "SELECT value FROM settings WHERE key = 'personal_details'"
+                ).fetchone()[0]
+            assert '"first_name": "Ada"' in stored
+        finally:
+            client.put("/api/personal-details", json=original)
+
+
 if __name__ == "__main__":
     test_core_workflow()
     test_html_import()
     test_template_upload_rejects_non_latex()
+    test_migrations_upgrade_legacy_database_and_are_repeatable()
+    test_personal_details_are_stored_in_settings()
     print("ApplyKit verification passed.")

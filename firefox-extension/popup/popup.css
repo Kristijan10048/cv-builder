@@ -1,0 +1,19 @@
+:root { color-scheme: light; font: 14px/1.4 system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { width: 310px; margin: 0; color: #232321; background: #fbfaf7; }
+header { display: flex; align-items: center; gap: 10px; padding: 16px; background: #303653; color: white; }
+header img { width: 36px; height: 36px; }
+header strong, header small { display: block; }
+header small { margin-top: 2px; color: #c6c8d3; font-size: 11px; }
+main { padding: 16px; }
+.state { margin: 0 0 13px; color: #76746f; font-size: 12px; }
+.state.connected { color: #39775a; }
+.state.error, .result.error { color: #a74f45; }
+button { width: 100%; border: 0; border-radius: 8px; padding: 11px 14px; background: #ee765e; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+button:hover { background: #d95f49; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.toggle { display: flex; align-items: center; gap: 9px; margin: 15px 0 0; font-size: 12px; font-weight: 600; }
+.toggle input { width: 17px; height: 17px; accent-color: #303653; }
+.privacy { margin: 13px 0 0; color: #76746f; font-size: 10px; }
+.result { min-height: 18px; margin: 11px 0 0; color: #39775a; font-size: 11px; }
+

@@ -195,11 +195,38 @@ $$(".file-drop input").forEach(input => input.addEventListener("change", () => {
   strong.textContent = input.files[0]?.name || "Choose a .tex file";
 }));
 
+const profileFields = {
+  first_name: "#profileFirstName", last_name: "#profileLastName",
+  email: "#profileEmail", phone: "#profilePhone",
+  address_line1: "#profileAddressLine1", address_line2: "#profileAddressLine2",
+  postal_code: "#profilePostalCode", city: "#profileCity",
+  state_region: "#profileStateRegion", country: "#profileCountry",
+  linkedin_url: "#profileLinkedinUrl", website_url: "#profileWebsiteUrl",
+  current_company: "#profileCurrentCompany", current_job_title: "#profileCurrentJobTitle",
+  work_authorization: "#profileWorkAuthorization", notice_period: "#profileNoticePeriod",
+  salary_expectation: "#profileSalaryExpectation",
+};
+
 async function loadSettings() {
-  const data = await api("/api/settings");
-  $("#lmStudioUrl").value = data.lm_studio_url;
-  $("#lmStudioModel").value = data.lm_studio_model;
+  const [settings, profile] = await Promise.all([
+    api("/api/settings"), api("/api/personal-details")
+  ]);
+  $("#lmStudioUrl").value = settings.lm_studio_url;
+  $("#lmStudioModel").value = settings.lm_studio_model;
+  Object.entries(profileFields).forEach(([key, selector]) => {
+    $(selector).value = profile[key] || "";
+  });
 }
+$("#personalDetailsForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const payload = Object.fromEntries(
+    Object.entries(profileFields).map(([key, selector]) => [key, $(selector).value.trim()])
+  );
+  try {
+    await api("/api/personal-details", { method: "PUT", body: JSON.stringify(payload) });
+    toast("Personal details saved");
+  } catch (error) { toast(error.message, true); }
+});
 $("#settingsForm").addEventListener("submit", async event => {
   event.preventDefault();
   try { await api("/api/settings", { method: "PUT", body: JSON.stringify({ lm_studio_url: $("#lmStudioUrl").value, lm_studio_model: $("#lmStudioModel").value }) }); toast("Settings saved"); }

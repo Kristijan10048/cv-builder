@@ -24,11 +24,27 @@ documents.
 
 - `.tex` upload and storage for the base CV and cover letter
 - Job description, status, notes, and tailored document storage
+- Personal details stored locally for browser autofill
+- Firefox autofill extension mockup in `firefox-extension/`
 - Searchable application history
 - Local SQLite database at `data/cv_builder.db`
+- Versioned SQLite migrations applied automatically at startup
 - Public job-page import with stored HTML
 - Indeed `window._initialData` extraction when present
 - LM Studio's OpenAI-compatible chat completions endpoint
+
+## Firefox autofill mockup
+
+Save your profile under **Settings → Personal details**, then follow the setup
+steps in [`firefox-extension/README.md`](firefox-extension/README.md). The
+extension fills only empty fields and never submits a form.
+
+## Database migrations
+
+Schema updates are versioned in `app/db_migrations/` and recorded in the
+database's `schema_migrations` table. See
+[`app/db_migrations/README.md`](app/db_migrations/README.md) before making a
+schema change.
 
 Run the automated checks with:
 
