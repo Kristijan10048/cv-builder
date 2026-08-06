@@ -157,14 +157,43 @@ $$("[data-generate]").forEach(button => button.addEventListener("click", async (
 
 async function loadTemplates() {
   const data = await api("/api/templates");
-  $("#templateCv").value = data.cv.content;
-  $("#templateCoverLetter").value = data.cover_letter.content;
+  renderCurrentFile("#currentCvFile", data.cv.filename, "No CV uploaded");
+  renderCurrentFile("#currentCoverLetterFile", data.cover_letter.filename, "No cover letter uploaded");
 }
 $("#templateForm").addEventListener("submit", async event => {
   event.preventDefault();
-  try { await api("/api/templates", { method: "PUT", body: JSON.stringify({ cv: $("#templateCv").value, cover_letter: $("#templateCoverLetter").value }) }); toast("Base documents saved"); }
-  catch (error) { toast(error.message, true); }
+  const cv = $("#templateCvFile").files[0];
+  const coverLetter = $("#templateCoverLetterFile").files[0];
+  if (!cv && !coverLetter) return toast("Select at least one .tex file.", true);
+  const formData = new FormData();
+  if (cv) formData.append("cv", cv);
+  if (coverLetter) formData.append("cover_letter", coverLetter);
+  const submit = event.submitter;
+  if (submit) { submit.disabled = true; submit.textContent = "Uploading…"; }
+  try {
+    const response = await fetch("/api/templates/upload", { method: "POST", body: formData });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Upload failed.");
+    renderCurrentFile("#currentCvFile", result.cv.filename, "No CV uploaded");
+    renderCurrentFile("#currentCoverLetterFile", result.cover_letter.filename, "No cover letter uploaded");
+    $("#templateForm").reset();
+    $$(".file-drop").forEach(drop => drop.classList.remove("has-file"));
+    toast("LaTeX files uploaded");
+  } catch (error) { toast(error.message, true); }
+  finally { if (submit) { submit.disabled = false; submit.textContent = "Upload selected files"; } }
 });
+
+function renderCurrentFile(selector, filename, fallback) {
+  const element = $(selector);
+  element.innerHTML = `<span>TEX</span><small>${escapeHtml(filename || fallback)}</small>`;
+}
+
+$$(".file-drop input").forEach(input => input.addEventListener("change", () => {
+  const drop = input.closest(".file-drop");
+  drop.classList.toggle("has-file", Boolean(input.files.length));
+  const strong = drop.querySelector("strong");
+  strong.textContent = input.files[0]?.name || "Choose a .tex file";
+}));
 
 async function loadSettings() {
   const data = await api("/api/settings");

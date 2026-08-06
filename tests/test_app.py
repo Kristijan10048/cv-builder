@@ -6,10 +6,19 @@ from app.main import app
 def test_core_workflow():
     with TestClient(app) as client:
         assert client.get("/").status_code == 200
-        assert client.put(
-            "/api/templates",
-            json={"cv": "Python developer", "cover_letter": "Dear hiring team"},
-        ).status_code == 200
+        uploaded = client.post(
+            "/api/templates/upload",
+            files={
+                "cv": ("candidate_cv.tex", b"\\documentclass{article}", "text/x-tex"),
+                "cover_letter": (
+                    "cover_letter.tex",
+                    b"\\documentclass{letter}",
+                    "text/x-tex",
+                ),
+            },
+        )
+        assert uploaded.status_code == 200
+        assert uploaded.json()["cv"]["filename"] == "candidate_cv.tex"
 
         created = client.post(
             "/api/applications",
@@ -47,7 +56,17 @@ def test_html_import():
         assert "Python services" in result.json()["job_description"]
 
 
+def test_template_upload_rejects_non_latex():
+    with TestClient(app) as client:
+        result = client.post(
+            "/api/templates/upload",
+            files={"cv": ("candidate.txt", b"plain text", "text/plain")},
+        )
+        assert result.status_code == 400
+
+
 if __name__ == "__main__":
     test_core_workflow()
     test_html_import()
+    test_template_upload_rejects_non_latex()
     print("ApplyKit verification passed.")

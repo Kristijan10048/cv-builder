@@ -138,9 +138,27 @@
         <section class="view" id="templatesView">
           <div class="section-heading page-heading"><div><p class="eyebrow">SOURCE MATERIAL</p><h2>Base documents</h2><p class="subcopy">These are the truthful source documents used when tailoring an application.</p></div></div>
           <form id="templateForm" class="template-grid">
-            <article class="panel"><div class="panel-heading"><span class="doc-icon">CV</span><div><h3>Template CV</h3><p>Keep this complete and factual.</p></div></div><textarea id="templateCv" rows="24" placeholder="Paste your base CV here…"></textarea></article>
-            <article class="panel"><div class="panel-heading"><span class="doc-icon">Aa</span><div><h3>Template cover letter</h3><p>Use a reusable starting structure.</p></div></div><textarea id="templateCoverLetter" rows="24" placeholder="Paste your base cover letter here…"></textarea></article>
-            <div class="form-actions"><button class="primary" type="submit">Save base documents</button></div>
+            <article class="panel upload-card">
+              <div class="panel-heading"><span class="doc-icon">CV</span><div><h3>Template CV</h3><p>Upload your complete, factual LaTeX source.</p></div></div>
+              <label class="file-drop" for="templateCvFile">
+                <input id="templateCvFile" name="cv" type="file" accept=".tex,text/x-tex">
+                <span class="upload-icon">↑</span>
+                <strong>Choose a .tex file</strong>
+                <small>UTF-8 LaTeX source · maximum 2 MB</small>
+              </label>
+              <div class="current-file" id="currentCvFile"><span>—</span><small>No CV uploaded</small></div>
+            </article>
+            <article class="panel upload-card">
+              <div class="panel-heading"><span class="doc-icon">Aa</span><div><h3>Template cover letter</h3><p>Upload your reusable LaTeX starting point.</p></div></div>
+              <label class="file-drop" for="templateCoverLetterFile">
+                <input id="templateCoverLetterFile" name="cover_letter" type="file" accept=".tex,text/x-tex">
+                <span class="upload-icon">↑</span>
+                <strong>Choose a .tex file</strong>
+                <small>UTF-8 LaTeX source · maximum 2 MB</small>
+              </label>
+              <div class="current-file" id="currentCoverLetterFile"><span>—</span><small>No cover letter uploaded</small></div>
+            </article>
+            <div class="form-actions"><button class="primary" type="submit">Upload selected files</button></div>
           </form>
         </section>
 
