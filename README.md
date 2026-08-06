@@ -22,7 +22,7 @@ documents.
 
 ## Included
 
-- Base CV and cover-letter storage
+- `.tex` upload and storage for the base CV and cover letter
 - Job description, status, notes, and tailored document storage
 - Searchable application history
 - Local SQLite database at `data/cv_builder.db`
