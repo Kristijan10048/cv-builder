@@ -67,6 +67,8 @@ class PersonalDetailsInput(BaseModel):
     city: str = Field(default="", max_length=120)
     state_region: str = Field(default="", max_length=120)
     country: str = Field(default="", max_length=120)
+    nationality: str = Field(default="", max_length=120)
+    date_of_birth: str = Field(default="", max_length=10)
     linkedin_url: str = Field(default="", max_length=500)
     website_url: str = Field(default="", max_length=500)
     current_company: str = Field(default="", max_length=250)
@@ -74,6 +76,10 @@ class PersonalDetailsInput(BaseModel):
     work_authorization: str = Field(default="", max_length=250)
     notice_period: str = Field(default="", max_length=120)
     salary_expectation: str = Field(default="", max_length=120)
+    german_language_level: str = Field(default="", max_length=120)
+    english_language_level: str = Field(default="", max_length=120)
+    onsite_availability: str = Field(default="", max_length=20)
+    travel_willingness: str = Field(default="", max_length=20)
 
     @field_validator("linkedin_url", "website_url")
     @classmethod

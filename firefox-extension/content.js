@@ -1,7 +1,4 @@
 (() => {
-  if (globalThis.__applyKitAutofillLoaded) return;
-  globalThis.__applyKitAutofillLoaded = true;
-
   const blockedInputTypes = new Set([
     "button", "checkbox", "color", "file", "hidden", "image", "password",
     "radio", "range", "reset", "search", "submit",
@@ -12,6 +9,7 @@
       .toLowerCase()
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, " ")
+      .replace(/ß/g, "ss")
       .replace(/[_\-.:[\]()/#]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -22,6 +20,11 @@
       ? [...element.labels].map((label) => label.textContent || "")
       : [];
     const parentLabel = element.closest("label")?.textContent || "";
+    const labelledBy = (element.getAttribute("aria-labelledby") || "")
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent || "");
+    const groupLabel = element.closest("fieldset, [role='group']")
+      ?.querySelector("legend")?.textContent || "";
     return normalized([
       element.autocomplete,
       element.name,
@@ -30,7 +33,9 @@
       element.getAttribute("aria-label"),
       element.getAttribute("data-testid"),
       ...labels,
+      ...labelledBy,
       parentLabel,
+      groupLabel,
     ].filter(Boolean).join(" "));
   }
 
@@ -39,6 +44,10 @@
     const autocomplete = normalized(element.autocomplete);
 
     const autocompleteKeys = [
+      ["bday day", "birth_day"],
+      ["bday month", "birth_month"],
+      ["bday year", "birth_year"],
+      ["bday", "date_of_birth"],
       ["given name", "first_name"],
       ["family name", "last_name"],
       ["address line2", "address_line2"],
@@ -61,6 +70,15 @@
 
     const patterns = [
       [/\b(linkedin|linked in)\b/, "linkedin_url"],
+      [/\b(staatsangehorigkeit|nationality|citizenship)\b/, "nationality"],
+      [/\b(birth|geburt)\w*\b.*\b(day|tag)\b|\b(day|tag)\b.*\b(birth|geburt)\w*\b/, "birth_day"],
+      [/\b(birth|geburt)\w*\b.*\b(month|monat)\b|\b(month|monat)\b.*\b(birth|geburt)\w*\b/, "birth_month"],
+      [/\b(birth|geburt)\w*\b.*\b(year|jahr)\b|\b(year|jahr)\b.*\b(birth|geburt)\w*\b/, "birth_year"],
+      [/\b(date of birth|birth date|dob|geburtsdatum)\b/, "date_of_birth"],
+      [/\b(deutsch\w*|german)\b.*\b(sprache|language|niveau|level|kenntnisse)\b|\b(sprache|language|niveau|level|kenntnisse)\b.*\b(deutsch\w*|german)\b/, "german_language_level"],
+      [/\b(englisch\w*|english)\b.*\b(sprache|language|niveau|level|kenntnisse)\b|\b(sprache|language|niveau|level|kenntnisse)\b.*\b(englisch\w*|english)\b/, "english_language_level"],
+      [/\b(50.*standort|standort.*50|on site|onsite|office presence|prasenz)\b/, "onsite_availability"],
+      [/\b(reisebereitschaft|reisebereit|travel willingness|willing to travel|business travel)\b/, "travel_willingness"],
       [/\b(first name|given name|forename|vorname)\b/, "first_name"],
       [/\b(last name|family name|surname|nachname|familienname)\b/, "last_name"],
       [/\b(full name|your name|applicant name|vollstandiger name|name des bewerbers)\b/, "full_name"],
@@ -88,17 +106,50 @@
           element instanceof HTMLSelectElement)) return false;
     if (element.disabled || element.readOnly) return false;
     if (element instanceof HTMLInputElement && blockedInputTypes.has(element.type)) return false;
-    if (String(element.value || "").trim()) return false;
+    if (element instanceof HTMLSelectElement) {
+      const selectedText = element.options[element.selectedIndex]?.textContent || "";
+      const current = normalized(`${element.value || ""} ${selectedText}`);
+      const isPlaceholder = !element.value || /\b(bitte.*auswahl|bitte.*wahlen|please.*select|choose|select one)\b/.test(current);
+      if (!isPlaceholder) return false;
+    } else if (String(element.value || "").trim()) return false;
     return element.getClientRects().length > 0;
   }
 
-  function setValue(element, value) {
+  const monthAliases = {
+    "01": ["1", "01", "january", "januar"],
+    "02": ["2", "02", "february", "februar"],
+    "03": ["3", "03", "march", "marz", "maerz"],
+    "04": ["4", "04", "april"],
+    "05": ["5", "05", "may", "mai"],
+    "06": ["6", "06", "june", "juni"],
+    "07": ["7", "07", "july", "juli"],
+    "08": ["8", "08", "august"],
+    "09": ["9", "09", "september"],
+    "10": ["10", "october", "oktober"],
+    "11": ["11", "november"],
+    "12": ["12", "december", "dezember"],
+  };
+
+  function selectCandidates(value, key) {
+    const wanted = normalized(value);
+    const candidates = new Set([wanted]);
+    if (["yes", "ja", "true"].includes(wanted)) ["yes", "ja", "true", "1"].forEach((item) => candidates.add(item));
+    if (["no", "nein", "false"].includes(wanted)) ["no", "nein", "false", "0"].forEach((item) => candidates.add(item));
+    if (key === "birth_day") candidates.add(String(Number(value)));
+    if (key === "birth_month") (monthAliases[value] || []).forEach((item) => candidates.add(normalized(item)));
+    if (["native", "native speaker", "muttersprache"].includes(wanted)) {
+      ["native", "native speaker", "mother tongue", "muttersprache"].forEach((item) => candidates.add(item));
+    }
+    return candidates;
+  }
+
+  function setValue(element, value, key) {
     if (!value) return false;
 
     if (element instanceof HTMLSelectElement) {
-      const wanted = normalized(value);
+      const candidates = selectCandidates(value, key);
       const option = [...element.options].find((item) =>
-        normalized(item.value) === wanted || normalized(item.textContent) === wanted
+        candidates.has(normalized(item.value)) || candidates.has(normalized(item.textContent))
       );
       if (!option) return false;
       element.value = option.value;
@@ -124,24 +175,35 @@
     profile.full_name = [profile.first_name, profile.last_name]
       .filter(Boolean)
       .join(" ");
+    const birthDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(profile.date_of_birth || "");
+    if (birthDate) {
+      profile.birth_year = birthDate[1];
+      profile.birth_month = birthDate[2];
+      profile.birth_day = birthDate[3];
+    }
 
     let count = 0;
     const fields = document.querySelectorAll("input, textarea, select");
     for (const field of fields) {
       if (!isFillable(field)) continue;
       const key = profileKeyFor(field);
-      if (key && setValue(field, profile[key])) count += 1;
+      if (key && setValue(field, profile[key], key)) count += 1;
     }
     return { count };
   }
 
-  browser.runtime.onMessage.addListener((message) => {
+  if (globalThis.__applyKitAutofillListener) {
+    try {
+      browser.runtime.onMessage.removeListener(globalThis.__applyKitAutofillListener);
+    } catch (_) {}
+  }
+  globalThis.__applyKitAutofillListener = (message) => {
     if (message?.type === "applykit:fill") return fillPage();
     return undefined;
-  });
+  };
+  browser.runtime.onMessage.addListener(globalThis.__applyKitAutofillListener);
 
   browser.storage.local.get("autoFillEnabled").then(({ autoFillEnabled }) => {
     if (autoFillEnabled) fillPage().catch(() => {});
   });
 })();
-

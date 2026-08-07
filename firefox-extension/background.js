@@ -57,7 +57,7 @@ async function configureAutoFill() {
 async function fillTab(tabId) {
   await browser.scripting.executeScript({
     target: { tabId },
-    files: ["content.js"],
+    files: ["/content.js"],
   });
   return browser.tabs.sendMessage(tabId, { type: "applykit:fill" });
 }
@@ -91,4 +91,3 @@ browser.runtime.onInstalled.addListener(() => {
 browser.runtime.onStartup.addListener(() => {
   configureAutoFill().catch(() => {});
 });
-

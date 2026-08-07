@@ -13,7 +13,7 @@ It never submits a form and never overwrites a nonempty field.
    ```
 
 2. Open ApplyKit at `http://127.0.0.1:8000`.
-3. Open **Settings**, complete **Personal details**, and save the form.
+3. Open **Profile**, complete your personal details, and save the form.
 4. In Firefox, open `about:debugging#/runtime/this-firefox`.
 5. Select **Load Temporary Add-on**.
 6. Select `firefox-extension/manifest.json` from this project.
@@ -34,11 +34,14 @@ Automatic filling can be turned off at any time. The extension still never submi
 - Full name
 - Email and phone
 - Address lines, postal code, city, state/region, and country
+- Nationality and date of birth (including split day/month/year fields)
 - LinkedIn and portfolio URLs
 - Current company and job title
 - Work authorization
 - Notice period / availability
 - Salary expectation
+- German and English language levels
+- On-site availability and willingness to travel
 
 Matching uses standard HTML `autocomplete` values first, followed by English and German field-name and label patterns. Websites with custom widgets, closed shadow DOM, cross-origin embedded forms, or nonstandard controls may require site-specific adapters.
 
@@ -56,4 +59,3 @@ Official references:
 - [Firefox `activeTab` permission](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions#activetab_permission)
 - [Firefox host permissions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/host_permissions)
 - [Firefox content scripts](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts)
-

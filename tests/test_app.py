@@ -1,4 +1,5 @@
 import sqlite3
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -111,11 +112,19 @@ def test_personal_details_are_stored_in_settings():
             "email": "ada@example.test",
             "city": "London",
             "website_url": "https://example.test",
+            "nationality": "British",
+            "date_of_birth": "1815-12-10",
+            "german_language_level": "B2",
+            "english_language_level": "Native",
+            "onsite_availability": "Yes",
+            "travel_willingness": "No",
         }
         try:
             saved = client.put("/api/personal-details", json=payload)
             assert saved.status_code == 200
             assert saved.json()["first_name"] == "Ada"
+            assert saved.json()["date_of_birth"] == "1815-12-10"
+            assert saved.json()["onsite_availability"] == "Yes"
             assert client.get("/api/personal-details").json()["city"] == "London"
             with connect() as db:
                 stored = db.execute(
@@ -138,9 +147,32 @@ def test_personal_details_are_presented_in_the_profile_view():
     assert profile_view < personal_form < settings_view
     assert 'id="profileDetails"' in html
     assert 'id="editProfileButton"' in html
+    assert 'id="profileNationality"' in html
+    assert 'id="profileDateOfBirth"' in html
+    assert 'id="profileGermanLanguageLevel"' in html
+    assert 'id="profileEnglishLanguageLevel"' in html
+    assert 'id="profileOnsiteAvailability"' in html
+    assert 'id="profileTravelWillingness"' in html
     assert html.count('data-action="edit-profile"') == 2
     assert 'data-action="cancel-profile-edit"' in html
-    assert "/static/app.js?v=20260807-profile-actions" in html
+    assert "/static/app.js?v=20260807-profile-fields" in html
+
+
+def test_extension_supports_the_additional_german_profile_fields():
+    extension_dir = Path(__file__).parents[1] / "firefox-extension"
+    popup_source = (extension_dir / "popup" / "popup.js").read_text(encoding="utf-8")
+    content_source = (extension_dir / "content.js").read_text(encoding="utf-8")
+
+    assert 'files: ["/content.js"]' in popup_source
+    for profile_key in (
+        "nationality",
+        "date_of_birth",
+        "german_language_level",
+        "english_language_level",
+        "onsite_availability",
+        "travel_willingness",
+    ):
+        assert profile_key in content_source
 
 
 if __name__ == "__main__":
@@ -150,4 +182,5 @@ if __name__ == "__main__":
     test_migrations_upgrade_legacy_database_and_are_repeatable()
     test_personal_details_are_stored_in_settings()
     test_personal_details_are_presented_in_the_profile_view()
+    test_extension_supports_the_additional_german_profile_fields()
     print("ApplyKit verification passed.")

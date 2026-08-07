@@ -202,10 +202,15 @@ const profileFields = {
   address_line1: "#profileAddressLine1", address_line2: "#profileAddressLine2",
   postal_code: "#profilePostalCode", city: "#profileCity",
   state_region: "#profileStateRegion", country: "#profileCountry",
+  nationality: "#profileNationality", date_of_birth: "#profileDateOfBirth",
   linkedin_url: "#profileLinkedinUrl", website_url: "#profileWebsiteUrl",
   current_company: "#profileCurrentCompany", current_job_title: "#profileCurrentJobTitle",
   work_authorization: "#profileWorkAuthorization", notice_period: "#profileNoticePeriod",
   salary_expectation: "#profileSalaryExpectation",
+  german_language_level: "#profileGermanLanguageLevel",
+  english_language_level: "#profileEnglishLanguageLevel",
+  onsite_availability: "#profileOnsiteAvailability",
+  travel_willingness: "#profileTravelWillingness",
 };
 
 const profileSections = [
@@ -217,11 +222,17 @@ const profileSections = [
     ["Address line 1", "address_line1"], ["Address line 2", "address_line2"],
     ["Postal code", "postal_code"], ["City", "city"],
     ["State / region", "state_region"], ["Country", "country"],
+    ["Nationality", "nationality"],
   ]],
   ["Work", [
     ["Current company", "current_company"], ["Current job title", "current_job_title"],
     ["Work authorization", "work_authorization"], ["Notice period", "notice_period"],
     ["Salary expectation", "salary_expectation"],
+    ["Date of birth", "date_of_birth"],
+    ["German language level", "german_language_level"],
+    ["English language level", "english_language_level"],
+    ["50% on-site availability", "onsite_availability"],
+    ["Willing to travel", "travel_willingness"],
   ]],
 ];
 

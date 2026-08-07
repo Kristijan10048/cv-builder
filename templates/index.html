@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20260807-profile-actions">
-  <script defer src="/static/app.js?v=20260807-profile-actions"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20260807-profile-fields">
+  <script defer src="/static/app.js?v=20260807-profile-fields"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -197,6 +197,10 @@
                 <label>Country<input id="profileCountry" autocomplete="country-name" maxlength="120"></label>
               </div>
               <div class="field-row">
+                <label>Nationality<input id="profileNationality" maxlength="120" placeholder="e.g. German"></label>
+                <label>Date of birth<input id="profileDateOfBirth" type="date" autocomplete="bday" max="9999-12-31"></label>
+              </div>
+              <div class="field-row">
                 <label>LinkedIn URL<input id="profileLinkedinUrl" type="url" placeholder="https://linkedin.com/in/..." maxlength="500"></label>
                 <label>Website / portfolio<input id="profileWebsiteUrl" type="url" placeholder="https://..." maxlength="500"></label>
               </div>
@@ -208,6 +212,18 @@
               <div class="field-row">
                 <label>Notice period<input id="profileNoticePeriod" placeholder="e.g. 4 weeks" maxlength="120"></label>
                 <label>Salary expectation<input id="profileSalaryExpectation" placeholder="e.g. EUR 70,000 gross/year" maxlength="120"></label>
+              </div>
+              <div class="field-row">
+                <label>German language level<input id="profileGermanLanguageLevel" placeholder="e.g. C1 or native" maxlength="120"></label>
+                <label>English language level<input id="profileEnglishLanguageLevel" placeholder="e.g. C1 or fluent" maxlength="120"></label>
+              </div>
+              <div class="field-row">
+                <label>Available for at least 50% on-site work
+                  <select id="profileOnsiteAvailability"><option value="">Not specified</option><option value="Yes">Yes</option><option value="No">No</option></select>
+                </label>
+                <label>Willing to travel
+                  <select id="profileTravelWillingness"><option value="">Not specified</option><option value="Yes">Yes</option><option value="No">No</option></select>
+                </label>
               </div>
               <div class="profile-form-actions">
                 <button class="secondary" type="button" id="cancelProfileEdit" data-action="cancel-profile-edit">Cancel</button>
