@@ -34,7 +34,7 @@ fillButton.addEventListener("click", async () => {
     if (!tab?.id) throw new Error("No active page was found.");
     await browser.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["content.js"],
+      files: ["/content.js"],
     });
     const response = await browser.tabs.sendMessage(tab.id, {
       type: "applykit:fill",

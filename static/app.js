@@ -27,7 +27,7 @@ function toast(message, error = false) {
 
 const titles = {
   dashboard: "Overview", editor: "Application builder", applications: "Applications",
-  templates: "Base documents", settings: "Settings"
+  templates: "Base documents", profile: "Profile", settings: "Settings"
 };
 
 async function showView(name) {
@@ -39,6 +39,7 @@ async function showView(name) {
   if (name === "dashboard") await loadOverview();
   if (name === "applications") await loadApplications();
   if (name === "templates") await loadTemplates();
+  if (name === "profile") await loadProfile();
   if (name === "settings") await loadSettings();
 }
 
@@ -207,23 +208,101 @@ const profileFields = {
   salary_expectation: "#profileSalaryExpectation",
 };
 
-async function loadSettings() {
-  const [settings, profile] = await Promise.all([
-    api("/api/settings"), api("/api/personal-details")
-  ]);
-  $("#lmStudioUrl").value = settings.lm_studio_url;
-  $("#lmStudioModel").value = settings.lm_studio_model;
+const profileSections = [
+  ["Contact", [
+    ["Email", "email"], ["Phone", "phone"], ["LinkedIn", "linkedin_url"],
+    ["Website / portfolio", "website_url"],
+  ]],
+  ["Address", [
+    ["Address line 1", "address_line1"], ["Address line 2", "address_line2"],
+    ["Postal code", "postal_code"], ["City", "city"],
+    ["State / region", "state_region"], ["Country", "country"],
+  ]],
+  ["Work", [
+    ["Current company", "current_company"], ["Current job title", "current_job_title"],
+    ["Work authorization", "work_authorization"], ["Notice period", "notice_period"],
+    ["Salary expectation", "salary_expectation"],
+  ]],
+];
+
+let savedProfile = {};
+
+function hasSavedProfile(profile) {
+  return Object.values(profile).some(value => String(value || "").trim());
+}
+
+function profileValueMarkup(label, key, value) {
+  const safeValue = escapeHtml(value || "Not provided");
+  const isLink = ["linkedin_url", "website_url"].includes(key) && value;
+  const content = isLink
+    ? `<a href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">${safeValue}</a>`
+    : safeValue;
+  return `<div class="profile-detail${value ? "" : " is-empty"}"><dt>${escapeHtml(label)}</dt><dd>${content}</dd></div>`;
+}
+
+function renderProfile(profile) {
+  savedProfile = profile;
+  const hasProfile = hasSavedProfile(profile);
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
+  const role = [profile.current_job_title, profile.current_company].filter(Boolean).join(" at ");
+  const initials = [profile.first_name, profile.last_name]
+    .filter(Boolean).map(value => value.trim().charAt(0)).join("").slice(0, 2).toUpperCase();
+
+  $("#profileDisplayName").textContent = fullName || "Your profile";
+  $("#profileDisplayRole").textContent = role || profile.email || "Personal details saved locally";
+  $("#profileAvatar").textContent = initials || "👤";
+  $("#profileEmpty").classList.toggle("hidden", hasProfile);
+  $("#profileDetails").classList.toggle("hidden", !hasProfile);
+  $("#editProfileButton").textContent = hasProfile ? "Edit profile" : "Add details";
+  $("#profileDetails").innerHTML = profileSections.map(([heading, fields]) => `
+    <section class="profile-detail-group">
+      <h4>${heading}</h4>
+      <dl>${fields.map(([label, key]) => profileValueMarkup(label, key, profile[key])).join("")}</dl>
+    </section>`).join("");
+}
+
+function fillProfileForm(profile) {
   Object.entries(profileFields).forEach(([key, selector]) => {
     $(selector).value = profile[key] || "";
   });
 }
+
+async function loadProfile() {
+  const profile = await api("/api/personal-details");
+  renderProfile(profile);
+  fillProfileForm(profile);
+  closeProfileEditor();
+}
+
+async function loadSettings() {
+  const settings = await api("/api/settings");
+  $("#lmStudioUrl").value = settings.lm_studio_url;
+  $("#lmStudioModel").value = settings.lm_studio_model;
+}
+
+function openProfileEditor() {
+  fillProfileForm(savedProfile);
+  $("#profileSummary").classList.add("hidden");
+  $("#personalDetailsForm").classList.remove("hidden");
+  $("#editProfileButton").classList.add("hidden");
+  $("#profileFirstName").focus();
+}
+
+function closeProfileEditor() {
+  $("#personalDetailsForm").classList.add("hidden");
+  $("#profileSummary").classList.remove("hidden");
+  $("#editProfileButton").classList.remove("hidden");
+}
+
 $("#personalDetailsForm").addEventListener("submit", async event => {
   event.preventDefault();
   const payload = Object.fromEntries(
     Object.entries(profileFields).map(([key, selector]) => [key, $(selector).value.trim()])
   );
   try {
-    await api("/api/personal-details", { method: "PUT", body: JSON.stringify(payload) });
+    const profile = await api("/api/personal-details", { method: "PUT", body: JSON.stringify(payload) });
+    renderProfile(profile);
+    closeProfileEditor();
     toast("Personal details saved");
   } catch (error) { toast(error.message, true); }
 });
@@ -251,7 +330,13 @@ $$("[data-document]").forEach(button => button.addEventListener("click", () => {
 document.addEventListener("click", event => {
   const viewButton = event.target.closest("[data-view]");
   if (viewButton) { event.preventDefault(); showView(viewButton.dataset.view); }
-  if (event.target.closest("[data-action='new']")) { resetApplication(); showView("editor"); }
+  const actionButton = event.target.closest("[data-action]");
+  if (actionButton?.dataset.action === "new") { resetApplication(); showView("editor"); }
+  if (actionButton?.dataset.action === "edit-profile") openProfileEditor();
+  if (actionButton?.dataset.action === "cancel-profile-edit") {
+    fillProfileForm(savedProfile);
+    closeProfileEditor();
+  }
   const row = event.target.closest(".application-row");
   if (row) openApplication(row.dataset.id);
 });

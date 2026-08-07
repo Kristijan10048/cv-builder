@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css">
-  <script defer src="/static/app.js"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20260807-profile-actions">
+  <script defer src="/static/app.js?v=20260807-profile-actions"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -25,6 +25,7 @@
         <button class="nav-item" data-view="editor"><span>＋</span> New application</button>
         <button class="nav-item" data-view="applications"><span>▤</span> Applications</button>
         <p class="nav-label">Library</p>
+        <button class="nav-item" data-view="profile"><span class="profile-nav-icon" aria-hidden="true">&#128100;</span> Profile</button>
         <button class="nav-item" data-view="templates"><span>◫</span> Base documents</button>
         <button class="nav-item" data-view="settings"><span>⚙</span> Settings</button>
       </nav>
@@ -162,11 +163,23 @@
           </form>
         </section>
 
-        <section class="view" id="settingsView">
-          <div class="section-heading page-heading"><div><p class="eyebrow">LOCAL CONFIGURATION</p><h2>Settings</h2><p class="subcopy">Manage your autofill profile and local AI connection.</p></div></div>
+        <section class="view" id="profileView">
+          <div class="section-heading page-heading profile-page-heading"><div><p class="eyebrow">YOUR AUTOFILL IDENTITY</p><h2>Profile</h2><p class="subcopy">Review and manage the personal details used to complete applications.</p></div><button class="primary" type="button" id="editProfileButton" data-action="edit-profile">Edit profile</button></div>
           <div class="settings-stack">
-            <form id="personalDetailsForm" class="panel settings-card profile-card">
-              <div class="panel-heading"><span class="doc-icon">ID</span><div><h3>Personal details</h3><p>Stored locally and shared only when you activate the Firefox extension.</p></div></div>
+            <article class="panel profile-summary" id="profileSummary">
+              <div class="profile-identity">
+                <span class="profile-avatar" id="profileAvatar" aria-hidden="true">&#128100;</span>
+                <div><h3 id="profileDisplayName">Your profile</h3><p id="profileDisplayRole">Add your details to speed up applications.</p></div>
+              </div>
+              <div class="profile-empty" id="profileEmpty">
+                <strong>No personal details saved yet</strong>
+                <p>Add your contact, address, and work information so it is ready when you need it.</p>
+                <button class="secondary" type="button" id="addProfileButton" data-action="edit-profile">Add personal details</button>
+              </div>
+              <div class="profile-detail-sections hidden" id="profileDetails"></div>
+            </article>
+            <form id="personalDetailsForm" class="panel profile-edit-card hidden">
+              <div class="panel-heading"><span class="doc-icon">ID</span><div><h3>Edit personal details</h3><p>Stored locally and shared only when you activate the Firefox extension.</p></div></div>
               <div class="field-row">
                 <label>First name<input id="profileFirstName" autocomplete="given-name" maxlength="100"></label>
                 <label>Last name<input id="profileLastName" autocomplete="family-name" maxlength="100"></label>
@@ -196,9 +209,18 @@
                 <label>Notice period<input id="profileNoticePeriod" placeholder="e.g. 4 weeks" maxlength="120"></label>
                 <label>Salary expectation<input id="profileSalaryExpectation" placeholder="e.g. EUR 70,000 gross/year" maxlength="120"></label>
               </div>
-              <button class="primary" type="submit">Save personal details</button>
+              <div class="profile-form-actions">
+                <button class="secondary" type="button" id="cancelProfileEdit" data-action="cancel-profile-edit">Cancel</button>
+                <button class="primary" type="submit">Save personal details</button>
+              </div>
             </form>
 
+          </div>
+        </section>
+
+        <section class="view" id="settingsView">
+          <div class="section-heading page-heading"><div><p class="eyebrow">LOCAL CONFIGURATION</p><h2>Settings</h2><p class="subcopy">Manage the local AI connection used to draft tailored documents.</p></div></div>
+          <div class="settings-stack">
             <form id="settingsForm" class="panel settings-card">
               <div class="panel-heading"><span class="doc-icon">AI</span><div><h3>LM Studio</h3><p>Connect to an OpenAI-compatible model running on this computer.</p></div></div>
               <label>LM Studio server URL<input id="lmStudioUrl" type="url" placeholder="http://localhost:1234/v1"></label>

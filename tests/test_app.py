@@ -126,10 +126,28 @@ def test_personal_details_are_stored_in_settings():
             client.put("/api/personal-details", json=original)
 
 
+def test_personal_details_are_presented_in_the_profile_view():
+    with TestClient(app) as client:
+        html = client.get("/").text
+
+    profile_view = html.index('id="profileView"')
+    personal_form = html.index('id="personalDetailsForm"')
+    settings_view = html.index('id="settingsView"')
+
+    assert 'data-view="profile"' in html
+    assert profile_view < personal_form < settings_view
+    assert 'id="profileDetails"' in html
+    assert 'id="editProfileButton"' in html
+    assert html.count('data-action="edit-profile"') == 2
+    assert 'data-action="cancel-profile-edit"' in html
+    assert "/static/app.js?v=20260807-profile-actions" in html
+
+
 if __name__ == "__main__":
     test_core_workflow()
     test_html_import()
     test_template_upload_rejects_non_latex()
     test_migrations_upgrade_legacy_database_and_are_repeatable()
     test_personal_details_are_stored_in_settings()
+    test_personal_details_are_presented_in_the_profile_view()
     print("ApplyKit verification passed.")
