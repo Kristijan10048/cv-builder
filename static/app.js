@@ -207,6 +207,7 @@ const profileFields = {
   current_company: "#profileCurrentCompany", current_job_title: "#profileCurrentJobTitle",
   work_authorization: "#profileWorkAuthorization", notice_period: "#profileNoticePeriod",
   salary_expectation: "#profileSalaryExpectation",
+  strongest_programming_language: "#profileStrongestProgrammingLanguage",
   german_language_level: "#profileGermanLanguageLevel",
   english_language_level: "#profileEnglishLanguageLevel",
   onsite_availability: "#profileOnsiteAvailability",
@@ -215,7 +216,7 @@ const profileFields = {
 
 const profileSections = [
   ["Contact", [
-    ["Email", "email"], ["Phone", "phone"], ["LinkedIn", "linkedin_url"],
+    ["Email", "email"], ["Phone", "phone"], ["LinkedIn Profile", "linkedin_url"],
     ["Website / portfolio", "website_url"],
   ]],
   ["Address", [
@@ -228,6 +229,7 @@ const profileSections = [
     ["Current company", "current_company"], ["Current job title", "current_job_title"],
     ["Work authorization", "work_authorization"], ["Notice period", "notice_period"],
     ["Salary expectation", "salary_expectation"],
+    ["Strongest programming language", "strongest_programming_language"],
     ["Date of birth", "date_of_birth"],
     ["German language level", "german_language_level"],
     ["English language level", "english_language_level"],

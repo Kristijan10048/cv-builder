@@ -35,11 +35,12 @@ Automatic filling can be turned off at any time. The extension still never submi
 - Email and phone
 - Address lines, postal code, city, state/region, and country
 - Nationality and date of birth (including split day/month/year fields)
-- LinkedIn and portfolio URLs
+- LinkedIn Profile and portfolio URLs
 - Current company and job title
 - Work authorization
 - Notice period / availability
 - Salary expectation
+- Strongest programming language
 - German and English language levels
 - On-site availability and willingness to travel
 

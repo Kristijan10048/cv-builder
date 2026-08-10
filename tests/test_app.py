@@ -112,6 +112,8 @@ def test_personal_details_are_stored_in_settings():
             "email": "ada@example.test",
             "city": "London",
             "website_url": "https://example.test",
+            "linkedin_url": "https://linkedin.com/in/ada-lovelace",
+            "strongest_programming_language": "Python",
             "nationality": "British",
             "date_of_birth": "1815-12-10",
             "german_language_level": "B2",
@@ -125,6 +127,8 @@ def test_personal_details_are_stored_in_settings():
             assert saved.json()["first_name"] == "Ada"
             assert saved.json()["date_of_birth"] == "1815-12-10"
             assert saved.json()["onsite_availability"] == "Yes"
+            assert saved.json()["linkedin_url"] == "https://linkedin.com/in/ada-lovelace"
+            assert saved.json()["strongest_programming_language"] == "Python"
             assert client.get("/api/personal-details").json()["city"] == "London"
             with connect() as db:
                 stored = db.execute(
@@ -153,9 +157,11 @@ def test_personal_details_are_presented_in_the_profile_view():
     assert 'id="profileEnglishLanguageLevel"' in html
     assert 'id="profileOnsiteAvailability"' in html
     assert 'id="profileTravelWillingness"' in html
+    assert 'id="profileLinkedinUrl"' in html
+    assert 'id="profileStrongestProgrammingLanguage"' in html
     assert html.count('data-action="edit-profile"') == 2
     assert 'data-action="cancel-profile-edit"' in html
-    assert "/static/app.js?v=20260807-profile-fields" in html
+    assert "/static/app.js?v=20260810-autofill-fields" in html
 
 
 def test_extension_supports_the_additional_german_profile_fields():
@@ -171,6 +177,8 @@ def test_extension_supports_the_additional_german_profile_fields():
         "english_language_level",
         "onsite_availability",
         "travel_willingness",
+        "linkedin_url",
+        "strongest_programming_language",
     ):
         assert profile_key in content_source
 

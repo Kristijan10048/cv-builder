@@ -70,6 +70,8 @@
 
     const patterns = [
       [/\b(linkedin|linked in)\b/, "linkedin_url"],
+      [/\b(strongest|primary|best|main|preferred)\b.*\b(programming|coding|software)\b.*\blanguage\b|\b(programming|coding|software)\b.*\blanguage\b.*\b(strongest|primary|best|main|preferred)\b/, "strongest_programming_language"],
+      [/\b(starkste|beste|primare|bevorzugte|haupt)\w*\b.*\b(programmier|coding|software)\w*\b.*\b(sprache|language)\b|\b(programmier|coding|software)\w*\b.*\b(sprache|language)\b.*\b(starkste|beste|primare|bevorzugte|haupt)\w*\b/, "strongest_programming_language"],
       [/\b(staatsangehorigkeit|nationality|citizenship)\b/, "nationality"],
       [/\b(birth|geburt)\w*\b.*\b(day|tag)\b|\b(day|tag)\b.*\b(birth|geburt)\w*\b/, "birth_day"],
       [/\b(birth|geburt)\w*\b.*\b(month|monat)\b|\b(month|monat)\b.*\b(birth|geburt)\w*\b/, "birth_month"],
