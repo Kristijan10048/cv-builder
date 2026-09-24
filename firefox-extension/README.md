@@ -20,6 +20,10 @@ It never submits a form and never overwrites a nonempty field.
 7. Open a job-application form.
 8. Select the ApplyKit toolbar button and choose **Fill empty fields**.
 
+Choose **Save application** to add the active page to ApplyKit with its detected
+company name, job title, URL, and the current application date/time. Saved pages
+are recorded with the **Applied** status.
+
 You can also use `Alt+Shift+A` on a page after interacting with the extension.
 
 ## Optional automatic filling
@@ -49,6 +53,7 @@ Matching uses standard HTML `autocomplete` values first, followed by English and
 ## Development notes
 
 - Personal details are read from `GET /api/personal-details`.
+- Saved applications are written to `POST /api/applications` and timestamped by ApplyKit.
 - The background script performs localhost requests because Manifest V3 content scripts do not receive extension cross-origin privileges.
 - The localhost origin is declared explicitly in `host_permissions` and the extension content security policy.
 - Persistent site-wide access is requested only when automatic filling is enabled.

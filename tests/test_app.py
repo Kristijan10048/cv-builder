@@ -161,11 +161,24 @@ def test_personal_details_are_presented_in_the_profile_view():
     assert 'id="profileStrongestProgrammingLanguage"' in html
     assert html.count('data-action="edit-profile"') == 2
     assert 'data-action="cancel-profile-edit"' in html
-    assert "/static/app.js?v=20260810-autofill-fields" in html
+    assert "/static/app.js?v=20260810-applications-table" in html
 
 
-def test_extension_supports_the_additional_german_profile_fields():
+def test_applications_page_has_application_history_table():
+    with TestClient(app) as client:
+        html = client.get("/").text
+
+    assert 'id="applicationsView"' in html
+    assert 'class="application-table"' in html
+    assert 'id="applicationList"' in html
+    for heading in ("Company", "Role", "Job page", "Applied on", "Status"):
+        assert f"<th>{heading}</th>" in html
+
+
+def test_extension_supports_profile_fields_and_application_saving():
     extension_dir = Path(__file__).parents[1] / "firefox-extension"
+    background_source = (extension_dir / "background.js").read_text(encoding="utf-8")
+    popup_html = (extension_dir / "popup" / "popup.html").read_text(encoding="utf-8")
     popup_source = (extension_dir / "popup" / "popup.js").read_text(encoding="utf-8")
     content_source = (extension_dir / "content.js").read_text(encoding="utf-8")
 
@@ -182,6 +195,13 @@ def test_extension_supports_the_additional_german_profile_fields():
     ):
         assert profile_key in content_source
 
+    assert 'id="saveButton"' in popup_html
+    assert "applykit:application-details" in popup_source
+    assert "applykit:application-details" in content_source
+    assert "applykit:save-application" in popup_source
+    assert "applykit:save-application" in background_source
+    assert 'status: "Applied"' in background_source
+
 
 if __name__ == "__main__":
     test_core_workflow()
@@ -190,5 +210,6 @@ if __name__ == "__main__":
     test_migrations_upgrade_legacy_database_and_are_repeatable()
     test_personal_details_are_stored_in_settings()
     test_personal_details_are_presented_in_the_profile_view()
-    test_extension_supports_the_additional_german_profile_fields()
+    test_applications_page_has_application_history_table()
+    test_extension_supports_profile_fields_and_application_saving()
     print("ApplyKit verification passed.")

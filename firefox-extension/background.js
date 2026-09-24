@@ -1,9 +1,14 @@
 const API_BASE = "http://127.0.0.1:8000";
 const AUTO_SCRIPT_ID = "applykit-auto-fill";
 
-async function api(path) {
+async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { Accept: "application/json" },
+    ...options,
+    headers: {
+      Accept: "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
+    },
   });
   if (!response.ok) {
     let message = `ApplyKit returned HTTP ${response.status}.`;
@@ -71,6 +76,18 @@ browser.runtime.onMessage.addListener((message) => {
   }
   if (message?.type === "applykit:configure-auto-fill") {
     return configureAutoFill().then((enabled) => ({ enabled }));
+  }
+  if (message?.type === "applykit:save-application") {
+    const application = message.application || {};
+    return api("/api/applications", {
+      method: "POST",
+      body: JSON.stringify({
+        company: application.company || "Unknown company",
+        job_title: application.job_title || "Job application",
+        source_url: application.source_url || "",
+        status: "Applied",
+      }),
+    });
   }
   return undefined;
 });

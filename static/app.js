@@ -45,13 +45,43 @@ async function showView(name) {
 
 function rowMarkup(item) {
   const initial = (item.company || "?").trim().slice(0, 1);
-  const date = new Date(`${item.updated_at.replace(" ", "T")}Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-  return `<article class="application-row" data-id="${item.id}" tabindex="0">
+  const date = formatUtcDateTime(item.updated_at, { month: "short", day: "numeric", year: "numeric" });
+  return `<article class="application-row" data-application-id="${item.id}" tabindex="0">
     <span class="company-avatar">${escapeHtml(initial)}</span>
     <div><strong>${escapeHtml(item.job_title)}</strong><small>${escapeHtml(item.company)}</small></div>
     <span class="status-badge status-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
     <small class="row-date">${date}</small><span>›</span>
   </article>`;
+}
+
+function formatUtcDateTime(value, options = { dateStyle: "medium", timeStyle: "short" }) {
+  if (!value) return "Not recorded";
+  const date = new Date(`${value.replace(" ", "T")}Z`);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, options);
+}
+
+function safeExternalUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function applicationTableMarkup(item) {
+  const source = safeExternalUrl(item.source_url);
+  const sourceMarkup = source
+    ? `<a href="${escapeHtml(source.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.hostname.replace(/^www\./, ""))}</a>`
+    : `<span class="table-empty-value">Not available</span>`;
+  return `<tr class="application-table-row" data-application-id="${item.id}" tabindex="0">
+    <td data-label="Company"><strong>${escapeHtml(item.company)}</strong></td>
+    <td data-label="Role">${escapeHtml(item.job_title)}</td>
+    <td data-label="Job page">${sourceMarkup}</td>
+    <td data-label="Applied on"><time>${escapeHtml(formatUtcDateTime(item.created_at))}</time></td>
+    <td data-label="Status"><span class="status-badge status-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span></td>
+    <td class="table-open" aria-hidden="true">›</td>
+  </tr>`;
 }
 
 const emptyMarkup = `<div class="empty-state"><strong>No applications yet</strong>Add a role to start building your pipeline.</div>`;
@@ -67,7 +97,9 @@ async function loadOverview() {
 async function loadApplications() {
   const params = new URLSearchParams({ search: $("#searchInput").value, status: $("#statusFilter").value });
   const rows = await api(`/api/applications?${params}`);
-  $("#applicationList").innerHTML = rows.length ? rows.map(rowMarkup).join("") : emptyMarkup;
+  $("#applicationList").innerHTML = rows.length
+    ? rows.map(applicationTableMarkup).join("")
+    : `<tr><td colspan="6">${emptyMarkup}</td></tr>`;
 }
 
 function resetApplication() {
@@ -350,12 +382,12 @@ document.addEventListener("click", event => {
     fillProfileForm(savedProfile);
     closeProfileEditor();
   }
-  const row = event.target.closest(".application-row");
-  if (row) openApplication(row.dataset.id);
+  const row = event.target.closest("[data-application-id]");
+  if (row && !event.target.closest("a, button")) openApplication(row.dataset.applicationId);
 });
 document.addEventListener("keydown", event => {
-  const row = event.target.closest(".application-row");
-  if (row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); openApplication(row.dataset.id); }
+  const row = event.target.closest("[data-application-id]");
+  if (row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); openApplication(row.dataset.applicationId); }
 });
 let searchTimer;
 $("#searchInput").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadApplications, 250); });

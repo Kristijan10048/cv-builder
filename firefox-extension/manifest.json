@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ApplyKit Autofill",
-  "version": "0.1.0",
-  "description": "Fill job application fields with personal details stored in local ApplyKit.",
+  "version": "0.2.0",
+  "description": "Fill job application fields and save applications to local ApplyKit.",
   "browser_specific_settings": {
     "gecko": {
       "id": "applykit-autofill@applykit.local",
@@ -44,4 +44,3 @@
     "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:*"
   }
 }
-

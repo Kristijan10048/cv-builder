@@ -12,8 +12,9 @@ main { padding: 16px; }
 button { width: 100%; border: 0; border-radius: 8px; padding: 11px 14px; background: #ee765e; color: white; font: inherit; font-weight: 700; cursor: pointer; }
 button:hover { background: #d95f49; }
 button:disabled { cursor: not-allowed; opacity: .55; }
+button.secondary { margin-top: 9px; border: 1px solid #303653; background: transparent; color: #303653; }
+button.secondary:hover { background: #eeedf3; }
 .toggle { display: flex; align-items: center; gap: 9px; margin: 15px 0 0; font-size: 12px; font-weight: 600; }
 .toggle input { width: 17px; height: 17px; accent-color: #303653; }
 .privacy { margin: 13px 0 0; color: #76746f; font-size: 10px; }
 .result { min-height: 18px; margin: 11px 0 0; color: #39775a; font-size: 11px; }
-

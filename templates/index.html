@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20260807-profile-fields">
-  <script defer src="/static/app.js?v=20260810-autofill-fields"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20260810-applications-table">
+  <script defer src="/static/app.js?v=20260810-applications-table"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -126,14 +126,19 @@
 
         <section class="view" id="applicationsView">
           <div class="section-heading page-heading">
-            <div><p class="eyebrow">YOUR PIPELINE</p><h2>Applications</h2><p class="subcopy">Every role and tailored document, in one searchable place.</p></div>
+            <div><p class="eyebrow">YOUR PIPELINE</p><h2>Applications</h2><p class="subcopy">See every place you applied, including its source and application time.</p></div>
             <button class="primary" data-action="new">New application</button>
           </div>
           <div class="filters">
             <label class="search-field">⌕<input id="searchInput" placeholder="Search company, role, or description"></label>
             <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option>Draft</option><option>Ready</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Closed</option></select>
           </div>
-          <div class="application-list" id="applicationList"></div>
+          <div class="application-table-wrap">
+            <table class="application-table">
+              <thead><tr><th>Company</th><th>Role</th><th>Job page</th><th>Applied on</th><th>Status</th><th><span class="sr-only">Open</span></th></tr></thead>
+              <tbody id="applicationList"></tbody>
+            </table>
+          </div>
         </section>
 
         <section class="view" id="templatesView">

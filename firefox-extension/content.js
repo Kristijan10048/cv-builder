@@ -170,6 +170,70 @@
     return true;
   }
 
+  function firstText(selectors) {
+    for (const selector of selectors) {
+      const value = document.querySelector(selector)?.textContent?.trim();
+      if (value) return value;
+    }
+    return "";
+  }
+
+  function metaContent(...names) {
+    for (const name of names) {
+      const escaped = CSS.escape(name);
+      const value = document.querySelector(
+        `meta[property="${escaped}"], meta[name="${escaped}"]`
+      )?.content?.trim();
+      if (value) return value;
+    }
+    return "";
+  }
+
+  function jobPostingData() {
+    for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+      try {
+        const value = JSON.parse(script.textContent || "null");
+        const candidates = Array.isArray(value)
+          ? value
+          : [value, ...(value?.["@graph"] || [])];
+        const posting = candidates.find((item) => {
+          const type = item?.["@type"];
+          return type === "JobPosting" ||
+            (Array.isArray(type) && type.includes("JobPosting"));
+        });
+        if (posting) return posting;
+      } catch (_) {}
+    }
+    return {};
+  }
+
+  function applicationDetails() {
+    const posting = jobPostingData();
+    const hiringOrganization = posting.hiringOrganization;
+    const company = (
+      (typeof hiringOrganization === "string" ? hiringOrganization : hiringOrganization?.name) ||
+      firstText([
+        "[data-automation-id='jobPostingCompany']", "[data-testid='inlineHeader-companyName']",
+        ".jobs-unified-top-card__company-name", "[data-testid*='company']",
+        "[class*='companyName']", "[class*='company-name']",
+        "[itemprop='hiringOrganization'] [itemprop='name']", "[itemprop='hiringOrganization']",
+      ]) ||
+      metaContent("og:site_name", "application-name") ||
+      location.hostname.replace(/^www\./, "")
+    ).trim().slice(0, 250);
+    const jobTitle = (
+      posting.title ||
+      firstText([
+        "h1[data-testid*='title']", "[data-testid*='job-title']", "[class*='jobTitle']",
+        "[class*='job-title']", "h1",
+      ]) ||
+      metaContent("og:title", "twitter:title") ||
+      document.title ||
+      "Job application"
+    ).trim().slice(0, 250);
+    return { company, job_title: jobTitle, source_url: location.href };
+  }
+
   async function fillPage() {
     const profile = await browser.runtime.sendMessage({
       type: "applykit:get-profile",
@@ -201,6 +265,7 @@
   }
   globalThis.__applyKitAutofillListener = (message) => {
     if (message?.type === "applykit:fill") return fillPage();
+    if (message?.type === "applykit:application-details") return applicationDetails();
     return undefined;
   };
   browser.runtime.onMessage.addListener(globalThis.__applyKitAutofillListener);
