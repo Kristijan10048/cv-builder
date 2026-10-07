@@ -27,7 +27,8 @@ function toast(message, error = false) {
 
 const titles = {
   dashboard: "Overview", editor: "Application builder", applications: "Applications",
-  templates: "Base documents", profile: "Profile", settings: "Settings"
+  templates: "Base documents", profile: "Profile", settings: "Settings",
+  availableJobs: "Available Jobs"
 };
 
 async function showView(name) {

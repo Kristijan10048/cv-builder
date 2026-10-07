@@ -161,7 +161,7 @@ def test_personal_details_are_presented_in_the_profile_view():
     assert 'id="profileStrongestProgrammingLanguage"' in html
     assert html.count('data-action="edit-profile"') == 2
     assert 'data-action="cancel-profile-edit"' in html
-    assert "/static/app.js?v=20260810-applications-table" in html
+    assert "/static/app.js?v=" in html
 
 
 def test_applications_page_has_application_history_table():

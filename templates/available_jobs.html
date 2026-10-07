@@ -1,0 +1,58 @@
+{# Illustrative fixtures only; these are not imported jobs or saved applications. #}
+{% set sample_jobs = [
+  ("Northstar Labs", "Senior Python Developer", "Berlin, Germany", 96, "2026-10-07", "Indeed", false),
+  ("Evergreen Systems", "Backend Engineer", "Munich, Germany", 93, "2026-10-07", "LinkedIn", true),
+  ("Harbor Technologies", "Full Stack Developer", "Hamburg, Germany", 91, "2026-10-07", "StepStone", false),
+  ("Bluebird Digital", "Software Engineer", "Remote, Germany", 88, "2026-10-06", "Indeed", false),
+  ("Atlas Robotics", "C++ Developer", "Stuttgart, Germany", 86, "2026-10-06", "LinkedIn", true),
+  ("Meadow Analytics", "Data Engineer", "Frankfurt, Germany", 84, "2026-10-06", "StepStone", false),
+  ("Cedar Cloud", "Cloud Platform Engineer", "Remote, Europe", 82, "2026-10-05", "Indeed", false),
+  ("Brightpath Software", "Frontend Developer", "Cologne, Germany", 79, "2026-10-05", "LinkedIn", false),
+  ("Riverstone Mobility", "DevOps Engineer", "Dusseldorf, Germany", 77, "2026-10-05", "StepStone", true),
+  ("Oak & Pine Studio", "Web Application Developer", "Leipzig, Germany", 74, "2026-10-04", "Indeed", false),
+  ("Silverline Networks", "QA Automation Engineer", "Dortmund, Germany", 71, "2026-10-04", "LinkedIn", false),
+  ("Summit Health Tech", "Java Developer", "Duisburg, Germany", 68, "2026-10-04", "StepStone", false)
+] %}
+{% set portal_searches = {
+  "Indeed": "https://de.indeed.com/jobs?q=",
+  "LinkedIn": "https://www.linkedin.com/jobs/search/?keywords=",
+  "StepStone": "https://www.stepstone.de/jobs/"
+} %}
+<section class="view" id="availableJobsView" aria-labelledby="availableJobsHeading">
+  <div class="section-heading page-heading">
+    <div>
+      <p class="eyebrow">EXPLORE OPPORTUNITIES</p>
+      <h2 id="availableJobsHeading">Available Jobs</h2>
+      <p class="subcopy" id="availableJobsNote">{{ sample_jobs | length }} sample jobs. Companies, matching scores, dates, and applied statuses are illustrative. Links open portal searches.</p>
+    </div>
+  </div>
+  <div class="application-table-wrap">
+    <table class="application-table available-jobs-table" aria-describedby="availableJobsNote">
+      <caption class="sr-only">Available jobs preview with sample data</caption>
+      <thead>
+        <tr>
+          <th scope="col">Company</th>
+          <th scope="col">Title</th>
+          <th scope="col">Location</th>
+          <th scope="col">Matching Score</th>
+          <th scope="col">Date Fetched</th>
+          <th scope="col">Job link</th>
+          <th scope="col">Applied</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for company, title, location, score, fetched, portal, applied in sample_jobs %}
+        <tr class="application-table-row available-job-row">
+          <td data-label="Company"><strong>{{ company }}</strong></td>
+          <td data-label="Title">{{ title }}</td>
+          <td data-label="Location">{{ location }}</td>
+          <td data-label="Matching Score"><span class="job-match-score">{{ score }}%</span></td>
+          <td data-label="Date Fetched"><time datetime="{{ fetched }}">{{ fetched }}</time></td>
+          <td data-label="Job link"><a href="{{ portal_searches[portal] }}{{ title | urlencode }}" target="_blank" rel="noopener noreferrer" aria-label="Search {{ portal }} for {{ title }} (opens in a new tab)">{{ portal }} search &#8599;</a></td>
+          <td data-label="Applied"><span class="status-badge {{ 'status-Applied' if applied else 'status-Draft' }}">{{ 'Yes' if applied else 'No' }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
