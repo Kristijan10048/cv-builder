@@ -13,6 +13,7 @@ from .database import BASE_DIR, connect, init_db, row_to_dict
 from .importer import download_page, parse_job_page
 from .job_search_preferences import router as job_search_preferences_router
 from .job_search import router as job_search_router
+from .request_logging import RequestLoggingMiddleware, close_logging, configure_logging
 from .models import (
     ApplicationInput,
     GenerateInput,
@@ -28,11 +29,16 @@ STATIC_DIR = BASE_DIR / "static"
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    init_db()
-    yield
+    log_handler = configure_logging()
+    try:
+        init_db()
+        yield
+    finally:
+        close_logging(log_handler)
 
 
 app = FastAPI(title="ApplyKit", version="0.1.0", lifespan=lifespan)
+app.add_middleware(RequestLoggingMiddleware)
 app.include_router(job_search_preferences_router)
 app.include_router(job_search_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
