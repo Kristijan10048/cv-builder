@@ -13,6 +13,30 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 
 Open `http://127.0.0.1:8000`.
 
+## Endpoint logging
+
+Python's standard logging records every HTTP request, including API routers,
+pages, static files, validation failures, and errors. Logs go to
+`logs/applykit.log` by default. Files rotate at 5 MB, keeping three backups.
+Application logs (including job-search failures) use the same file.
+
+Set `APPLYKIT_LOG_DIR` to change the directory (relative paths are resolved from
+the project directory), and `APPLYKIT_LOG_LEVEL` to select verbosity:
+
+- `INFO` (default): method, route template, HTTP status, and elapsed milliseconds.
+- `DEBUG`: also records request start events.
+- `TRACE`: also records ASGI message types, body byte counts, and streaming flags.
+
+Request/response bodies, query strings, headers, and dynamic path values are
+not included in request logs. Unhandled failures record the exception type and
+are re-raised for the normal server error handling.
+
+```powershell
+$env:APPLYKIT_LOG_DIR = 'C:\ApplyKitLogs'
+$env:APPLYKIT_LOG_LEVEL = 'TRACE'
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
 ## LM Studio
 
 Start LM Studio's local server and load a model. In ApplyKit, open **Settings**,
