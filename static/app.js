@@ -11,7 +11,12 @@ const api = async (url, options = {}) => {
   });
   if (!response.ok) {
     let message = "Something went wrong.";
-    try { message = (await response.json()).detail || message; } catch (_) {}
+    try {
+      const detail = (await response.json()).detail;
+      message = Array.isArray(detail)
+        ? detail.map(item => `${item.loc?.slice(1).join(" ") || "Search"}: ${item.msg}`).join("; ")
+        : detail || message;
+    } catch (_) {}
     throw new Error(message);
   }
   return response.status === 204 ? null : response.json();
@@ -28,7 +33,7 @@ function toast(message, error = false) {
 const titles = {
   dashboard: "Overview", editor: "Application builder", applications: "Applications",
   templates: "Base documents", profile: "Profile", settings: "Settings",
-  availableJobs: "Available Jobs"
+  availableJobs: "Available Jobs", jobSearchPreferences: "Job Search Preferences"
 };
 
 async function showView(name) {
@@ -39,6 +44,8 @@ async function showView(name) {
   closeMenu();
   if (name === "dashboard") await loadOverview();
   if (name === "applications") await loadApplications();
+  if (name === "availableJobs") await loadAvailableJobs();
+  if (name === "jobSearchPreferences") await loadJobSearchPreferences();
   if (name === "templates") await loadTemplates();
   if (name === "profile") await loadProfile();
   if (name === "settings") await loadSettings();
@@ -398,6 +405,6 @@ function openMenu(){ $("#sidebar").classList.add("open"); $("#mobileOverlay").cl
 function closeMenu(){ $("#sidebar").classList.remove("open"); $("#mobileOverlay").classList.remove("visible"); }
 $("#menuButton").addEventListener("click", openMenu);
 $("#mobileOverlay").addEventListener("click", closeMenu);
-function escapeHtml(value = "") { const div = document.createElement("div"); div.textContent = value; return div.innerHTML; }
+function escapeHtml(value = "") { const div = document.createElement("div"); div.textContent = value; return div.innerHTML.replaceAll('"', "&quot;"); }
 
 loadOverview().catch(error => toast(error.message, true));

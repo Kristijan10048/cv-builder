@@ -6,6 +6,8 @@ import sqlite3
 
 from .v001_initial_schema import apply as apply_v001
 from .v002_personal_details import apply as apply_v002
+from .v003_job_search_preferences import apply as apply_v003
+from .v004_available_jobs import apply as apply_v004
 
 
 @dataclass(frozen=True)
@@ -18,6 +20,8 @@ class Migration:
 MIGRATIONS = (
     Migration(1, "initial_schema", apply_v001),
     Migration(2, "personal_details_setting", apply_v002),
+    Migration(3, "job_search_preferences", apply_v003),
+    Migration(4, "available_jobs", apply_v004),
 )
 
 
@@ -65,4 +69,3 @@ def run_migrations(connection: sqlite3.Connection) -> None:
         except Exception:
             connection.rollback()
             raise
-

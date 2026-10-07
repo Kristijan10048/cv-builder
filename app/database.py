@@ -1,4 +1,5 @@
 from pathlib import Path
+from contextlib import closing
 import sqlite3
 
 from .db_migrations import run_migrations
@@ -17,7 +18,7 @@ def connect() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    with connect() as db:
+    with closing(connect()) as db:
         run_migrations(db)
 
 

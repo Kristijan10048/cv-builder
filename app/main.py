@@ -11,6 +11,8 @@ from fastapi.templating import Jinja2Templates
 
 from .database import BASE_DIR, connect, init_db, row_to_dict
 from .importer import download_page, parse_job_page
+from .job_search_preferences import router as job_search_preferences_router
+from .job_search import router as job_search_router
 from .models import (
     ApplicationInput,
     GenerateInput,
@@ -31,6 +33,8 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="ApplyKit", version="0.1.0", lifespan=lifespan)
+app.include_router(job_search_preferences_router)
+app.include_router(job_search_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 

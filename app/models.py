@@ -1,6 +1,8 @@
 """Pydantic models used by the ApplyKit API."""
 
-from pydantic import BaseModel, Field, field_validator
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
 
 class TemplateUpdate(BaseModel):
@@ -66,7 +68,43 @@ class PersonalDetailsInput(BaseModel):
         return value
 
 
+class JobSearchPreferenceInput(BaseModel):
+    job_title: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)
+    ]
+    country: Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)] = ""
+    city: Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)] = ""
+    radius_km: int = Field(default=0, ge=0, le=1000, strict=True)
+    keywords: list[
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+    ] = Field(default_factory=list, max_length=30)
+    posted_within_days: int | None = Field(default=None, ge=1, le=3650, strict=True)
+
+    @model_validator(mode="after")
+    def validate_radius_location(self):
+        if self.radius_km and not self.city:
+            raise ValueError("Enter a city when using a search radius.")
+        return self
+
+
 class GenerateInput(BaseModel):
     application_id: int
     document: str
     instructions: str = ""
+
+
+JobBoard = Literal["linkedin", "indeed", "glassdoor", "zip_recruiter", "bayt", "bdjobs", "naukri"]
+
+
+class JobSearchInput(BaseModel):
+    preference_id: int = Field(gt=0, strict=True)
+    sites: list[JobBoard] = Field(
+        default_factory=lambda: ["linkedin", "indeed", "glassdoor", "zip_recruiter"],
+        min_length=1, max_length=7,
+    )
+    results_wanted: int = Field(default=50, ge=1, le=100, strict=True)
+
+    @field_validator("sites")
+    @classmethod
+    def unique_sites(cls, value):
+        return list(dict.fromkeys(value))

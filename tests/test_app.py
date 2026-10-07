@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.database import connect
-from app.db_migrations import run_migrations
+from app.db_migrations import MIGRATIONS, run_migrations
 from app.main import app
 
 
@@ -98,7 +98,7 @@ def test_migrations_upgrade_legacy_database_and_are_repeatable():
     assert db.execute(
         "SELECT value FROM settings WHERE key = 'personal_details'"
     ).fetchone()[0] == "{}"
-    assert db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 2
+    assert db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == len(MIGRATIONS)
     db.close()
 
 

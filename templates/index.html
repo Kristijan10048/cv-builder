@@ -8,8 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20261007-available-jobs">
-  <script defer src="/static/app.js?v=20261007-available-jobs"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20261007-job-search">
+  <script defer src="/static/app.js?v=20261007-job-search"></script>
+  <script defer src="/static/job_search_preferences.js?v=20261007-search-preferences"></script>
+  <script defer src="/static/available_jobs.js?v=20261007-job-search"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -25,6 +27,7 @@
         <button class="nav-item" data-view="editor"><span>＋</span> New application</button>
         <button class="nav-item" data-view="applications"><span>▤</span> Applications</button>
         <button class="nav-item" data-view="availableJobs"><span aria-hidden="true">&#128188;</span> Available Jobs</button>
+        <button class="nav-item" data-view="jobSearchPreferences"><span aria-hidden="true">&#8981;</span> Job Search Preferences</button>
         <p class="nav-label">Library</p>
         <button class="nav-item" data-view="profile"><span class="profile-nav-icon" aria-hidden="true">&#128100;</span> Profile</button>
         <button class="nav-item" data-view="templates"><span>◫</span> Base documents</button>
@@ -143,6 +146,7 @@
         </section>
 
         {% include "available_jobs.html" %}
+        {% include "job_search_preferences.html" %}
 
         <section class="view" id="templatesView">
           <div class="section-heading page-heading"><div><p class="eyebrow">SOURCE MATERIAL</p><h2>Base documents</h2><p class="subcopy">These are the truthful source documents used when tailoring an application.</p></div></div>

@@ -1,0 +1,38 @@
+<section class="view" id="jobSearchPreferencesView" aria-labelledby="jobSearchPreferencesHeading">
+  <div class="section-heading page-heading preference-page-heading">
+    <div>
+      <p class="eyebrow">YOUR JOB SEARCH</p>
+      <h2 id="jobSearchPreferencesHeading">Job Search Preferences</h2>
+      <p class="subcopy">Save up to 10 searches for the roles and locations you are interested in.</p>
+    </div>
+    <button class="primary" type="button" id="addSearchPreference" disabled>Add search</button>
+  </div>
+  <p class="preference-count" id="searchPreferenceCount" role="status">Loading saved searches...</p>
+  <div class="preference-error hidden" id="searchPreferenceLoadError" role="alert">
+    <p id="searchPreferenceLoadErrorMessage"></p>
+    <button class="secondary" type="button" id="retrySearchPreferences">Try again</button>
+  </div>
+  <form class="panel preference-form hidden" id="searchPreferenceForm">
+    <input type="hidden" id="searchPreferenceId">
+    <h3 id="searchPreferenceFormHeading">New job search</h3>
+    <fieldset class="preference-fields" id="searchPreferenceFields">
+      <legend class="sr-only">Job search criteria</legend>
+      <label>Job title / position<input id="searchPreferenceTitle" required maxlength="250" placeholder="e.g. Software Developer"></label>
+      <div class="field-row">
+        <label>Country<input id="searchPreferenceCountry" maxlength="120" placeholder="Any country"></label>
+        <label>City<input id="searchPreferenceCity" maxlength="120" placeholder="Any city"></label>
+      </div>
+      <div class="field-row">
+        <label>Radius around city (km)<input id="searchPreferenceRadius" type="number" min="0" max="1000" step="1" value="0" required aria-describedby="searchPreferenceRadiusHelp"><small class="field-help" id="searchPreferenceRadiusHelp">0 means the city itself. Enter a city to use a radius.</small></label>
+        <label>Dates posted<select id="searchPreferenceAge"><option value="">Any time</option><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select></label>
+      </div>
+      <label>Description contains keywords<textarea id="searchPreferenceKeywords" rows="3" maxlength="3630" placeholder="e.g. Python, SQL, customer support" aria-describedby="searchPreferenceKeywordsHelp"></textarea><small class="field-help" id="searchPreferenceKeywordsHelp">Separate keywords or phrases with commas. Leave empty for any description.</small></label>
+      <p class="preference-error hidden" id="searchPreferenceFormError" role="alert"></p>
+      <div class="profile-form-actions">
+        <button class="secondary" type="button" id="cancelSearchPreference">Cancel</button>
+        <button class="primary" type="submit" id="saveSearchPreference">Save search</button>
+      </div>
+    </fieldset>
+  </form>
+  <div class="preference-list" id="searchPreferenceList"></div>
+</section>

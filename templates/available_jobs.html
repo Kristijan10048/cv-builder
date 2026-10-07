@@ -1,58 +1,50 @@
-{# Illustrative fixtures only; these are not imported jobs or saved applications. #}
-{% set sample_jobs = [
-  ("Northstar Labs", "Senior Python Developer", "Berlin, Germany", 96, "2026-10-07", "Indeed", false),
-  ("Evergreen Systems", "Backend Engineer", "Munich, Germany", 93, "2026-10-07", "LinkedIn", true),
-  ("Harbor Technologies", "Full Stack Developer", "Hamburg, Germany", 91, "2026-10-07", "StepStone", false),
-  ("Bluebird Digital", "Software Engineer", "Remote, Germany", 88, "2026-10-06", "Indeed", false),
-  ("Atlas Robotics", "C++ Developer", "Stuttgart, Germany", 86, "2026-10-06", "LinkedIn", true),
-  ("Meadow Analytics", "Data Engineer", "Frankfurt, Germany", 84, "2026-10-06", "StepStone", false),
-  ("Cedar Cloud", "Cloud Platform Engineer", "Remote, Europe", 82, "2026-10-05", "Indeed", false),
-  ("Brightpath Software", "Frontend Developer", "Cologne, Germany", 79, "2026-10-05", "LinkedIn", false),
-  ("Riverstone Mobility", "DevOps Engineer", "Dusseldorf, Germany", 77, "2026-10-05", "StepStone", true),
-  ("Oak & Pine Studio", "Web Application Developer", "Leipzig, Germany", 74, "2026-10-04", "Indeed", false),
-  ("Silverline Networks", "QA Automation Engineer", "Dortmund, Germany", 71, "2026-10-04", "LinkedIn", false),
-  ("Summit Health Tech", "Java Developer", "Duisburg, Germany", 68, "2026-10-04", "StepStone", false)
-] %}
-{% set portal_searches = {
-  "Indeed": "https://de.indeed.com/jobs?q=",
-  "LinkedIn": "https://www.linkedin.com/jobs/search/?keywords=",
-  "StepStone": "https://www.stepstone.de/jobs/"
-} %}
-<section class="view" id="availableJobsView" aria-labelledby="availableJobsHeading">
-  <div class="section-heading page-heading">
-    <div>
-      <p class="eyebrow">EXPLORE OPPORTUNITIES</p>
-      <h2 id="availableJobsHeading">Available Jobs</h2>
-      <p class="subcopy" id="availableJobsNote">{{ sample_jobs | length }} sample jobs. Companies, matching scores, dates, and applied statuses are illustrative. Links open portal searches.</p>
+﻿<section class="view" id="availableJobsView" aria-labelledby="availableJobsHeading">
+  <div class="section-heading page-heading"><div>
+    <p class="eyebrow">EXPLORE OPPORTUNITIES</p><h2 id="availableJobsHeading">Available Jobs</h2>
+    <p class="subcopy">Search job boards with your saved preferences. Fetched jobs stay in your local workspace.</p>
+  </div></div>
+  <form id="jobSearchForm" class="panel job-search-form">
+    <div class="field-row">
+      <label>Saved search<select id="jobSearchPreference"><option value="">All fetched jobs</option></select></label>
+      <label>Results per board<select id="jobSearchLimit"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option></select></label>
     </div>
+    <fieldset class="job-board-options"><legend>Job boards</legend>
+      <label><input type="checkbox" name="jobBoard" value="linkedin" checked> LinkedIn</label>
+      <label><input type="checkbox" name="jobBoard" value="indeed" checked> Indeed</label>
+      <label><input type="checkbox" name="jobBoard" value="glassdoor" checked> Glassdoor</label>
+      <label><input type="checkbox" name="jobBoard" value="zip_recruiter" checked> ZipRecruiter</label>
+      <label><input type="checkbox" name="jobBoard" value="bayt"> Bayt</label>
+      <label><input type="checkbox" name="jobBoard" value="bdjobs"> BDJobs</label>
+      <label><input type="checkbox" name="jobBoard" value="naukri"> Naukri</label>
+    </fieldset>
+    <p class="field-help">Indeed and Glassdoor need a supported country. ZipRecruiter covers US/Canada, BDJobs Bangladesh, and Naukri India. Description keywords must all match.</p>
+    <div class="job-search-actions"><button type="submit" class="primary" id="fetchJobsButton" disabled>Fetch jobs</button>
+      <button type="button" class="text-button" data-view="jobSearchPreferences">Manage saved searches</button></div>
+    <p id="jobSearchStatus" role="status" aria-live="polite" class="subcopy"></p>
+    <p id="jobSearchWarnings" role="alert" class="preference-error hidden"></p>
+  </form>
+  <div class="filters">
+    <label class="search-field"><input id="availableJobsSearch" placeholder="Search fetched jobs" aria-label="Search fetched jobs"></label>
+    <select id="availableJobsSite" aria-label="Filter by job board">
+      <option value="">All boards</option><option value="linkedin">LinkedIn</option><option value="indeed">Indeed</option>
+      <option value="glassdoor">Glassdoor</option><option value="zip_recruiter">ZipRecruiter</option>
+      <option value="bayt">Bayt</option><option value="bdjobs">BDJobs</option><option value="naukri">Naukri</option>
+    </select>
   </div>
+  <p class="subcopy" id="availableJobsNote" aria-live="polite">No fetched jobs yet.</p>
   <div class="application-table-wrap">
     <table class="application-table available-jobs-table" aria-describedby="availableJobsNote">
-      <caption class="sr-only">Available jobs preview with sample data</caption>
-      <thead>
-        <tr>
-          <th scope="col">Company</th>
-          <th scope="col">Title</th>
-          <th scope="col">Location</th>
-          <th scope="col">Matching Score</th>
-          <th scope="col">Date Fetched</th>
-          <th scope="col">Job link</th>
-          <th scope="col">Applied</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for company, title, location, score, fetched, portal, applied in sample_jobs %}
-        <tr class="application-table-row available-job-row">
-          <td data-label="Company"><strong>{{ company }}</strong></td>
-          <td data-label="Title">{{ title }}</td>
-          <td data-label="Location">{{ location }}</td>
-          <td data-label="Matching Score"><span class="job-match-score">{{ score }}%</span></td>
-          <td data-label="Date Fetched"><time datetime="{{ fetched }}">{{ fetched }}</time></td>
-          <td data-label="Job link"><a href="{{ portal_searches[portal] }}{{ title | urlencode }}" target="_blank" rel="noopener noreferrer" aria-label="Search {{ portal }} for {{ title }} (opens in a new tab)">{{ portal }} search &#8599;</a></td>
-          <td data-label="Applied"><span class="status-badge {{ 'status-Applied' if applied else 'status-Draft' }}">{{ 'Yes' if applied else 'No' }}</span></td>
-        </tr>
-        {% endfor %}
-      </tbody>
+      <caption class="sr-only">Fetched job postings</caption><thead><tr>
+        <th scope="col">Company</th><th scope="col">Title</th><th scope="col">Location</th>
+        <th scope="col">Source</th><th scope="col">Date Fetched</th><th scope="col">Job link</th><th scope="col">Applied</th>
+      </tr></thead>
+      <tbody id="availableJobsList"><tr><td colspan="7"><div class="empty-state"><strong>No fetched jobs yet</strong>Select a saved search and fetch jobs to explore opportunities.</div></td></tr></tbody>
     </table>
   </div>
+  <nav class="job-pagination" aria-label="Available jobs pages">
+    <label>Jobs per page<select id="availableJobsPageSize"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select></label>
+    <div><button type="button" class="secondary" id="jobsPrevious" disabled>Previous</button>
+      <span id="jobsPageLabel" role="status">Page 1 of 1</span>
+      <button type="button" class="secondary" id="jobsNext" disabled>Next</button></div>
+  </nav>
 </section>
