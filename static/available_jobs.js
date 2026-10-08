@@ -4,6 +4,99 @@ let fetchingJobs = false;
 let jobsSearchTimer;
 const boardNames = { linkedin: "LinkedIn", indeed: "Indeed", glassdoor: "Glassdoor", zip_recruiter: "ZipRecruiter", bayt: "Bayt", bdjobs: "BDJobs", naukri: "Naukri" };
 
+// Keep widths on columns, so replacing result rows never resets a user's sizing.
+function enableJobColumnResizing() {
+  const table = $(".available-jobs-table");
+  const headers = Array.from(table.querySelectorAll("thead th"));
+  const columns = document.createElement("colgroup");
+  headers.forEach(() => columns.append(document.createElement("col")));
+  table.querySelector("thead").before(columns);
+  const minWidth = 110;
+  const container = table.closest(".application-table-wrap");
+  let widths;
+  let drag;
+
+  function applyWidths() {
+    widths.forEach((width, index) => { columns.children[index].style.width = `${width}px`; });
+    table.style.width = `${Math.max(container.clientWidth, headers.length * minWidth)}px`;
+    table.classList.add("columns-resized");
+  }
+  function initializeWidths() {
+    if (!widths) {
+      widths = headers.map(header => Math.max(minWidth, header.getBoundingClientRect().width));
+    }
+    fitAvailableSpace();
+  }
+  function fitAvailableSpace() {
+    if (!container.clientWidth || window.matchMedia("(max-width: 700px)").matches) return;
+    if (!widths) widths = headers.map(header => Math.max(minWidth, header.getBoundingClientRect().width));
+    const total = Math.max(container.clientWidth, headers.length * minWidth);
+    const spare = total - headers.length * minWidth;
+    const weights = widths.map(width => Math.max(0, width - minWidth));
+    const sum = weights.reduce((a, b) => a + b, 0);
+    widths = weights.map(weight => minWidth + spare * (sum ? weight / sum : 1 / headers.length));
+    applyWidths();
+  }
+  function resizeColumn(index, requestedWidth, original = widths) {
+    const total = original.reduce((a, b) => a + b, 0);
+    const selected = Math.min(total - minWidth * (headers.length - 1), Math.max(minWidth, requestedWidth));
+    const remainingSpare = total - selected - minWidth * (headers.length - 1);
+    const otherSpare = original.reduce((sum, width, i) => sum + (i === index ? 0 : Math.max(0, width - minWidth)), 0);
+    widths = original.map((width, i) => i === index ? selected :
+      minWidth + remainingSpare * (otherSpare ? Math.max(0, width - minWidth) / otherSpare : 1 / (headers.length - 1)));
+    applyWidths();
+  }
+  function finishDrag() {
+    if (!drag) return;
+    const { handle, pointerId } = drag;
+    drag = null;
+    document.body.classList.remove("resizing-job-column");
+    if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId);
+  }
+
+  headers.forEach((header, index) => {
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "column-resize-handle";
+    const label = `Resize ${header.textContent.trim()} column`;
+    handle.setAttribute("aria-label", label);
+    handle.title = `${label}. Drag or use Left and Right arrow keys.`;
+    header.append(handle);
+    handle.addEventListener("pointerdown", event => {
+      if (event.button !== 0 || window.matchMedia("(max-width: 700px)").matches) return;
+      event.preventDefault();
+      initializeWidths();
+      handle.focus();
+      drag = { handle, pointerId: event.pointerId, startX: event.clientX, original: [...widths] };
+      handle.setPointerCapture(event.pointerId);
+      document.body.classList.add("resizing-job-column");
+    });
+    handle.addEventListener("pointermove", event => {
+      if (!drag || drag.handle !== handle || drag.pointerId !== event.pointerId) return;
+      resizeColumn(index, drag.original[index] + event.clientX - drag.startX, drag.original);
+    });
+    handle.addEventListener("pointerup", finishDrag);
+    handle.addEventListener("pointercancel", finishDrag);
+    handle.addEventListener("lostpointercapture", finishDrag);
+    handle.addEventListener("keydown", event => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      initializeWidths();
+      resizeColumn(index, widths[index] + (event.key === "ArrowRight" ? 10 : -10));
+    });
+  });
+  window.addEventListener("blur", finishDrag);
+  window.addEventListener("resize", finishDrag);
+  let lastContainerWidth;
+  new ResizeObserver(() => {
+    if (container.clientWidth === lastContainerWidth) return;
+    lastContainerWidth = container.clientWidth;
+    finishDrag();
+    fitAvailableSpace();
+  }).observe(container);
+}
+enableJobColumnResizing();
+
 function updateFetchButton() {
   $("#fetchJobsButton").disabled = fetchingJobs || !$("#jobSearchPreference").value || !$("input[name='jobBoard']:checked");
 }
