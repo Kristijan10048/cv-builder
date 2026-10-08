@@ -401,6 +401,29 @@ let searchTimer;
 $("#searchInput").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadApplications, 250); });
 $("#statusFilter").addEventListener("change", loadApplications);
 
+const sidebarToggle = $("#sidebarToggle");
+const mobileLayout = window.matchMedia("(max-width: 900px)");
+let sidebarCollapsed = false;
+try { sidebarCollapsed = localStorage.getItem("applykit.sidebarCollapsed") === "true"; }
+catch { /* Navigation still works when browser storage is unavailable. */ }
+
+function updateSidebar() {
+  $(".app-shell").classList.toggle("sidebar-collapsed", sidebarCollapsed);
+  const expanded = mobileLayout.matches || !sidebarCollapsed;
+  const label = expanded ? "Collapse menu" : "Expand menu";
+  sidebarToggle.setAttribute("aria-expanded", String(expanded));
+  sidebarToggle.setAttribute("aria-label", label);
+  sidebarToggle.title = label;
+}
+sidebarToggle.addEventListener("click", () => {
+  sidebarCollapsed = !sidebarCollapsed;
+  updateSidebar();
+  try { localStorage.setItem("applykit.sidebarCollapsed", String(sidebarCollapsed)); }
+  catch { /* Keep the current session's choice without persistent storage. */ }
+});
+mobileLayout.addEventListener("change", () => { closeMenu(); updateSidebar(); });
+updateSidebar();
+
 function openMenu(){ $("#sidebar").classList.add("open"); $("#mobileOverlay").classList.add("visible"); }
 function closeMenu(){ $("#sidebar").classList.remove("open"); $("#mobileOverlay").classList.remove("visible"); }
 $("#menuButton").addEventListener("click", openMenu);

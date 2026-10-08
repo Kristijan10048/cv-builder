@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20261007-job-search">
-  <script defer src="/static/app.js?v=20261007-job-search"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20261008-sidebar">
+  <script defer src="/static/app.js?v=20261008-sidebar"></script>
   <script defer src="/static/job_search_preferences.js?v=20261007-search-preferences"></script>
   <script defer src="/static/available_jobs.js?v=20261007-job-search"></script>
 </head>
@@ -17,21 +17,22 @@
   <div class="app-shell">
     <div class="mobile-overlay" id="mobileOverlay"></div>
     <aside class="sidebar" id="sidebar">
+      <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu"><span aria-hidden="true">&#9776;</span></button>
       <a class="brand" href="#" data-view="dashboard" aria-label="ApplyKit home">
         <span class="brand-mark">A</span>
-        <span><strong>ApplyKit</strong><small>Application workspace</small></span>
+        <span class="brand-text"><strong>ApplyKit</strong><small>Application workspace</small></span>
       </a>
       <nav aria-label="Main navigation">
         <p class="nav-label">Workspace</p>
-        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Overview</button>
-        <button class="nav-item" data-view="editor"><span>＋</span> New application</button>
-        <button class="nav-item" data-view="applications"><span>▤</span> Applications</button>
-        <button class="nav-item" data-view="availableJobs"><span aria-hidden="true">&#128188;</span> Available Jobs</button>
-        <button class="nav-item" data-view="jobSearchPreferences"><span aria-hidden="true">&#8981;</span> Job Search Preferences</button>
+        <button class="nav-item active" data-view="dashboard" aria-label="Overview" title="Overview"><span aria-hidden="true">⌂</span><span class="nav-text">Overview</span></button>
+        <button class="nav-item" data-view="editor" aria-label="New application" title="New application"><span aria-hidden="true">＋</span><span class="nav-text">New application</span></button>
+        <button class="nav-item" data-view="applications" aria-label="Applications" title="Applications"><span aria-hidden="true">▤</span><span class="nav-text">Applications</span></button>
+        <button class="nav-item" data-view="availableJobs" aria-label="Available Jobs" title="Available Jobs"><span aria-hidden="true">&#128188;</span><span class="nav-text">Available Jobs</span></button>
+        <button class="nav-item" data-view="jobSearchPreferences" aria-label="Job Search Preferences" title="Job Search Preferences"><span aria-hidden="true">&#8981;</span><span class="nav-text">Job Search Preferences</span></button>
         <p class="nav-label">Library</p>
-        <button class="nav-item" data-view="profile"><span class="profile-nav-icon" aria-hidden="true">&#128100;</span> Profile</button>
-        <button class="nav-item" data-view="templates"><span>◫</span> Base documents</button>
-        <button class="nav-item" data-view="settings"><span>⚙</span> Settings</button>
+        <button class="nav-item" data-view="profile" aria-label="Profile" title="Profile"><span class="profile-nav-icon" aria-hidden="true">&#128100;</span><span class="nav-text">Profile</span></button>
+        <button class="nav-item" data-view="templates" aria-label="Base documents" title="Base documents"><span aria-hidden="true">◫</span><span class="nav-text">Base documents</span></button>
+        <button class="nav-item" data-view="settings" aria-label="Settings" title="Settings"><span aria-hidden="true">⚙</span><span class="nav-text">Settings</span></button>
       </nav>
       <div class="sidebar-note">
         <span class="pulse"></span>
