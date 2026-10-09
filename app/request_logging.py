@@ -17,7 +17,7 @@ logger = logging.getLogger("app.requests")
 
 def configure_logging() -> RotatingFileHandler:
     """Configure only application logs, leaving Uvicorn and root handlers alone."""
-    level_name = os.getenv("APPLYKIT_LOG_LEVEL", "INFO").strip().upper()
+    level_name = os.getenv("APPLYKIT_LOG_LEVEL", "TRACE").strip().upper()
     levels = {
         "TRACE": TRACE, "DEBUG": logging.DEBUG, "INFO": logging.INFO,
         "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL,

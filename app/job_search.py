@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 from .database import connect
 from .job_search_preferences import get_preference
 from .models import JobBoard, JobSearchInput
+from .request_logging import TRACE
 
 router = APIRouter(prefix="/api", tags=["Job search"])
 logger = logging.getLogger(__name__)
@@ -112,6 +113,11 @@ def _scrape_board(preference: dict, site: str, results_wanted: int):
 @router.post("/job-search")
 def search_jobs(payload: JobSearchInput):
     preference = get_preference(payload.preference_id)
+    logger.info(
+        "job_search_started preference_id=%s sites=%s results_wanted=%d preference=%s",
+        payload.preference_id, json.dumps(payload.sites), payload.results_wanted,
+        json.dumps(preference, ensure_ascii=False),
+    )
     jobs, boards, warnings = [], {}, []
     with ThreadPoolExecutor(max_workers=len(payload.sites)) as executor:
         futures = {
@@ -124,16 +130,34 @@ def search_jobs(payload: JobSearchInput):
                 found, skipped = future.result()
                 jobs.extend(found)
                 boards[site] = {"status": "completed", "count": len(found)}
+                logger.info(
+                    "job_search_board_completed preference_id=%s site=%s count=%d skipped=%d",
+                    payload.preference_id, site, len(found), skipped,
+                )
+                if logger.isEnabledFor(TRACE):
+                    for job in found:
+                        logger.log(
+                            TRACE, "job_search_result preference_id=%s site=%s job=%s",
+                            payload.preference_id, site, json.dumps(job, ensure_ascii=False),
+                        )
                 if skipped:
                     warnings.append(f"{site}: skipped {skipped} incomplete postings.")
             except ValueError as exc:
+                logger.warning(
+                    "job_search_board_failed preference_id=%s site=%s error=%s",
+                    payload.preference_id, site, exc,
+                )
                 boards[site] = {"status": "failed", "count": 0}
                 warnings.append(f"{site}: {exc}")
             except Exception:
-                logger.exception("Job search failed for %s", site)
+                logger.exception(
+                    "job_search_board_failed preference_id=%s site=%s",
+                    payload.preference_id, site,
+                )
                 boards[site] = {"status": "failed", "count": 0}
                 warnings.append(f"{site}: the search failed. Try again later or check your connection.")
     if all(board["status"] == "failed" for board in boards.values()):
+        logger.error("job_search_failed preference_id=%s reason=all_boards_failed", payload.preference_id)
         raise HTTPException(502, {"message": "All job board searches failed. Previously fetched jobs are still available.", "warnings": warnings})
     with closing(connect()) as db, db:
         # The user may delete the preference while network requests are running.
@@ -156,11 +180,16 @@ def search_jobs(payload: JobSearchInput):
                    SELECT ?, id FROM available_jobs WHERE site = ? AND job_url = ?""",
                 (payload.preference_id, job["site"], job["job_url"]),
             )
-    return {
+    result = {
         "preference_id": payload.preference_id,
         "fetched": len({(job["site"], job["job_url"]) for job in jobs}),
         "boards": boards, "warnings": sorted(warnings),
     }
+    logger.info(
+        "job_search_completed preference_id=%s fetched=%d boards=%s warnings=%s",
+        payload.preference_id, result["fetched"], json.dumps(boards), json.dumps(result["warnings"]),
+    )
+    return result
 
 
 @router.get("/available-jobs")
