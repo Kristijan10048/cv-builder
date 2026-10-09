@@ -78,6 +78,13 @@ searches. Country, city, description keywords, and posting age are optional.
 The city radius is in kilometres (0–1000); a radius above zero needs a city.
 These preferences are stored locally and used by **Available Jobs** searches.
 
+Country and City use dropdowns. Select a country to load its city choices;
+changing the country clears the city and radius. **Other city** lets you enter
+a place outside the list, including a city without a country. Existing saved
+locations remain selectable when editing. Choices come from the bundled
+[GeoNames catalog](https://github.com/yaph/geonamescache) (cities with populations
+of at least 15,000) and work offline. A failed catalog load offers **Retry locations**.
+
 ## Job search
 
 Open **Available Jobs**, choose a saved search and job boards, then select

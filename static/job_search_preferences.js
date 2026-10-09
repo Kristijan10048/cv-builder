@@ -1,6 +1,7 @@
 let savedSearchPreferences = [];
 let searchPreferencesLoaded = false;
 let searchPreferenceBusy = false;
+const searchPreferenceLocations = new SearchPreferenceLocationFields()
 
 function updateSearchPreferenceCount() {
   const count = savedSearchPreferences.length;
@@ -59,8 +60,7 @@ function openSearchPreferenceEditor(item = null) {
   $("#searchPreferenceForm").reset();
   $("#searchPreferenceId").value = item?.id || "";
   $("#searchPreferenceTitle").value = item?.job_title || "";
-  $("#searchPreferenceCountry").value = item?.country || "";
-  $("#searchPreferenceCity").value = item?.city || "";
+  searchPreferenceLocations.load(item?.country || '', item?.city || '')
   $("#searchPreferenceRadius").value = item?.radius_km || 0;
   $("#searchPreferenceKeywords").value = item?.keywords.join(", ") || "";
   const age = item?.posted_within_days ? String(item.posted_within_days) : "";
@@ -80,6 +80,7 @@ function openSearchPreferenceEditor(item = null) {
 }
 
 function closeSearchPreferenceEditor() {
+  searchPreferenceLocations.close()
   $("#searchPreferenceForm").classList.add("hidden");
   $("#searchPreferenceForm").reset();
   $("#searchPreferenceId").value = "";
@@ -89,6 +90,7 @@ function closeSearchPreferenceEditor() {
 function setSearchPreferenceBusy(busy) {
   searchPreferenceBusy = busy;
   $("#searchPreferenceFields").disabled = busy;
+  searchPreferenceLocations.updateDisabled()
   $$("[data-preference-edit], [data-preference-delete]").forEach(button => button.disabled = busy || !searchPreferencesLoaded);
   updateSearchPreferenceCount();
 }
@@ -98,12 +100,12 @@ $("#cancelSearchPreference").addEventListener("click", closeSearchPreferenceEdit
 $("#retrySearchPreferences").addEventListener("click", loadJobSearchPreferences);
 $("#searchPreferenceForm").addEventListener("submit", async event => {
   event.preventDefault();
-  if (searchPreferenceBusy) return;
+  if (searchPreferenceBusy || searchPreferenceLocations.loading) return
   const id = $("#searchPreferenceId").value;
   const payload = {
     job_title: $("#searchPreferenceTitle").value.trim(),
     country: $("#searchPreferenceCountry").value.trim(),
-    city: $("#searchPreferenceCity").value.trim(),
+    city: searchPreferenceLocations.cityValue(),
     radius_km: Number($("#searchPreferenceRadius").value),
     keywords: $("#searchPreferenceKeywords").value.split(",").map(value => value.trim()).filter(Boolean),
     posted_within_days: $("#searchPreferenceAge").value ? Number($("#searchPreferenceAge").value) : null,
@@ -111,7 +113,7 @@ $("#searchPreferenceForm").addEventListener("submit", async event => {
   const errorBox = $("#searchPreferenceFormError");
   errorBox.classList.add("hidden");
   if (payload.radius_km > 0 && !payload.city) {
-    errorBox.textContent = "Enter a city when using a search radius.";
+    errorBox.textContent = 'Choose a city when using a search radius.'
     errorBox.classList.remove("hidden");
     $("#searchPreferenceCity").focus();
     return;
@@ -125,6 +127,7 @@ $("#searchPreferenceForm").addEventListener("submit", async event => {
       ? savedSearchPreferences.map(item => item.id === saved.id ? saved : item)
       : [...savedSearchPreferences, saved];
     renderSearchPreferences();
+    searchPreferenceLocations.close()
     $("#searchPreferenceForm").classList.add("hidden");
     $("#searchPreferenceForm").reset();
     $("#searchPreferenceId").value = "";

@@ -19,8 +19,13 @@
       <legend class="sr-only">Job search criteria</legend>
       <label>Job title / position<input id="searchPreferenceTitle" required maxlength="250" placeholder="e.g. Software Developer"></label>
       <div class="field-row">
-        <label>Country<input id="searchPreferenceCountry" maxlength="120" placeholder="Any country"></label>
-        <label>City<input id="searchPreferenceCity" maxlength="120" placeholder="Any city"></label>
+        <label>Country<select id="searchPreferenceCountry"><option value="">Any country</option></select></label>
+        <label>City<select id="searchPreferenceCity" aria-describedby="searchPreferenceCityHelp"><option value="">Any city</option></select><small class="field-help" id="searchPreferenceCityHelp">Choose a country to see its cities. Use Other city for a location outside the list.</small></label>
+      </div>
+      <label class="hidden" id="searchPreferenceCustomCityField">Other city<input id="searchPreferenceCustomCity" maxlength="120" placeholder="Enter city name"></label>
+      <div class="preference-error hidden" id="searchPreferenceLocationError" role="alert">
+        <p id="searchPreferenceLocationErrorMessage"></p>
+        <button class="secondary" type="button" id="retrySearchPreferenceLocations">Retry locations</button>
       </div>
       <div class="field-row">
         <label>Radius around city (km)<input id="searchPreferenceRadius" type="number" min="0" max="1000" step="1" value="0" required aria-describedby="searchPreferenceRadiusHelp"><small class="field-help" id="searchPreferenceRadiusHelp">0 means the city itself. Enter a city to use a radius.</small></label>
