@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from .database import BASE_DIR, connect, init_db, row_to_dict
 from .importer import download_page, parse_job_page
 from .job_search_preferences import router as job_search_preferences_router
-from .job_search import router as job_search_router
+from .job_search import C_ROUTER as job_search_router
 from .request_logging import RequestLoggingMiddleware, close_logging, configure_logging
 from .models import (
     ApplicationInput,
