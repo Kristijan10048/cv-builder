@@ -6,6 +6,6 @@
 - Include description for every function and class
 - Write comments for important code such as logic
 - do not use short names for variables, functions or classes.
-- prefix constants with C_
+- prefix constants with C_ for example C_PI=3.14
 - use PascalCase for class names
 - Create a model class for each db table
