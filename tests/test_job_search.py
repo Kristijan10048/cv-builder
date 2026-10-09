@@ -44,6 +44,37 @@ def fetch(client, preference_id, sites=None):
     return client.post("/api/job-search", json=payload)
 
 
+@pytest.mark.parametrize("level", ["INFO", "DEBUG", "TRACE"])
+def test_search_logging_and_result_level(level, tmp_path, monkeypatch):
+    monkeypatch.setenv("APPLYKIT_LOG_LEVEL", level)
+    monkeypatch.setattr(job_search, "scrape_jobs", lambda **kwargs: frame(2, company="Trace Company"))
+    with TestClient(app) as client:
+        saved = preference(client, city="Boston", radius_km=50, posted_within_days=7, keywords=["python"])
+        response = fetch(client, saved, ["indeed"])
+        assert response.status_code == 200
+        assert response.json()["fetched"] == 2
+
+    content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+    assert f"job_search_started preference_id={saved}" in content
+    assert 'sites=["indeed"] results_wanted=50' in content
+    assert '"job_title": "Developer"' in content
+    assert '"city": "Boston"' in content
+    assert '"radius_km": 50' in content
+    assert '"posted_within_days": 7' in content
+    assert '"keywords": ["python"]' in content
+    assert f"job_search_board_completed preference_id={saved} site=indeed count=2 skipped=0" in content
+    assert f"job_search_completed preference_id={saved} fetched=2" in content
+    result_lines = [line for line in content.splitlines() if "job_search_result " in line]
+    assert len(result_lines) == (2 if level == "TRACE" else 0)
+    assert ("Trace Company" in content) == (level == "TRACE")
+    for index, line in enumerate(result_lines):
+        assert " TRACE app.job_search " in line
+        job = json.loads(line.split(" job=", 1)[1])
+        assert job["job_url"] == f"https://example.test/job/{index}"
+        assert job["description"] == "Build PYTHON and SQL services"
+        assert json.loads(job["raw_data"])["min_amount"] is None
+
+
 def test_all_four_boards_run_concurrently_with_saved_filters(client, monkeypatch):
     saved = preference(client, city="Boston", radius_km=50, posted_within_days=7, keywords=["python", "sql"])
     barrier = Barrier(4, timeout=10)

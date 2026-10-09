@@ -1,0 +1,11 @@
+## 🎨 Coding Conventions & Style Guide
+- One statement per line
+- Explicit code
+- Create classes. Use object oriented style
+- Do not hardcode sql queries
+- Include description for every function and class
+- Write comments for important code such as logic
+- do not use short names for variables, functions or classes.
+- prefix constants with C_
+- use PascalCase for class names
+- Create a model class for each db table

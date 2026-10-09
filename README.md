@@ -18,14 +18,16 @@ Open `http://127.0.0.1:8000`.
 Python's standard logging records every HTTP request, including API routers,
 pages, static files, validation failures, and errors. Logs go to
 `logs/applykit.log` by default. Files rotate at 5 MB, keeping three backups.
-Application logs (including job-search failures) use the same file.
+Application logs (including job searches and failures) use the same file.
 
 Set `APPLYKIT_LOG_DIR` to change the directory (relative paths are resolved from
 the project directory), and `APPLYKIT_LOG_LEVEL` to select verbosity:
 
-- `INFO` (default): method, route template, HTTP status, and elapsed milliseconds.
+- `INFO`: method, route template, HTTP status, elapsed milliseconds, job-search
+  parameters, board counts, and search completion summaries.
 - `DEBUG`: also records request start events.
-- `TRACE`: also records ASGI message types, body byte counts, and streaming flags.
+- `TRACE` (default): also records individual job-search results with complete
+  source data, ASGI message types, body byte counts, and streaming flags.
 
 Request/response bodies, query strings, headers, and dynamic path values are
 not included in request logs. Unhandled failures record the exception type and

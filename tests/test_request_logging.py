@@ -97,6 +97,17 @@ def test_invalid_level_fails_with_clear_message(monkeypatch):
         configure_logging()
 
 
+def test_trace_is_enabled_by_default(tmp_path, monkeypatch):
+    monkeypatch.delenv("APPLYKIT_LOG_LEVEL")
+    handler = configure_logging()
+    try:
+        logging.getLogger("app.job_search").log(request_logging.TRACE, "default-trace-enabled")
+        content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+        assert " TRACE app.job_search default-trace-enabled" in content
+    finally:
+        close_logging(handler)
+
+
 def test_middleware_preserves_streaming_messages(tmp_path, monkeypatch):
     monkeypatch.setenv("APPLYKIT_LOG_LEVEL", "TRACE")
     received = [
