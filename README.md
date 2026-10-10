@@ -98,6 +98,10 @@ BDJobs, and Naukri are also available. Indeed and Glassdoor require a supported
 country; ZipRecruiter covers US/Canada, BDJobs Bangladesh, and Naukri India.
 Unsupported boards and failed requests show warnings while successful board
 results are retained. JobSpy may return empty results when a board blocks it.
+Glassdoor HTTP 429 responses show a rate-limit warning and pause new Glassdoor
+searches for five minutes in the current app process. Other boards continue,
+and jobs received before the limit are kept with a partial status. This cooldown
+does not guarantee that Glassdoor will allow requests when it ends.
 
 Saved search titles, locations, radii (converted from kilometres to miles), and
 posting ages are passed to JobSpy. All saved description keywords must match
@@ -112,9 +116,31 @@ saved applications with the same job URL in Applied, Interview, or Offer status.
 - `GET /api/available-jobs?page=1&page_size=20`: paginated results and totals;
   optional `preference_id`, `site`, and `search` filters.
 
-The result limit is 1–100 per board. Stored result pages support 1–100 jobs.
+The requested result limit is 1–1000 per board, with a default of 50. The UI offers
+20, 50, 100, 250, 500, and 1,000. For a daily search, save **Dates posted → Last 24
+hours** in Job Search Preferences, then choose **1,000** in Available Jobs. This
+passes `hours_old=24` and `results_wanted=1000` to JobSpy without changing other
+saved criteria. Description keywords filter that source batch afterward.
+
+Larger requests can take longer and do not prove full coverage. The installed
+JobSpy 1.2.0 Glassdoor scraper clamps requests to 900 postings; its LinkedIn
+scraper stops at a source start offset of 1000. Board blocking, inaccessible
+details, filter precision, and additional postings beyond the requested limit can
+still leave matches unfetched. Stored result pages continue to support 1–100 jobs.
 Migration 4 adds `available_jobs` and `job_search_results` and preserves existing
 applications, settings, documents, and search preferences.
+
+The [PLLKTTSTS-15 completeness plan](docs/PLLKTTSTS-15-job-fetch-completeness-plan.md)
+describes how to verify coverage across boards, current retrieval limitations,
+proposed implementation steps, and an effort estimate. It prioritizes the EU
+(especially Germany and the Netherlands) and Switzerland, then the USA, excludes
+Asia, and defines configurable region expansion. The separate
+[verification test plan](docs/PLLKTTSTS-15-job-fetch-verification-tests.md) specifies
+offline fixtures and independent live comparisons. These are planning documents;
+coverage verification is not yet implemented.
+
+Short versions with examples: [plan summary](docs/PLLKTTSTS-15-job-fetch-completeness-plan-summary.md)
+and [test summary](docs/PLLKTTSTS-15-job-fetch-verification-tests-summary.md).
 
 Run the automated checks with:
 

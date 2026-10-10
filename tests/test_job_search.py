@@ -6,6 +6,7 @@ import json
 import sqlite3
 from threading import Barrier
 
+from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
 import pandas as pd
 import pytest
@@ -92,7 +93,8 @@ def test_all_four_boards_run_concurrently_with_saved_filters(client, monkeypatch
     assert {call["site_name"][0] for call in calls} == {"linkedin", "indeed", "glassdoor", "zip_recruiter"}
     for call in calls:
         assert call["search_term"] == "Developer"
-        assert call["location"] == "Boston, USA"
+        expected_location = "Boston" if call["site_name"] == ["glassdoor"] else "Boston, USA"
+        assert call["location"] == expected_location
         assert call["distance"] == 32
         assert call["hours_old"] == 168
         assert call["country_indeed"] == "usa"
@@ -236,11 +238,66 @@ def test_validation_and_empty_results(client, monkeypatch):
     assert listing["items"] == [] and listing["total_pages"] == 1
     assert not listing["has_next"] and not listing["has_previous"]
     assert fetch(client, 999, ["indeed"]).status_code == 404
-    for fields in ({"sites": []}, {"sites": ["unknown"]}, {"results_wanted": 0}, {"results_wanted": 101}, {"preference_id": True}):
-        assert client.post("/api/job-search", json={"preference_id": saved, **fields}).status_code == 422
+    invalid_search_fields = (
+        {"sites": []},
+        {"sites": ["unknown"]},
+        {"results_wanted": 0},
+        {"results_wanted": 1001},
+        {"results_wanted": True},
+        {"results_wanted": 1000.5},
+        {"results_wanted": "1000"},
+        {"preference_id": True},
+    )
+    for invalid_fields in invalid_search_fields:
+        assert client.post("/api/job-search", json={"preference_id": saved, **invalid_fields}).status_code == 422
     for query in ({"page": 0}, {"page_size": 0}, {"page_size": 101}, {"site": "unknown"}):
         assert client.get("/api/available-jobs", params=query).status_code == 422
     assert client.get("/api/available-jobs?preference_id=999").status_code == 404
+
+
+class TestExtendedJobSearchLimit:
+    """Verify larger daily source requests reach the scraper and persist beyond 100 jobs."""
+
+    @pytest.mark.parametrize("requested_limit", [101, 1000])
+    def test_daily_request_preserves_requested_limit_and_all_matching_jobs(
+        self, client: TestClient, monkeypatch, requested_limit: int,
+    ) -> None:
+        """Pass the extended limit and 24-hour age to the scraper without truncating storage."""
+        preference_id = preference(client, posted_within_days=1, keywords=["python", "sql"])
+        scraper_requests = []
+
+        def scrape_board(**arguments):
+            """Return a matching source batch sized by the actual forwarded request."""
+            scraper_requests.append(arguments)
+            return frame(arguments["results_wanted"])
+
+        monkeypatch.setattr(job_search, "scrape_jobs", scrape_board)
+        response = client.post("/api/job-search", json={
+            "preference_id": preference_id,
+            "sites": ["indeed"],
+            "results_wanted": requested_limit,
+        })
+        assert response.status_code == 200, response.text
+        assert len(scraper_requests) == 1
+        assert scraper_requests[0]["results_wanted"] == requested_limit
+        assert scraper_requests[0]["hours_old"] == 24
+        assert response.json()["fetched"] == requested_limit
+        assert response.json()["boards"]["indeed"]["count"] == requested_limit
+        listing = client.get("/api/available-jobs", params={"preference_id": preference_id}).json()
+        assert listing["total"] == requested_limit
+        assert listing["items"][0]["job_title"] == f"Developer {requested_limit - 1}"
+
+    def test_search_page_offers_one_thousand_results_and_retains_default(
+        self, client: TestClient,
+    ) -> None:
+        """Expose the new maximum in the rendered form without increasing the default request."""
+        response = client.get("/")
+        assert response.status_code == 200
+        document = BeautifulSoup(response.text, "html.parser")
+        result_limit = document.find("select", id="jobSearchLimit")
+        assert result_limit.find("option", value="1000") is not None
+        assert result_limit.find("option", selected=True)["value"] == "50"
+        assert document.find(id="jobSearchLimitHelp") is not None
 
 
 def test_deleted_preference_during_scraping_returns_conflict(client, monkeypatch):
