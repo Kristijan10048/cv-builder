@@ -8,13 +8,19 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 
 from .database_models import AvailableJobModel, JobSearchPreferenceModel
-from .job_search_adapter import JobSearchAdapter
+from .job_search_adapter import JobBoardSearchError, JobSearchAdapter
 from .job_search_repository import JobSearchRepository
 from .models import JobBoard, JobSearchInput
 from .request_logging import TRACE as C_TRACE_LOG_LEVEL
 
 C_ROUTER = APIRouter(prefix="/api", tags=["Job search"])
 C_LOGGER = logging.getLogger(__name__)
+C_BOARD_STATUS_KEY = "status"
+C_PARTIAL_BOARD_STATUS = "partial"
+C_BOARD_WARNING_TEMPLATE = "{site}: {warning}"
+C_BOARD_INTERRUPTED_LOG_MESSAGE = (
+    "job_search_board_interrupted preference_id=%s site=%s count=%d error=%s"
+)
 
 
 def scrape_jobs(**arguments):
@@ -62,6 +68,19 @@ class JobSearchOutcome:
         """Record one board's failure while retaining results from other boards."""
         self.boards[site] = {"status": "failed", "count": 0}
         self.warnings.append(f"{site}: {warning}")
+
+    def interrupt_board(self, site: str, exception: JobBoardSearchError) -> None:
+        """Keep accepted postings while exposing a failed or incomplete source request."""
+        if exception.jobs:
+            self.complete_board(site, exception.jobs, exception.skipped_count)
+            self.boards[site][C_BOARD_STATUS_KEY] = C_PARTIAL_BOARD_STATUS
+            self.warnings.append(C_BOARD_WARNING_TEMPLATE.format(site=site, warning=exception))
+        else:
+            self.fail_board(site, str(exception))
+        C_LOGGER.warning(
+            C_BOARD_INTERRUPTED_LOG_MESSAGE,
+            self.preference_id, site, len(exception.jobs), exception,
+        )
 
     def ensure_success(self) -> None:
         """Raise the existing gateway error if every board failed before persistence."""
@@ -129,6 +148,8 @@ class JobSearchService:
                 try:
                     found_jobs, skipped_count = board_future.result()
                     outcome.complete_board(site, found_jobs, skipped_count)
+                except JobBoardSearchError as exception:
+                    outcome.interrupt_board(site, exception)
                 except ValueError as exception:
                     C_LOGGER.warning(
                         "job_search_board_failed preference_id=%s site=%s error=%s",

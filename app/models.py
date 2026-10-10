@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
+C_MAX_JOB_SEARCH_RESULTS = 1000
+
 
 class TemplateUpdate(BaseModel):
     cv: str = ""
@@ -97,12 +99,15 @@ JobBoard = Literal["linkedin", "indeed", "glassdoor", "zip_recruiter", "bayt", "
 
 
 class JobSearchInput(BaseModel):
+    """Validate a bounded per-board search independently of stored-page pagination."""
+
     preference_id: int = Field(gt=0, strict=True)
     sites: list[JobBoard] = Field(
         default_factory=lambda: ["linkedin", "indeed", "glassdoor", "zip_recruiter"],
         min_length=1, max_length=7,
     )
-    results_wanted: int = Field(default=50, ge=1, le=100, strict=True)
+    # This bounds source postings before the adapter applies description keywords.
+    results_wanted: int = Field(default=50, ge=1, le=C_MAX_JOB_SEARCH_RESULTS, strict=True)
 
     @field_validator("sites")
     @classmethod

@@ -6,12 +6,24 @@ from typing import Callable
 from urllib.parse import urlsplit
 
 from .database_models import AvailableJobModel, JobSearchPreferenceModel
+from .job_search_glassdoor import C_GLASSDOOR_SITE, GlassdoorSearchGuard
 
 C_KILOMETRES_PER_MILE = 1.609344
 C_HOURS_PER_DAY = 24
 C_HTTP_SCHEMES = frozenset({"http", "https"})
 C_COUNTRY_REQUIRED_BOARDS = frozenset({"indeed", "glassdoor"})
 C_ZIP_RECRUITER_COUNTRIES = frozenset({"USA", "CANADA"})
+C_GLASSDOOR_GUARD = GlassdoorSearchGuard()
+
+
+class JobBoardSearchError(ValueError):
+    """Carry accepted partial results alongside a user-facing board failure."""
+
+    def __init__(self, warning: str, jobs: list[AvailableJobModel], skipped_count: int) -> None:
+        """Retain postings fetched before a board stopped serving results."""
+        super().__init__(warning)
+        self.jobs = jobs
+        self.skipped_count = skipped_count
 
 
 class JobSearchAdapter:
@@ -26,8 +38,15 @@ class JobSearchAdapter:
     ) -> tuple[list[AvailableJobModel], int]:
         """Fetch one board and return accepted postings and incomplete-record count."""
         arguments = self.build_arguments(preference, site, results_wanted)
-        result_frame = self.scraper(**arguments)
-        return self.normalize_records(result_frame, site, preference.keywords)
+        warning = None
+        if site == C_GLASSDOOR_SITE:
+            result_frame, warning = C_GLASSDOOR_GUARD.search(self.scraper, arguments)
+        else:
+            result_frame = self.scraper(**arguments)
+        accepted_jobs, skipped_count = self.normalize_records(result_frame, site, preference.keywords)
+        if warning:
+            raise JobBoardSearchError(warning, accepted_jobs, skipped_count)
+        return accepted_jobs, skipped_count
 
     @staticmethod
     def resolve_country(value: str):
@@ -51,6 +70,9 @@ class JobSearchAdapter:
         self.validate_country(site, country)
         posted_within_days = preference.posted_within_days
         location_parts = [preference.city, preference.country]
+        if site == C_GLASSDOOR_SITE and preference.city:
+            # Glassdoor autocomplete needs the city alone; country_indeed selects its domain.
+            location_parts = [preference.city]
         arguments = {
             "site_name": [site],
             "search_term": preference.job_title,

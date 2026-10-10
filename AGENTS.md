@@ -1,5 +1,5 @@
 # Python Code
-    - 🎨 Coding Conventions & Style Guide 
+    - Coding Conventions & Style Guide 
     - One statement per line
     - Explicit code
     - Create classes. Use object oriented style
@@ -10,9 +10,10 @@
     - prefix constants with C_ for example C_PI=3.14
     - use PascalCase for class names
     - Create a model class for each db table
+    - Do not hardcode strings or numbers in the code use C_<NAME> = Value
 
 # NodeJs Code
-    ## 🛠️ Environment & Commands
+    ## Environment & Commands
     Always use these exact commands when testing or validating code:
     - **Install dependencies:** `pnpm install`
     - **Run local development:** `pnpm dev`
@@ -20,13 +21,13 @@
     - **Lint code:** `pnpm lint`
     - **Database migration:** `pnpm prisma migrate dev`
 
-    ## 🎨 Coding Conventions & Style Guide
+    ## Coding Conventions & Style Guide
     - **TypeScript:** Enforce strict type safety. Avoid using `any`.
     - **Formatting:** Use single quotes, no semicolons, and 2-space indentation.
     - **Components:** Prefer functional components with explicit prop types. 
     - **File Naming:** Use kebab-case for assets/utilities (`date-helper.ts`) and PascalCase for React components (`Button.tsx`).
 
-    ## 🛡️ Critical Safety Boundaries
+    ## Critical Safety Boundaries
     - **Environment Variables:** Never hardcode secrets. Always read from `process.env`.
     - **Database:** Do not drop tables or run destructive sync commands without explicit confirmation.
     - **API Keys:** Never commit API keys or expose private tokens to client-side code.
