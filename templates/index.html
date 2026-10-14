@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20261014-jobs-language">
-  <script defer src="/static/app.js?v=20261014-jobs-layout"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20261014-jobs-ribbon">
+  <script defer src="/static/app.js?v=20261014-jobs-ribbon"></script>
   <script defer src="/static/job-search-locations.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/job_search_preferences.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/available_jobs.js?v=20261014-jobs-language"></script>
@@ -44,7 +44,7 @@
     <section class="workspace">
       <header class="topbar">
         <button class="icon-button mobile-menu" id="menuButton" aria-label="Open menu">☰</button>
-        <div>
+        <div id="topbarHeading">
           <p class="eyebrow">APPLICATION WORKSPACE</p>
           <h1 id="pageTitle">Overview</h1>
         </div>
@@ -52,6 +52,7 @@
           <span class="save-state" id="saveState">All changes saved</span>
           <button class="primary small" data-action="new">New application</button>
         </div>
+        {% include "job_search_toolbar.html" %}
       </header>
 
       <main>

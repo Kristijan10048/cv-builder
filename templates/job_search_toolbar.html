@@ -1,0 +1,29 @@
+<form id="jobSearchForm" class="job-search-ribbon hidden" aria-label="Job search tools">
+  <fieldset class="job-ribbon-group job-ribbon-preferences">
+    <legend>Preferences</legend>
+    <label>Search profile<select id="jobSearchPreference"><option value="">All fetched jobs</option></select></label>
+    <button type="button" class="text-button" data-view="jobSearchPreferences">Manage preferences &#8599;</button>
+  </fieldset>
+  <fieldset class="job-ribbon-group job-board-options">
+    <legend>Job boards</legend>
+    <div class="job-ribbon-boards">
+      <label><input type="checkbox" name="jobBoard" value="linkedin" checked> LinkedIn</label>
+      <label><input type="checkbox" name="jobBoard" value="indeed" checked> Indeed</label>
+      <label><input type="checkbox" name="jobBoard" value="glassdoor" checked> Glassdoor</label>
+      <label><input type="checkbox" name="jobBoard" value="zip_recruiter" checked> ZipRecruiter</label>
+      <label><input type="checkbox" name="jobBoard" value="bayt"> Bayt</label>
+      <label><input type="checkbox" name="jobBoard" value="bdjobs"> BDJobs</label>
+      <label><input type="checkbox" name="jobBoard" value="naukri"> Naukri</label>
+    </div>
+  </fieldset>
+  <fieldset class="job-ribbon-group job-ribbon-fetch">
+    <legend>Fetch settings</legend>
+    <label>Results per board<select id="jobSearchLimit" aria-describedby="jobSearchLimitHelp"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="1000">1,000</option></select></label>
+    <button type="submit" class="primary" id="fetchJobsButton" disabled>Fetch jobs</button>
+  </fieldset>
+  <details class="job-ribbon-help">
+    <summary>Search tips and board coverage</summary>
+    <p class="field-help" id="jobSearchLimitHelp">The limit applies before description keyword matching. Larger searches take longer, and job boards may return fewer results. Choose Last 24 hours in your search profile's Dates posted field for recent jobs. A larger limit does not guarantee every matching job is fetched.</p>
+    <p class="field-help">Indeed and Glassdoor need a supported country. ZipRecruiter covers US/Canada, BDJobs Bangladesh, and Naukri India. Description keywords must all match.</p>
+  </details>
+</form>

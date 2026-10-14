@@ -9,3 +9,4 @@ data/*.db-wal
 /.venv/
 /logs/
 /jira_agent_tickets.csv
+/.jira_agent.lock

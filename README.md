@@ -13,18 +13,64 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 
 Open `http://127.0.0.1:8000`.
 
-## Jira agent ticket CSV
+## Scheduled Jira implementation
 
-`jira_agent.py` creates `jira_agent_tickets.csv` in its working directory when
-polling starts. Set `JIRA_AGENT_CSV_PATH` to use another file path.
+Starting `jira_agent.py` starts an [APScheduler](https://apscheduler.readthedocs.io/en/3.x/userguide.html)
+interval scheduler. It fetches one batch of up to five Jira tickets immediately,
+then every **10 minutes** while the script remains running. By default it selects
+the workflow status **Waiting for AI Developer**. Each ticket is implemented
+locally with the Codex CLI and recorded in `jira_agent_tickets.csv`. The worker
+reads Jira without changing its labels or posting comments, and changes remain
+in the local working tree.
 
-The CSV has two columns: `implemented_ticket` contains ticket keys whose pull
-requests were successfully opened, and `currently_implementing_ticket` contains
-the claimed ticket while the worker implements it. Each ticket occupies its own
-row. The current column is cleared after success or failure; failed tickets are
-not added to the implemented column. Completed history is preserved across
-restarts, and the current ticket from a previous run is cleared on startup.
-Use a separate CSV path for each worker.
+Install dependencies and sign in to the Codex CLI as the user running the script.
+Configure `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIRA_PROJECT` as
+environment variables in that process. Windows Task Scheduler is no longer needed.
+
+Optional settings:
+
+- `POLL_INTERVAL`: positive interval in seconds (default 600, or 10 minutes).
+- `JIRA_STATUS`: workflow status to pull from (default `Waiting for AI Developer`).
+- `JIRA_AGENT_REPOSITORY`: existing Git checkout to edit (defaults to this script's directory).
+- `JIRA_AGENT_CSV_PATH`: CSV path, resolved relative to the implementation repository.
+- `AGENT_CMD`: another coding CLI template containing `{prompt}`.
+- `AGENT_TIMEOUT`: positive per-ticket timeout in seconds (default 1800).
+
+Jira board columns map to workflow statuses. Set `JIRA_STATUS` to the status name
+on the tickets in your chosen column. The previous `agent-ready` label is not
+required. Completed CSV keys are excluded from the Jira query before the batch
+limit is applied.
+
+The default command uses `codex --ask-for-approval never exec --sandbox workspace-write`,
+following [OpenAI's non-interactive CLI documentation](https://learn.chatgpt.com/docs/non-interactive-mode).
+The prompt asks the agent to validate its work and return
+`JIRA_AGENT_IMPLEMENTED:<ticket-key>` as its final line. A ticket is completed
+only when the command succeeds, that confirmation is present, and new Git-visible
+changes exist. This checks the agent's confirmation; it does not independently
+rerun the project's tests. Failed tickets remain eligible for a later batch,
+and any partial changes remain locally for inspection.
+
+Start the scheduler:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+$env:POLL_INTERVAL = '600'
+$env:JIRA_STATUS = 'Waiting for AI Developer'
+.\.venv\Scripts\python.exe .\jira_agent.py
+```
+
+APScheduler allows only one active batch and coalesces missed runs. A repository
+lock also prevents two script instances from implementing tickets concurrently.
+CSV history is reloaded under that lock for every batch. Errors are printed to
+the console and retried on a later interval. Press Ctrl+C to stop scheduling;
+shutdown waits for an active implementation to finish updating its CSV. The
+script must stay running for subsequent batches to execute.
+
+The CSV retains two columns: `implemented_ticket` for completed keys and
+`currently_implementing_ticket` for the active key. Each ticket occupies its own
+row. Current work is cleared after success or failure and at the next startup
+after an interrupted run. Completed history survives restarts and prevents
+duplicate implementations. Use a separate CSV per project.
 
 ## Endpoint logging
 

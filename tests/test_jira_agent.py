@@ -3,15 +3,15 @@
 import ast
 import csv
 import importlib
+import json
 import os
 import subprocess
 import tempfile
+import threading
 import unittest
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock, patch
-
-import requests
 
 import jira_agent
 
@@ -20,8 +20,6 @@ C_TEST_ENVIRONMENT = {
     jira_agent.C_ENV_JIRA_EMAIL: "worker@example.com",
     jira_agent.C_ENV_JIRA_TOKEN: "jira-test-secret",
     jira_agent.C_ENV_JIRA_PROJECT: "Project Name",
-    jira_agent.C_ENV_GITHUB_TOKEN: "github-test-secret",
-    jira_agent.C_ENV_GITHUB_REPOSITORY: "example/repository",
 }
 C_ISSUE_KEY = "PROJ-123"
 C_SUMMARY = "Fix parser"
@@ -35,18 +33,11 @@ C_QUOTED_PROJECT_QUERY = 'project = "Project Name"'
 C_INVALID_DURATIONS = ("0", "-1", "invalid")
 C_EMPTY_ENVIRONMENT = {}
 C_ERROR = "request failed"
-C_COMMENT_ERROR = "comment failed"
-C_PULL_REQUEST_URL = "https://github.com/example/repository/pull/123"
 C_SUCCESS_CODE = 0
 C_FAILURE_CODE = 7
-C_CHANGED_STATUS = " M source.py\n"
 C_EMPTY_OUTPUT = ""
-C_PADDING_CHARACTER = "x"
-C_REDACTION_FAILURE = "Command diagnostics were truncated before credential redaction."
 C_FIRST_CALL_INDEX = 0
 C_LAST_CALL_INDEX = -1
-C_ENVIRONMENT_KEY = "environment"
-C_METHOD_CREATE_PULL_REQUEST = "create_pull_request"
 C_METHOD_RUN = "run"
 C_TIMEOUT_KEY = "timeout"
 C_PARAMETERS_KEY = "params"
@@ -58,7 +49,30 @@ C_MAIN_MODULE = "__main__"
 C_SECOND_ISSUE_KEY = "PROJ-124"
 C_METHOD_WRITE = "write"
 C_METHOD_REPLACE = "replace"
-C_METHOD_SLEEP = "sleep"
+C_METHOD_FINGERPRINT = "workspace_fingerprint"
+C_METHOD_IMPLEMENT = "implement_issue"
+C_BEFORE = b"before"
+C_AFTER = b"after"
+C_INVALID_KEY = "bad key"
+C_NULL = "\0"
+C_UNTRACKED_FILE = "source.txt"
+C_JIRA_STATUS = 'Ready "for" development'
+C_JIRA_STATUS_QUERY = "status = {status}"
+C_JIRA_LABEL_FILTER = "labels"
+C_METHOD_WORKER = "JiraAgentWorker"
+C_METHOD_SCHEDULER = "JiraAgentScheduler"
+C_METHOD_BATCH = "run_batch"
+C_TEST_POLL_INTERVAL = 1
+C_TEST_SCHEDULER_TIMEOUT = 5
+C_EXPECTED_RECURRING_CALLS = 2
+C_METHOD_FIND_ISSUES = "find_ready_issues"
+C_JOB_TRIGGER = "trigger"
+C_JOB_SECONDS = "seconds"
+C_JOB_ID = "id"
+C_JOB_MAX_INSTANCES = "max_instances"
+C_JOB_COALESCE = "coalesce"
+C_JOB_REPLACE_EXISTING = "replace_existing"
+C_JOB_NEXT_RUN_TIME = "next_run_time"
 
 
 class JiraAgentTests(unittest.TestCase):
@@ -70,12 +84,14 @@ class JiraAgentTests(unittest.TestCase):
         self.report_directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.report_directory.cleanup)
         self.report_path = Path(self.report_directory.name) / jira_agent.C_DEFAULT_TICKET_CSV_PATH
-        self.configuration = replace(self.configuration, ticket_csv_path=str(self.report_path))
+        self.configuration = replace(
+            self.configuration, ticket_csv_path=str(self.report_path),
+            repository_directory=self.report_directory.name,
+        )
         self.jira_client = Mock(spec=jira_agent.JiraClient)
-        self.github_client = Mock(spec=jira_agent.GitHubClient)
         self.command_runner = Mock(spec=jira_agent.CommandRunner)
         self.worker = jira_agent.JiraAgentWorker(
-            self.configuration, self.jira_client, self.github_client, self.command_runner,
+            self.configuration, self.jira_client, self.command_runner,
         )
         self.issue = jira_agent.JiraIssue(C_ISSUE_KEY, C_SUMMARY, C_DESCRIPTION)
 
@@ -91,22 +107,20 @@ class JiraAgentTests(unittest.TestCase):
         environment = dict(C_TEST_ENVIRONMENT)
         environment[jira_agent.C_ENV_TICKET_CSV_PATH] = str(self.report_path)
         configuration = jira_agent.AgentConfiguration.from_environment(environment)
-        self.assertEqual(configuration.ticket_csv_path, str(self.report_path))
+        self.assertEqual(Path(configuration.ticket_csv_path), self.report_path.resolve())
 
     def test_csv_shows_current_ticket_then_implemented_ticket(self) -> None:
         """Publish active work before coding and move it to completed history on success."""
-        self.jira_client.claim_issue.return_value = True
 
-        def check_active_report(issue: jira_agent.JiraIssue) -> str:
+        def check_active_report(issue: jira_agent.JiraIssue) -> None:
             """Inspect the file at the moment implementation begins."""
             self.assertEqual(issue, self.issue)
             self.assertEqual(self.read_ticket_rows(), [{
                 jira_agent.C_CSV_IMPLEMENTED_TICKET: C_EMPTY_OUTPUT,
                 jira_agent.C_CSV_CURRENT_TICKET: C_ISSUE_KEY,
             }])
-            return C_PULL_REQUEST_URL
 
-        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, side_effect=check_active_report):
+        with patch.object(self.worker, C_METHOD_IMPLEMENT, side_effect=check_active_report):
             self.worker.process_issue(self.issue)
         self.assertEqual(self.read_ticket_rows(), [{
             jira_agent.C_CSV_IMPLEMENTED_TICKET: C_ISSUE_KEY,
@@ -116,8 +130,7 @@ class JiraAgentTests(unittest.TestCase):
     def test_csv_clears_failed_ticket_and_keeps_completed_history(self) -> None:
         """An implementation error must retain earlier successes without listing the failure."""
         self.worker.ticket_report.record_finished(C_SECOND_ISSUE_KEY, implemented=True)
-        self.jira_client.claim_issue.return_value = True
-        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, side_effect=RuntimeError(C_ERROR)):
+        with patch.object(self.worker, C_METHOD_IMPLEMENT, side_effect=RuntimeError(C_ERROR)):
             self.worker.process_issue(self.issue)
         self.assertEqual(self.read_ticket_rows(), [{
             jira_agent.C_CSV_IMPLEMENTED_TICKET: C_SECOND_ISSUE_KEY,
@@ -136,31 +149,6 @@ class JiraAgentTests(unittest.TestCase):
             jira_agent.C_CSV_CURRENT_TICKET: C_EMPTY_OUTPUT,
         }])
 
-    def test_poll_creates_empty_csv_without_ready_tickets(self) -> None:
-        """An idle worker still creates a report with the requested columns."""
-        self.jira_client.find_ready_issues.return_value = []
-        with patch.object(jira_agent.time, C_METHOD_SLEEP, side_effect=KeyboardInterrupt):
-            with self.assertRaises(KeyboardInterrupt):
-                self.worker.poll_forever()
-        self.assertEqual(self.read_ticket_rows(), [])
-
-    def test_unclaimed_ticket_does_not_write_csv(self) -> None:
-        """Stale search results must not appear as work started by this worker."""
-        self.jira_client.claim_issue.return_value = False
-        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST) as create_request:
-            self.worker.process_issue(self.issue)
-        create_request.assert_not_called()
-        self.assertFalse(self.report_path.exists())
-
-    def test_csv_failure_after_pr_creation_keeps_review_label(self) -> None:
-        """A local report write failure must not turn a published PR into an agent failure."""
-        self.jira_client.claim_issue.return_value = True
-        with patch.object(self.worker.ticket_report, C_METHOD_WRITE, side_effect=[None, OSError(C_ERROR)]):
-            with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, return_value=C_PULL_REQUEST_URL):
-                self.worker.process_issue(self.issue)
-        self.jira_client.swap_label.assert_called_once_with(
-            C_ISSUE_KEY, jira_agent.C_LABEL_IN_PROGRESS, jira_agent.C_LABEL_REVIEW,
-        )
 
     def test_failed_atomic_replace_preserves_previous_csv_and_cleans_temp_file(self) -> None:
         """An interrupted report replacement must retain the previous valid file."""
@@ -185,7 +173,7 @@ class JiraAgentTests(unittest.TestCase):
             jira_agent.AgentConfiguration.from_environment(C_EMPTY_ENVIRONMENT)
 
     def test_configuration_rejects_invalid_durations(self) -> None:
-        """Prevent zero polling intervals and invalid subprocess timeouts."""
+        """Prevent invalid subprocess timeouts."""
         for setting in (jira_agent.C_ENV_AGENT_TIMEOUT, jira_agent.C_ENV_POLL_INTERVAL):
             for duration in C_INVALID_DURATIONS:
                 with self.subTest(setting=setting, duration=duration):
@@ -202,15 +190,14 @@ class JiraAgentTests(unittest.TestCase):
             jira_agent.AgentConfiguration.from_environment(environment)
 
     def test_configuration_repr_hides_credentials(self) -> None:
-        """Dataclass diagnostics must not print either API credential."""
+        """Dataclass diagnostics must not print the Jira API credential."""
         representation = repr(self.configuration)
-        self.assertNotIn(self.configuration.github_token, representation)
         self.assertNotIn(self.configuration.jira_token, representation)
 
     def test_posix_prompt_remains_one_argument(self) -> None:
         """Ticket quotes and newlines must not alter argument boundaries."""
         arguments = self.worker.build_agent_arguments(C_PROMPT, windows=False)
-        self.assertEqual(arguments[C_PROMPT_ARGUMENT_INDEX], C_PROMPT)
+        self.assertEqual(arguments[C_LAST_CALL_INDEX], C_PROMPT)
 
     def test_windows_executable_preserves_backslashes(self) -> None:
         """A quoted Windows executable path must retain spaces and backslashes."""
@@ -219,10 +206,6 @@ class JiraAgentTests(unittest.TestCase):
         self.assertEqual(arguments[C_EXECUTABLE_ARGUMENT_INDEX], C_WINDOWS_EXECUTABLE)
         self.assertEqual(arguments[C_PROMPT_ARGUMENT_INDEX], C_PROMPT)
 
-    def test_branch_without_slug_uses_issue_key(self) -> None:
-        """Non-Latin summaries must not create a branch ending in a hyphen."""
-        issue = jira_agent.JiraIssue(C_ISSUE_KEY, C_EMPTY_OUTPUT, None)
-        self.assertEqual(issue.build_branch_name(), C_ISSUE_KEY)
 
     def test_search_quotes_project_names(self) -> None:
         """Spaces in a Jira project name must not produce malformed JQL."""
@@ -235,117 +218,16 @@ class JiraAgentTests(unittest.TestCase):
         self.assertEqual(parameters[C_TIMEOUT_KEY], jira_agent.C_HTTP_TIMEOUT)
         self.assertIn(C_QUOTED_PROJECT_QUERY, parameters[C_PARAMETERS_KEY][jira_agent.C_KEY_QUERY])
 
-    def test_stale_search_result_is_not_claimed(self) -> None:
-        """Live review/in-progress labels must override a stale ready search result."""
-        for labels in (
-            [jira_agent.C_LABEL_REVIEW],
-            [jira_agent.C_LABEL_READY, jira_agent.C_LABEL_IN_PROGRESS],
-        ):
-            with self.subTest(labels=labels):
-                session = Mock()
-                session.request.return_value.content = True
-                session.request.return_value.json.return_value = {
-                    jira_agent.C_KEY_FIELDS: {jira_agent.C_KEY_LABELS: labels},
-                }
-                client = jira_agent.JiraClient(self.configuration, session)
-                self.assertFalse(client.claim_issue(C_ISSUE_KEY))
-                session.request.assert_called_once()
 
     def test_empty_http_response_is_not_decoded(self) -> None:
-        """Successful Jira updates commonly return no JSON response body."""
+        """Empty HTTP response bodies must not be decoded as JSON."""
         session = Mock()
         session.request.return_value.content = C_EMPTY_OUTPUT
         client = jira_agent.BaseHttpClient(session)
-        self.assertEqual(client.request(jira_agent.C_METHOD_PUT, self.configuration.jira_url), {})
+        self.assertEqual(client.request(jira_agent.C_METHOD_GET, self.configuration.jira_url), {})
         session.request.return_value.raise_for_status.assert_called_once()
         session.request.return_value.json.assert_not_called()
 
-    def test_failed_claim_does_not_modify_ticket(self) -> None:
-        """A claim request error must leave existing labels alone."""
-        self.jira_client.claim_issue.side_effect = requests.RequestException(C_ERROR)
-        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST) as create_request:
-            self.worker.process_issue(self.issue)
-        create_request.assert_not_called()
-        self.jira_client.swap_label.assert_not_called()
-        self.jira_client.add_comment.assert_not_called()
-
-    def test_failed_comment_does_not_mark_created_pr_failed(self) -> None:
-        """Reporting a published PR must retain the review state when comments fail."""
-        self.jira_client.claim_issue.return_value = True
-        self.jira_client.add_comment.side_effect = requests.RequestException(C_COMMENT_ERROR)
-        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, return_value=C_PULL_REQUEST_URL):
-            self.worker.process_issue(self.issue)
-        self.jira_client.swap_label.assert_called_once_with(
-            C_ISSUE_KEY, jira_agent.C_LABEL_IN_PROGRESS, jira_agent.C_LABEL_REVIEW,
-        )
-
-    def test_failed_label_update_still_attempts_comment(self) -> None:
-        """Independent reporting keeps the PR URL available despite a label API failure."""
-        self.jira_client.swap_label.side_effect = requests.RequestException(C_ERROR)
-        self.worker.report_result(C_ISSUE_KEY, jira_agent.C_LABEL_REVIEW, C_PULL_REQUEST_URL)
-        self.jira_client.add_comment.assert_called_once_with(C_ISSUE_KEY, C_PULL_REQUEST_URL)
-
-    def test_agent_failure_redacts_credentials_and_sets_failure_label(self) -> None:
-        """Error reports must redact credentials and still attempt a failed transition."""
-        self.jira_client.claim_issue.return_value = True
-        self.jira_client.add_comment.side_effect = requests.RequestException(C_COMMENT_ERROR)
-        with patch.object(
-            self.worker, C_METHOD_CREATE_PULL_REQUEST, side_effect=RuntimeError(self.configuration.github_token),
-        ):
-            self.worker.process_issue(self.issue)
-        self.jira_client.swap_label.assert_called_once_with(
-            C_ISSUE_KEY, jira_agent.C_LABEL_IN_PROGRESS, jira_agent.C_LABEL_FAILED,
-        )
-        comment = self.jira_client.add_comment.call_args.args[C_LAST_CALL_INDEX]
-        self.assertNotIn(self.configuration.github_token, comment)
-        self.assertIn(jira_agent.C_REDACTED, comment)
-
-    def test_process_environments_keep_secrets_out_of_agent(self) -> None:
-        """Only clone/push receive ephemeral Git headers; the agent receives no API tokens."""
-        with patch.dict(os.environ, C_TEST_ENVIRONMENT, clear=True):
-            agent_environment = self.worker.build_process_environment()
-            git_environment = self.worker.build_process_environment(authenticate_git=True)
-        self.assertNotIn(jira_agent.C_ENV_GITHUB_TOKEN, agent_environment)
-        self.assertNotIn(jira_agent.C_ENV_JIRA_TOKEN, agent_environment)
-        self.assertNotIn(jira_agent.C_GIT_AUTH_CONFIG_VALUE, agent_environment)
-        self.assertEqual(
-            git_environment[jira_agent.C_GIT_HELPER_CONFIG_VALUE], jira_agent.C_EMPTY_TEXT,
-        )
-        self.assertIn(jira_agent.C_GIT_AUTH_CONFIG_VALUE, git_environment)
-
-    def test_create_pr_uses_clean_remote_and_redacted_output(self) -> None:
-        """The complete workflow must keep credentials out of Git arguments and the PR."""
-        successful_command = subprocess.CompletedProcess(
-            [], C_SUCCESS_CODE, stdout=C_EMPTY_OUTPUT, stderr=C_EMPTY_OUTPUT,
-        )
-        agent_result = subprocess.CompletedProcess(
-            [], C_SUCCESS_CODE, stdout=self.configuration.github_token, stderr=C_EMPTY_OUTPUT,
-        )
-        status_result = subprocess.CompletedProcess(
-            [], C_SUCCESS_CODE, stdout=C_CHANGED_STATUS, stderr=C_EMPTY_OUTPUT,
-        )
-        self.command_runner.run.side_effect = [
-            successful_command, successful_command, agent_result, status_result,
-            successful_command, successful_command, successful_command,
-        ]
-        self.github_client.open_pull_request.return_value = C_PULL_REQUEST_URL
-        self.assertEqual(self.worker.create_pull_request(self.issue), C_PULL_REQUEST_URL)
-        for command_call in self.command_runner.run.call_args_list:
-            self.assertNotIn(self.configuration.github_token, repr(command_call.args))
-        first_call = self.command_runner.run.call_args_list[C_FIRST_CALL_INDEX]
-        self.assertIn(jira_agent.C_GIT_AUTH_CONFIG_VALUE, first_call.kwargs[C_ENVIRONMENT_KEY])
-        body = self.github_client.open_pull_request.call_args.args[C_LAST_CALL_INDEX]
-        self.assertNotIn(self.configuration.github_token, body)
-        self.assertIn(jira_agent.C_REDACTED, body)
-
-    def test_no_changes_does_not_commit_or_open_pr(self) -> None:
-        """An unchanged repository must fail before staging, pushing, or publishing."""
-        self.command_runner.run.return_value = subprocess.CompletedProcess(
-            [], C_SUCCESS_CODE, stdout=C_EMPTY_OUTPUT, stderr=C_EMPTY_OUTPUT,
-        )
-        with self.assertRaisesRegex(RuntimeError, jira_agent.C_ERROR_NO_CHANGES):
-            self.worker.create_pull_request(self.issue)
-        self.github_client.open_pull_request.assert_not_called()
 
     def test_command_failure_preserves_diagnostic_output(self) -> None:
         """A CLI failure that writes to stdout must retain the relevant diagnostic."""
@@ -357,24 +239,6 @@ class JiraAgentTests(unittest.TestCase):
                 jira_agent.CommandRunner().run([jira_agent.C_GIT_EXECUTABLE])
 
 
-    def test_long_command_error_is_redacted_before_truncation(self) -> None:
-        """Redact entire command output before trimming the Jira failure report."""
-        diagnostic = self.configuration.github_token + C_PADDING_CHARACTER * jira_agent.C_OUTPUT_LIMIT
-        result = subprocess.CompletedProcess(
-            [], C_FAILURE_CODE, stdout=diagnostic, stderr=C_EMPTY_OUTPUT,
-        )
-        with patch.object(subprocess, C_METHOD_RUN, return_value=result):
-            with self.assertRaises(RuntimeError) as failure:
-                jira_agent.CommandRunner().run([jira_agent.C_GIT_EXECUTABLE])
-        self.jira_client.claim_issue.return_value = True
-        with patch.object(
-            self.worker, C_METHOD_CREATE_PULL_REQUEST, side_effect=failure.exception,
-        ):
-            self.worker.process_issue(self.issue)
-        comment = self.jira_client.add_comment.call_args.args[C_LAST_CALL_INDEX]
-        self.assertIn(jira_agent.C_REDACTED, comment, C_REDACTION_FAILURE)
-        self.assertNotIn(self.configuration.github_token, comment)
-
     def test_runtime_literals_are_named_constants(self) -> None:
         """Check the reviewed module for hardcoded runtime strings or numbers."""
         syntax_tree = ast.parse(Path(jira_agent.__file__).read_text(encoding=C_ENCODING))
@@ -382,7 +246,7 @@ class JiraAgentTests(unittest.TestCase):
             if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef)):
                 if node.body and isinstance(node.body[C_FIRST_CALL_INDEX], ast.Expr):
                     if ast.get_docstring(node):
-                        node.body = node.body[jira_agent.C_QUOTE_LENGTH:]
+                        node.body = node.body[jira_agent.C_ONE:]
         constant_assignments = [
             node for node in syntax_tree.body
             if isinstance(node, ast.Assign)
@@ -405,6 +269,239 @@ class JiraAgentTests(unittest.TestCase):
         for node in ast.walk(syntax_tree):
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
                 self.assertTrue(ast.get_docstring(node), C_DOCSTRING_PREFIX + node.name)
+
+
+    def test_run_once_fetches_one_batch_and_exits(self) -> None:
+        """An idle scheduled invocation must fetch once, write headers, and return."""
+        self.jira_client.find_ready_issues.return_value = []
+        self.assertEqual(self.worker.run_once(), jira_agent.C_ZERO)
+        self.jira_client.find_ready_issues.assert_called_once_with([])
+        self.assertEqual(self.read_ticket_rows(), [])
+
+    def test_completed_tickets_are_excluded_from_jira_query(self) -> None:
+        """Completed keys must be filtered before the Jira batch limit is applied."""
+        session = Mock()
+        session.request.return_value.content = True
+        session.request.return_value.json.return_value = {jira_agent.C_KEY_ISSUES: []}
+        client = jira_agent.JiraClient(self.configuration, session)
+        client.find_ready_issues([C_ISSUE_KEY])
+        query = session.request.call_args.kwargs[C_PARAMETERS_KEY][jira_agent.C_KEY_QUERY]
+        self.assertIn(jira_agent.C_JQL_EXCLUSION.format(keys=json.dumps(C_ISSUE_KEY)), query)
+        self.assertEqual(session.request.call_args.args[C_FIRST_CALL_INDEX], jira_agent.C_METHOD_GET)
+
+    def test_already_completed_ticket_is_not_implemented_again(self) -> None:
+        """A stale Jira response must not rerun a ticket persisted as completed."""
+        self.worker.ticket_report.record_finished(C_ISSUE_KEY, implemented=True)
+        with patch.object(self.worker, C_METHOD_IMPLEMENT) as implement:
+            self.assertTrue(self.worker.process_issue(self.issue))
+        implement.assert_not_called()
+
+    def test_csv_failure_returns_failed_invocation(self) -> None:
+        """A failed completion write must be visible in the scheduler exit code."""
+        with patch.object(self.worker.ticket_report, C_METHOD_WRITE, side_effect=[None, OSError(C_ERROR)]):
+            with patch.object(self.worker, C_METHOD_IMPLEMENT):
+                self.assertFalse(self.worker.process_issue(self.issue))
+
+    def test_agent_requires_confirmation_and_new_changes(self) -> None:
+        """Mark complete only after agent confirmation and new workspace changes."""
+        result = subprocess.CompletedProcess(
+            [], C_SUCCESS_CODE,
+            stdout=jira_agent.C_SUCCESS_MARKER_TEMPLATE.format(issue_key=C_ISSUE_KEY),
+            stderr=C_EMPTY_OUTPUT,
+        )
+        self.command_runner.run.return_value = result
+        with patch.object(self.worker, C_METHOD_FINGERPRINT, side_effect=[C_BEFORE, C_AFTER]):
+            self.worker.implement_issue(self.issue)
+        arguments = self.command_runner.run.call_args.args[C_FIRST_CALL_INDEX]
+        self.assertIn(self.issue.build_prompt(), arguments)
+        self.assertEqual(
+            self.command_runner.run.call_args.kwargs[C_TIMEOUT_KEY],
+            self.configuration.agent_timeout,
+        )
+
+    def test_agent_without_confirmation_is_not_completed(self) -> None:
+        """A zero exit code alone cannot establish successful implementation."""
+        self.command_runner.run.return_value = subprocess.CompletedProcess(
+            [], C_SUCCESS_CODE, stdout=C_EMPTY_OUTPUT, stderr=C_EMPTY_OUTPUT,
+        )
+        with patch.object(self.worker, C_METHOD_FINGERPRINT, return_value=C_BEFORE):
+            with self.assertRaisesRegex(RuntimeError, jira_agent.C_ERROR_INCOMPLETE):
+                self.worker.implement_issue(self.issue)
+
+    def test_unchanged_dirty_workspace_is_not_completed(self) -> None:
+        """Existing changes must not be mistaken for this ticket's implementation."""
+        self.command_runner.run.return_value = subprocess.CompletedProcess(
+            [], C_SUCCESS_CODE,
+            stdout=jira_agent.C_SUCCESS_MARKER_TEMPLATE.format(issue_key=C_ISSUE_KEY),
+            stderr=C_EMPTY_OUTPUT,
+        )
+        with patch.object(self.worker, C_METHOD_FINGERPRINT, return_value=C_BEFORE):
+            with self.assertRaisesRegex(RuntimeError, jira_agent.C_ERROR_NO_CHANGES):
+                self.worker.implement_issue(self.issue)
+
+    def test_fingerprint_detects_edits_to_existing_untracked_file(self) -> None:
+        """Changing content must change the fingerprint even when status is unchanged."""
+        untracked_path = Path(self.report_directory.name) / C_UNTRACKED_FILE
+        untracked_path.write_bytes(C_BEFORE)
+        diff_result = subprocess.CompletedProcess([], C_SUCCESS_CODE, stdout=C_EMPTY_OUTPUT)
+        untracked_result = subprocess.CompletedProcess(
+            [], C_SUCCESS_CODE, stdout=C_UNTRACKED_FILE + C_NULL,
+        )
+        self.command_runner.run.side_effect = [
+            diff_result, untracked_result, diff_result, untracked_result,
+        ]
+        before_fingerprint = self.worker.workspace_fingerprint()
+        untracked_path.write_bytes(C_AFTER)
+        self.assertNotEqual(before_fingerprint, self.worker.workspace_fingerprint())
+
+    def test_batch_continues_after_malformed_ticket_and_returns_failure(self) -> None:
+        """One malformed response must not prevent a later valid implementation."""
+        self.jira_client.find_ready_issues.return_value = [
+            {jira_agent.C_KEY_ISSUE_KEY: C_INVALID_KEY},
+            {
+                jira_agent.C_KEY_ISSUE_KEY: C_ISSUE_KEY,
+                jira_agent.C_KEY_FIELDS: {
+                    jira_agent.C_KEY_SUMMARY: C_SUMMARY,
+                    jira_agent.C_KEY_DESCRIPTION: C_DESCRIPTION,
+                },
+            },
+        ]
+        with patch.object(self.worker, C_METHOD_IMPLEMENT) as implement:
+            self.assertEqual(self.worker.run_once(), jira_agent.C_ONE)
+        implement.assert_called_once_with(self.issue)
+        self.assertEqual(self.worker.ticket_report.implemented_tickets, [C_ISSUE_KEY])
+
+    def test_repository_lock_blocks_overlap_and_releases_after_exit(self) -> None:
+        """Overlapping invocations must skip before clearing another run's CSV."""
+        with jira_agent.RepositoryRunLock(self.report_directory.name):
+            with self.assertRaises(BlockingIOError):
+                with jira_agent.RepositoryRunLock(self.report_directory.name):
+                    self.fail(C_ERROR)
+        with jira_agent.RepositoryRunLock(self.report_directory.name):
+            pass
+
+    def test_agent_environment_excludes_jira_credentials(self) -> None:
+        """The coding CLI must not receive the worker's Jira credentials."""
+        with patch.dict(os.environ, C_TEST_ENVIRONMENT, clear=True):
+            environment = self.worker.build_process_environment()
+        self.assertNotIn(jira_agent.C_ENV_JIRA_TOKEN, environment)
+        self.assertNotIn(jira_agent.C_ENV_JIRA_EMAIL, environment)
+
+    def test_configuration_accepts_status_and_poll_interval(self) -> None:
+        """Allow Jira selection and scheduling cadence to be configured independently."""
+        environment = dict(C_TEST_ENVIRONMENT)
+        environment[jira_agent.C_ENV_JIRA_STATUS] = C_JIRA_STATUS
+        environment[jira_agent.C_ENV_POLL_INTERVAL] = str(C_TEST_POLL_INTERVAL)
+        configuration = jira_agent.AgentConfiguration.from_environment(environment)
+        self.assertEqual(configuration.jira_status, C_JIRA_STATUS)
+        self.assertEqual(configuration.poll_interval, C_TEST_POLL_INTERVAL)
+
+    def test_configuration_rejects_empty_status(self) -> None:
+        """An explicitly empty status must not silently select unrelated work."""
+        environment = dict(C_TEST_ENVIRONMENT)
+        environment[jira_agent.C_ENV_JIRA_STATUS] = C_EMPTY_OUTPUT
+        with self.assertRaisesRegex(ValueError, jira_agent.C_ENV_JIRA_STATUS):
+            jira_agent.AgentConfiguration.from_environment(environment)
+
+    def test_jira_query_quotes_status_and_does_not_require_labels(self) -> None:
+        """Selecting a board status must work without the previous agent-ready label."""
+        configuration = replace(self.configuration, jira_status=C_JIRA_STATUS)
+        session = Mock()
+        session.request.return_value.content = True
+        session.request.return_value.json.return_value = {jira_agent.C_KEY_ISSUES: []}
+        client = jira_agent.JiraClient(configuration, session)
+        client.find_ready_issues([C_ISSUE_KEY])
+        query = session.request.call_args.kwargs[C_PARAMETERS_KEY][jira_agent.C_KEY_QUERY]
+        self.assertIn(C_JIRA_STATUS_QUERY.format(status=json.dumps(C_JIRA_STATUS)), query)
+        self.assertNotIn(C_JIRA_LABEL_FILTER, query)
+        self.assertIn(json.dumps(C_ISSUE_KEY), query)
+
+    def test_scheduler_registers_immediate_recurring_job_and_shuts_down(self) -> None:
+        """Schedule one nonoverlapping batch immediately, then at the configured interval."""
+        scheduler = Mock(spec=jira_agent.BlockingScheduler)
+        scheduler.running = True
+        scheduler.start.side_effect = KeyboardInterrupt
+        runtime = jira_agent.JiraAgentScheduler(self.configuration, scheduler)
+        runtime.start()
+        scheduler.add_job.assert_called_once()
+        job_arguments = scheduler.add_job.call_args.kwargs
+        self.assertEqual(scheduler.add_job.call_args.args, (runtime.run_batch,))
+        self.assertEqual(job_arguments[C_JOB_TRIGGER], jira_agent.C_SCHEDULER_TRIGGER)
+        self.assertEqual(job_arguments[C_JOB_SECONDS], self.configuration.poll_interval)
+        self.assertEqual(job_arguments[C_JOB_ID], jira_agent.C_SCHEDULER_JOB_ID)
+        self.assertEqual(job_arguments[C_JOB_MAX_INSTANCES], jira_agent.C_ONE)
+        self.assertTrue(job_arguments[C_JOB_COALESCE])
+        self.assertTrue(job_arguments[C_JOB_REPLACE_EXISTING])
+        self.assertLessEqual(job_arguments[C_JOB_NEXT_RUN_TIME], jira_agent.datetime.now(jira_agent.timezone.utc))
+        scheduler.shutdown.assert_called_once_with(wait=True)
+
+    def test_scheduler_failure_does_not_prevent_next_batch(self) -> None:
+        """A transient batch error must not terminate future scheduled runs."""
+        runtime = jira_agent.JiraAgentScheduler(self.configuration)
+        with patch.object(jira_agent, C_METHOD_WORKER) as worker_type:
+            worker_type.return_value.run_once.side_effect = [RuntimeError(C_ERROR), jira_agent.C_ZERO]
+            self.assertEqual(runtime.run_batch(), jira_agent.C_ONE)
+            self.assertEqual(runtime.run_batch(), jira_agent.C_ZERO)
+        self.assertEqual(worker_type.call_count, C_EXPECTED_RECURRING_CALLS)
+
+    def test_scheduler_reload_preserves_csv_updates_between_batches(self) -> None:
+        """Each batch must reload history rather than overwrite another run's completion."""
+        runtime = jira_agent.JiraAgentScheduler(self.configuration)
+        with patch.object(jira_agent.JiraClient, C_METHOD_FIND_ISSUES, return_value=[]):
+            self.assertEqual(runtime.run_batch(), jira_agent.C_ZERO)
+            self.worker.ticket_report.record_finished(C_ISSUE_KEY, implemented=True)
+            self.assertEqual(runtime.run_batch(), jira_agent.C_ZERO)
+        self.assertEqual(self.read_ticket_rows(), [{
+            jira_agent.C_CSV_IMPLEMENTED_TICKET: C_ISSUE_KEY,
+            jira_agent.C_CSV_CURRENT_TICKET: C_EMPTY_OUTPUT,
+        }])
+
+    def test_overlapping_scheduler_does_not_clear_active_csv(self) -> None:
+        """A second process must skip before touching the first process's current ticket."""
+        self.worker.ticket_report.record_started(C_ISSUE_KEY)
+        runtime = jira_agent.JiraAgentScheduler(self.configuration)
+        with jira_agent.RepositoryRunLock(self.report_directory.name):
+            with patch.object(jira_agent, C_METHOD_WORKER) as worker_type:
+                self.assertEqual(runtime.run_batch(), jira_agent.C_ZERO)
+                worker_type.assert_not_called()
+        self.assertEqual(self.read_ticket_rows(), [{
+            jira_agent.C_CSV_IMPLEMENTED_TICKET: C_EMPTY_OUTPUT,
+            jira_agent.C_CSV_CURRENT_TICKET: C_ISSUE_KEY,
+        }])
+
+    def test_real_scheduler_executes_multiple_batches_and_stops(self) -> None:
+        """Exercise actual APScheduler timing and shutdown without Jira or CLI execution."""
+        configuration = replace(self.configuration, poll_interval=C_TEST_POLL_INTERVAL)
+        runtime = jira_agent.JiraAgentScheduler(configuration)
+        recurring_run = threading.Event()
+        batch_count = jira_agent.C_ZERO
+
+        def observe_batch() -> int:
+            """Signal when the immediate run and a later interval have both executed."""
+            nonlocal batch_count
+            batch_count += jira_agent.C_ONE
+            if batch_count >= C_EXPECTED_RECURRING_CALLS:
+                recurring_run.set()
+            return jira_agent.C_ZERO
+
+        with patch.object(runtime, C_METHOD_BATCH, side_effect=observe_batch):
+            scheduler_thread = threading.Thread(target=runtime.start, daemon=True)
+            scheduler_thread.start()
+            try:
+                self.assertTrue(recurring_run.wait(C_TEST_SCHEDULER_TIMEOUT))
+            finally:
+                if runtime.scheduler.running:
+                    runtime.scheduler.shutdown(wait=True)
+                scheduler_thread.join(C_TEST_SCHEDULER_TIMEOUT)
+            self.assertFalse(scheduler_thread.is_alive())
+        self.assertGreaterEqual(batch_count, C_EXPECTED_RECURRING_CALLS)
+
+    def test_main_starts_scheduler_without_running_a_batch_directly(self) -> None:
+        """Launching the script must hand lifecycle control to APScheduler."""
+        with patch.dict(os.environ, C_TEST_ENVIRONMENT, clear=True):
+            with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
+                self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                scheduler_type.return_value.start.assert_called_once_with()
 
 
 if __name__ == C_MAIN_MODULE:

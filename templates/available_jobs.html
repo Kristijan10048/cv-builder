@@ -1,29 +1,5 @@
 ﻿<section class="view" id="availableJobsView" aria-labelledby="availableJobsHeading">
-  <div class="section-heading page-heading"><div>
-    <p class="eyebrow">EXPLORE OPPORTUNITIES</p><h2 id="availableJobsHeading">Available Jobs</h2>
-    <p class="subcopy">Search job boards with your saved preferences. Fetched jobs stay in your local workspace.</p>
-  </div></div>
-  <form id="jobSearchForm" class="panel job-search-form">
-    <div class="field-row">
-      <label>Saved search<select id="jobSearchPreference"><option value="">All fetched jobs</option></select></label>
-      <label>Results per board<select id="jobSearchLimit" aria-describedby="jobSearchLimitHelp"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="1000">1,000</option></select></label>
-    </div>
-    <p class="field-help" id="jobSearchLimitHelp">The limit applies before description keyword matching. Larger searches take longer, and job boards may return fewer results. Choose Last 24 hours in your saved search's Dates posted field for recent jobs. A larger limit does not guarantee every matching job is fetched.</p>
-    <fieldset class="job-board-options"><legend>Job boards</legend>
-      <label><input type="checkbox" name="jobBoard" value="linkedin" checked> LinkedIn</label>
-      <label><input type="checkbox" name="jobBoard" value="indeed" checked> Indeed</label>
-      <label><input type="checkbox" name="jobBoard" value="glassdoor" checked> Glassdoor</label>
-      <label><input type="checkbox" name="jobBoard" value="zip_recruiter" checked> ZipRecruiter</label>
-      <label><input type="checkbox" name="jobBoard" value="bayt"> Bayt</label>
-      <label><input type="checkbox" name="jobBoard" value="bdjobs"> BDJobs</label>
-      <label><input type="checkbox" name="jobBoard" value="naukri"> Naukri</label>
-    </fieldset>
-    <p class="field-help">Indeed and Glassdoor need a supported country. ZipRecruiter covers US/Canada, BDJobs Bangladesh, and Naukri India. Description keywords must all match.</p>
-    <div class="job-search-actions"><button type="submit" class="primary" id="fetchJobsButton" disabled>Fetch jobs</button>
-      <button type="button" class="text-button" data-view="jobSearchPreferences">Manage saved searches</button></div>
-    <p id="jobSearchStatus" role="status" aria-live="polite" class="subcopy"></p>
-    <p id="jobSearchWarnings" role="alert" class="preference-error hidden"></p>
-  </form>
+  <h2 class="sr-only" id="availableJobsHeading">Available Jobs</h2>
   <div class="filters">
     <label class="search-field"><input id="availableJobsSearch" placeholder="Search fetched jobs" aria-label="Search fetched jobs"></label>
     <select id="availableJobsSite" aria-label="Filter by job board">
@@ -32,6 +8,8 @@
       <option value="bayt">Bayt</option><option value="bdjobs">BDJobs</option><option value="naukri">Naukri</option>
     </select>
   </div>
+  <p id="jobSearchStatus" role="status" aria-live="polite" class="subcopy job-search-status"></p>
+  <p id="jobSearchWarnings" role="alert" class="preference-error hidden"></p>
   <p class="subcopy" id="availableJobsNote" aria-live="polite">No fetched jobs yet.</p>
   <div class="application-table-wrap">
     <table class="application-table available-jobs-table" aria-describedby="availableJobsNote">
