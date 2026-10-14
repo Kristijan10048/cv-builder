@@ -8,7 +8,7 @@
     - Write comments for important code such as logic
     - do not use short names for variables, functions or classes.
     - Create base classes. Flollow rules for Object oriented 
-    - prefix constants with C_ for example C_PI=3.14
+    - prefix constants with C_ for example C_PI=3.14. Expcetions are only the logging messages. Those can remain as a hardcoded arguments
     - use PascalCase for class names
     - Create a model class for each db table
     - Do not hardcode strings or numbers in the code use C_<NAME> = Value

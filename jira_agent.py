@@ -9,6 +9,7 @@ Requires requests, Git, and the CLI configured through AGENT_CMD.
 from __future__ import annotations
 
 import base64
+import csv
 import json
 import os
 import re
@@ -17,6 +18,7 @@ import subprocess
 import tempfile
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Mapping
 from urllib.parse import quote
 
@@ -53,6 +55,16 @@ C_ENV_BASE_BRANCH = "BASE_BRANCH"
 C_ENV_AGENT_COMMAND = "AGENT_CMD"
 C_ENV_AGENT_TIMEOUT = "AGENT_TIMEOUT"
 C_ENV_POLL_INTERVAL = "POLL_INTERVAL"
+C_ENV_TICKET_CSV_PATH = "JIRA_AGENT_CSV_PATH"
+C_DEFAULT_TICKET_CSV_PATH = "jira_agent_tickets.csv"
+C_CSV_IMPLEMENTED_TICKET = "implemented_ticket"
+C_CSV_CURRENT_TICKET = "currently_implementing_ticket"
+C_CSV_COLUMNS = (C_CSV_IMPLEMENTED_TICKET, C_CSV_CURRENT_TICKET)
+C_FILE_READ_MODE = "r"
+C_FILE_WRITE_MODE = "w"
+C_CSV_TEMP_SUFFIX = ".tmp"
+C_ERROR_CSV_COLUMNS = "Ticket CSV must have columns: implemented_ticket, currently_implementing_ticket."
+C_OPERATION_CSV = "CSV update"
 C_DEFAULT_BASE_BRANCH = "main"
 C_PROMPT_PLACEHOLDER = "{prompt}"
 C_DEFAULT_AGENT_COMMAND = "claude -p {prompt} --permission-mode acceptEdits --max-turns 30"
@@ -175,6 +187,7 @@ class AgentConfiguration:
     agent_command: str = C_DEFAULT_AGENT_COMMAND
     agent_timeout: int = C_DEFAULT_AGENT_TIMEOUT
     poll_interval: int = C_DEFAULT_POLL_INTERVAL
+    ticket_csv_path: str = C_DEFAULT_TICKET_CSV_PATH
 
     @classmethod
     def from_environment(class_type, environment: Mapping[str, str]) -> AgentConfiguration:
@@ -207,6 +220,7 @@ class AgentConfiguration:
             poll_interval=class_type.read_positive_integer(
                 environment, C_ENV_POLL_INTERVAL, C_DEFAULT_POLL_INTERVAL,
             ),
+            ticket_csv_path=environment.get(C_ENV_TICKET_CSV_PATH, C_DEFAULT_TICKET_CSV_PATH),
         )
 
     @staticmethod
@@ -387,18 +401,76 @@ class CommandRunner:
         return result
 
 
+class TicketCsvReport:
+    """Persist completed ticket keys and the single worker's current ticket."""
+
+    def __init__(self, file_path: str) -> None:
+        """Restore completed history while discarding a previous run's active state."""
+        self.file_path = Path(file_path).resolve()
+        self.implemented_tickets: list[str] = []
+        self.current_ticket = C_EMPTY_TEXT
+        if self.file_path.exists():
+            with self.file_path.open(C_FILE_READ_MODE, encoding=C_ENCODING, newline=C_EMPTY_TEXT) as report_file:
+                reader = csv.DictReader(report_file)
+                if reader.fieldnames != list(C_CSV_COLUMNS):
+                    raise ValueError(C_ERROR_CSV_COLUMNS)
+                for row in reader:
+                    issue_key = row.get(C_CSV_IMPLEMENTED_TICKET, C_EMPTY_TEXT)
+                    if issue_key and issue_key not in self.implemented_tickets:
+                        self.implemented_tickets.append(issue_key)
+
+    def record_started(self, issue_key: str) -> None:
+        """Publish the claimed ticket before starting implementation."""
+        self.current_ticket = issue_key
+        self.write()
+
+    def record_finished(self, issue_key: str, implemented: bool) -> None:
+        """Clear active work and retain successful tickets without duplicates."""
+        self.current_ticket = C_EMPTY_TEXT
+        if implemented and issue_key not in self.implemented_tickets:
+            self.implemented_tickets.append(issue_key)
+        self.write()
+
+    def write(self) -> None:
+        """Atomically replace the CSV so readers never see a partially written report."""
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary_path = None
+        try:
+            # Close the temporary file before replacing the destination on Windows.
+            with tempfile.NamedTemporaryFile(
+                mode=C_FILE_WRITE_MODE, encoding=C_ENCODING, newline=C_EMPTY_TEXT,
+                dir=self.file_path.parent, suffix=C_CSV_TEMP_SUFFIX, delete=False,
+            ) as report_file:
+                temporary_path = Path(report_file.name)
+                writer = csv.DictWriter(report_file, fieldnames=C_CSV_COLUMNS)
+                writer.writeheader()
+                for issue_key in self.implemented_tickets:
+                    writer.writerow({C_CSV_IMPLEMENTED_TICKET: issue_key})
+                if self.current_ticket:
+                    writer.writerow({C_CSV_CURRENT_TICKET: self.current_ticket})
+            os.replace(temporary_path, self.file_path)
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+
+
 class JiraAgentWorker:
     """Coordinate ticket claims, isolated coding work, and independent reporting."""
 
     def __init__(
         self, configuration: AgentConfiguration, jira_client: JiraClient,
         github_client: GitHubClient, command_runner: CommandRunner,
+        ticket_report: TicketCsvReport | None = None,
     ) -> None:
         """Accept collaborators explicitly for offline workflow tests."""
         self.configuration = configuration
         self.jira_client = jira_client
         self.github_client = github_client
         self.command_runner = command_runner
+        self.ticket_report = (
+            ticket_report if ticket_report is not None
+            else TicketCsvReport(configuration.ticket_csv_path)
+        )
 
     def build_agent_arguments(self, prompt: str, windows: bool | None = None) -> list[str]:
         """Parse the template before inserting arbitrary ticket text as an argument."""
@@ -505,20 +577,32 @@ class JiraAgentWorker:
             return
         self.log(C_LOG_STARTED.format(issue_key=issue.issue_key))
         try:
+            self.ticket_report.record_started(issue.issue_key)
             pull_request_url = self.create_pull_request(issue)
         except Exception as exception:
             error = self.configuration.redact(str(exception))[:C_ERROR_LIMIT]
+            self.finish_ticket_report(issue.issue_key, implemented=False)
             self.report_result(
                 issue.issue_key, C_LABEL_FAILED, C_FAILURE_COMMENT.format(error=error),
             )
             self.log(C_LOG_FAILURE.format(issue_key=issue.issue_key, error=error))
             return
-        # Jira reporting failures must not change a successfully opened PR to agent-failed.
+        # CSV and Jira reporting failures must not change a published PR to agent-failed.
+        self.finish_ticket_report(issue.issue_key, implemented=True)
         self.log(C_LOG_PULL_REQUEST.format(issue_key=issue.issue_key, pull_request_url=pull_request_url))
         self.report_result(
             issue.issue_key, C_LABEL_REVIEW,
             C_REVIEW_COMMENT.format(pull_request_url=pull_request_url),
         )
+
+    def finish_ticket_report(self, issue_key: str, implemented: bool) -> None:
+        """Attempt local reporting independently of Jira labels and comments."""
+        try:
+            self.ticket_report.record_finished(issue_key, implemented)
+        except Exception as exception:
+            self.log(C_LOG_REPORT_FAILURE.format(
+                issue_key=issue_key, operation=C_OPERATION_CSV, error=exception,
+            ))
 
     def log(self, message: str) -> None:
         """Print operational messages after removing configured credentials."""
@@ -526,6 +610,7 @@ class JiraAgentWorker:
 
     def poll_forever(self) -> None:
         """Process sequentially while isolating network failures and malformed tickets."""
+        self.ticket_report.write()
         self.log(C_LOG_POLLING)
         while True:
             try:

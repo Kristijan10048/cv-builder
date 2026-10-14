@@ -8,3 +8,4 @@ data/*.db-wal
 /.idea/
 /.venv/
 /logs/
+/jira_agent_tickets.csv

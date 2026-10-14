@@ -13,6 +13,19 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 
 Open `http://127.0.0.1:8000`.
 
+## Jira agent ticket CSV
+
+`jira_agent.py` creates `jira_agent_tickets.csv` in its working directory when
+polling starts. Set `JIRA_AGENT_CSV_PATH` to use another file path.
+
+The CSV has two columns: `implemented_ticket` contains ticket keys whose pull
+requests were successfully opened, and `currently_implementing_ticket` contains
+the claimed ticket while the worker implements it. Each ticket occupies its own
+row. The current column is cleared after success or failure; failed tickets are
+not added to the implemented column. Completed history is preserved across
+restarts, and the current ticket from a previous run is cleared on startup.
+Use a separate CSV path for each worker.
+
 ## Endpoint logging
 
 Python's standard logging records every HTTP request, including API routers,

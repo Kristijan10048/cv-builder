@@ -1,9 +1,11 @@
 """Regression tests for the standalone Jira coding worker without external writes."""
 
 import ast
+import csv
 import importlib
 import os
 import subprocess
+import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
@@ -53,6 +55,10 @@ C_DOCSTRING_PREFIX = "Missing docstring: "
 C_CONSTANT_PREFIX = "C_"
 C_LITERAL_ERROR = "Runtime literal outside a named constant at line "
 C_MAIN_MODULE = "__main__"
+C_SECOND_ISSUE_KEY = "PROJ-124"
+C_METHOD_WRITE = "write"
+C_METHOD_REPLACE = "replace"
+C_METHOD_SLEEP = "sleep"
 
 
 class JiraAgentTests(unittest.TestCase):
@@ -61,6 +67,10 @@ class JiraAgentTests(unittest.TestCase):
     def setUp(self) -> None:
         """Construct a worker with mocked collaborators and inert test credentials."""
         self.configuration = jira_agent.AgentConfiguration.from_environment(C_TEST_ENVIRONMENT)
+        self.report_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.report_directory.cleanup)
+        self.report_path = Path(self.report_directory.name) / jira_agent.C_DEFAULT_TICKET_CSV_PATH
+        self.configuration = replace(self.configuration, ticket_csv_path=str(self.report_path))
         self.jira_client = Mock(spec=jira_agent.JiraClient)
         self.github_client = Mock(spec=jira_agent.GitHubClient)
         self.command_runner = Mock(spec=jira_agent.CommandRunner)
@@ -68,6 +78,101 @@ class JiraAgentTests(unittest.TestCase):
             self.configuration, self.jira_client, self.github_client, self.command_runner,
         )
         self.issue = jira_agent.JiraIssue(C_ISSUE_KEY, C_SUMMARY, C_DESCRIPTION)
+
+    def read_ticket_rows(self) -> list[dict[str, str]]:
+        """Read the persisted CSV rather than relying on report object state."""
+        with self.report_path.open(encoding=jira_agent.C_ENCODING, newline=C_EMPTY_OUTPUT) as report_file:
+            reader = csv.DictReader(report_file)
+            self.assertEqual(reader.fieldnames, list(jira_agent.C_CSV_COLUMNS))
+            return list(reader)
+
+    def test_configuration_accepts_csv_path(self) -> None:
+        """Allow the report location to be configured without changing source code."""
+        environment = dict(C_TEST_ENVIRONMENT)
+        environment[jira_agent.C_ENV_TICKET_CSV_PATH] = str(self.report_path)
+        configuration = jira_agent.AgentConfiguration.from_environment(environment)
+        self.assertEqual(configuration.ticket_csv_path, str(self.report_path))
+
+    def test_csv_shows_current_ticket_then_implemented_ticket(self) -> None:
+        """Publish active work before coding and move it to completed history on success."""
+        self.jira_client.claim_issue.return_value = True
+
+        def check_active_report(issue: jira_agent.JiraIssue) -> str:
+            """Inspect the file at the moment implementation begins."""
+            self.assertEqual(issue, self.issue)
+            self.assertEqual(self.read_ticket_rows(), [{
+                jira_agent.C_CSV_IMPLEMENTED_TICKET: C_EMPTY_OUTPUT,
+                jira_agent.C_CSV_CURRENT_TICKET: C_ISSUE_KEY,
+            }])
+            return C_PULL_REQUEST_URL
+
+        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, side_effect=check_active_report):
+            self.worker.process_issue(self.issue)
+        self.assertEqual(self.read_ticket_rows(), [{
+            jira_agent.C_CSV_IMPLEMENTED_TICKET: C_ISSUE_KEY,
+            jira_agent.C_CSV_CURRENT_TICKET: C_EMPTY_OUTPUT,
+        }])
+
+    def test_csv_clears_failed_ticket_and_keeps_completed_history(self) -> None:
+        """An implementation error must retain earlier successes without listing the failure."""
+        self.worker.ticket_report.record_finished(C_SECOND_ISSUE_KEY, implemented=True)
+        self.jira_client.claim_issue.return_value = True
+        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, side_effect=RuntimeError(C_ERROR)):
+            self.worker.process_issue(self.issue)
+        self.assertEqual(self.read_ticket_rows(), [{
+            jira_agent.C_CSV_IMPLEMENTED_TICKET: C_SECOND_ISSUE_KEY,
+            jira_agent.C_CSV_CURRENT_TICKET: C_EMPTY_OUTPUT,
+        }])
+
+    def test_csv_restart_preserves_history_and_discards_stale_current_ticket(self) -> None:
+        """Restarting must retain unique completed tickets and remove interrupted active work."""
+        self.worker.ticket_report.record_finished(C_ISSUE_KEY, implemented=True)
+        self.worker.ticket_report.record_started(C_SECOND_ISSUE_KEY)
+        report = jira_agent.TicketCsvReport(str(self.report_path))
+        report.write()
+        report.record_finished(C_ISSUE_KEY, implemented=True)
+        self.assertEqual(self.read_ticket_rows(), [{
+            jira_agent.C_CSV_IMPLEMENTED_TICKET: C_ISSUE_KEY,
+            jira_agent.C_CSV_CURRENT_TICKET: C_EMPTY_OUTPUT,
+        }])
+
+    def test_poll_creates_empty_csv_without_ready_tickets(self) -> None:
+        """An idle worker still creates a report with the requested columns."""
+        self.jira_client.find_ready_issues.return_value = []
+        with patch.object(jira_agent.time, C_METHOD_SLEEP, side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                self.worker.poll_forever()
+        self.assertEqual(self.read_ticket_rows(), [])
+
+    def test_unclaimed_ticket_does_not_write_csv(self) -> None:
+        """Stale search results must not appear as work started by this worker."""
+        self.jira_client.claim_issue.return_value = False
+        with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST) as create_request:
+            self.worker.process_issue(self.issue)
+        create_request.assert_not_called()
+        self.assertFalse(self.report_path.exists())
+
+    def test_csv_failure_after_pr_creation_keeps_review_label(self) -> None:
+        """A local report write failure must not turn a published PR into an agent failure."""
+        self.jira_client.claim_issue.return_value = True
+        with patch.object(self.worker.ticket_report, C_METHOD_WRITE, side_effect=[None, OSError(C_ERROR)]):
+            with patch.object(self.worker, C_METHOD_CREATE_PULL_REQUEST, return_value=C_PULL_REQUEST_URL):
+                self.worker.process_issue(self.issue)
+        self.jira_client.swap_label.assert_called_once_with(
+            C_ISSUE_KEY, jira_agent.C_LABEL_IN_PROGRESS, jira_agent.C_LABEL_REVIEW,
+        )
+
+    def test_failed_atomic_replace_preserves_previous_csv_and_cleans_temp_file(self) -> None:
+        """An interrupted report replacement must retain the previous valid file."""
+        self.worker.ticket_report.record_finished(C_ISSUE_KEY, implemented=True)
+        with patch.object(jira_agent.os, C_METHOD_REPLACE, side_effect=OSError(C_ERROR)):
+            with self.assertRaises(OSError):
+                self.worker.ticket_report.record_started(C_SECOND_ISSUE_KEY)
+        self.assertEqual(self.read_ticket_rows(), [{
+            jira_agent.C_CSV_IMPLEMENTED_TICKET: C_ISSUE_KEY,
+            jira_agent.C_CSV_CURRENT_TICKET: C_EMPTY_OUTPUT,
+        }])
+        self.assertEqual(list(self.report_path.parent.iterdir()), [self.report_path])
 
     def test_import_does_not_require_environment_credentials(self) -> None:
         """Importing the worker must not read required settings or contact services."""
