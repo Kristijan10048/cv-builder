@@ -112,6 +112,18 @@ Filter stored jobs by saved search, board, or text. Previous/Next and the page
 size control browse the database without fetching again. Applied status reflects
 saved applications with the same job URL in Applied, Interview, or Offer status.
 
+Available Jobs appears directly below Overview and uses the workspace width,
+including when the sidebar is collapsed. Its **Language** column lists explicit
+spoken-language requirements detected in each stored description. The initial
+regex parser recognizes common English, German, and Dutch requirement phrases,
+including proficiency and CEFR levels, and ignores incidental, optional, or
+negated mentions. Language names are normalized; the column does not display
+proficiency levels or distinguish alternative languages from joint requirements.
+**Not specified** means no explicit requirement was detected, rather than proof
+that none exists. Unusual wording can be missed. Existing jobs are parsed when
+listed, so no refetch or database migration is needed. The parser has a replaceable
+interface for a future local LLM integration.
+
 - `POST /api/job-search`: `{ "preference_id": 1, "sites": ["indeed", "linkedin"], "results_wanted": 50 }`
 - `GET /api/available-jobs?page=1&page_size=20`: paginated results and totals;
   optional `preference_id`, `site`, and `search` filters.

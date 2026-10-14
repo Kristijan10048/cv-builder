@@ -37,6 +37,7 @@ const titles = {
 };
 
 async function showView(name) {
+  $('main').classList.toggle('available-jobs-layout', name === 'availableJobs')
   $$(".view").forEach(view => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
   $$(".nav-item").forEach(item => item.classList.toggle("active", item.dataset.view === name));

@@ -69,6 +69,10 @@ main { padding: 42px 4vw 70px; max-width: 1440px; margin: 0 auto; }.view { displ
 .application-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff}.application-table{width:100%;border-collapse:collapse;text-align:left}.application-table th{padding:12px 15px;background:#f6f4ef;color:#8a877f;font-size:9px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.application-table td{padding:15px;border-top:1px solid #efede7;font-size:11px;vertical-align:middle}.application-table-row{cursor:pointer}.application-table-row:hover{background:#fcfbf8}.application-table td strong{font:700 12px Manrope}.application-table td a{color:var(--navy);text-decoration-color:#b6b3c7;text-underline-offset:3px}.application-table time{white-space:nowrap;color:var(--muted)}.table-empty-value{color:#aaa79f}.table-open{width:28px;color:#aaa79f;font-size:18px;text-align:right}
 .available-job-row{cursor:default}.job-match-score{display:inline-block;justify-self:start;padding:5px 9px;border-radius:20px;background:var(--mint);color:#39775a;font-size:11px;font-weight:700}.available-jobs-table td a{display:inline-block;min-width:85px}.available-jobs-table .status-badge{display:inline-block}
 .available-jobs-table th { position: relative; padding-right: 24px; }
+main.available-jobs-layout { max-width: none; }
+@media(min-width:651px) {
+  main.available-jobs-layout { padding-inline: clamp(16px, 2vw, 32px); }
+}
 .column-resize-handle { position: absolute; right: 0; top: 0; bottom: 0; width: 12px; padding: 0; border: 0; background: transparent; cursor: col-resize; touch-action: none; }
 .column-resize-handle::after { content: ""; position: absolute; top: 8px; bottom: 8px; left: 5px; width: 2px; background: #c8c5bc; }
 .column-resize-handle:hover::after, .column-resize-handle:focus-visible::after { background: var(--accent); }
