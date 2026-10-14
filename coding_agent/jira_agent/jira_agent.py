@@ -26,6 +26,7 @@ C_EMPTY_TEXT = ""
 C_SLASH = "/"
 C_ZERO = 0
 C_ONE = 1
+C_REPOSITORY_PARENT_INDEX = 2
 C_LAST_CHARACTER = -1
 C_MIN_QUOTED_LENGTH = 2
 C_QUOTE_CHARACTERS = "\"'"
@@ -152,7 +153,7 @@ class AgentConfiguration:
             if not environment.get(setting, C_EMPTY_TEXT).strip():
                 raise ValueError(C_ERROR_REQUIRED_SETTING.format(setting=setting))
         repository_directory = Path(environment.get(
-            C_ENV_REPOSITORY_DIRECTORY, str(Path(__file__).resolve().parent),
+            C_ENV_REPOSITORY_DIRECTORY, str(Path(__file__).resolve().parents[C_REPOSITORY_PARENT_INDEX]),
         )).resolve()
         if not repository_directory.is_dir():
             raise ValueError(C_ERROR_REPOSITORY)

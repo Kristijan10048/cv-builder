@@ -5,6 +5,7 @@ import csv
 import importlib
 import json
 import os
+import runpy
 import subprocess
 import tempfile
 import threading
@@ -13,7 +14,7 @@ from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import jira_agent
+from coding_agent.jira_agent import jira_agent
 
 C_TEST_ENVIRONMENT = {
     jira_agent.C_ENV_JIRA_URL: "https://example.atlassian.net/",
@@ -73,6 +74,9 @@ C_JOB_MAX_INSTANCES = "max_instances"
 C_JOB_COALESCE = "coalesce"
 C_JOB_REPLACE_EXISTING = "replace_existing"
 C_JOB_NEXT_RUN_TIME = "next_run_time"
+C_PROJECT_ROOT_PARENT_INDEX = 3
+C_MODULE_ENTRY_POINT = "coding_agent.jira_agent.__main__"
+C_METHOD_MAIN = "main"
 
 
 class JiraAgentTests(unittest.TestCase):
@@ -107,6 +111,25 @@ class JiraAgentTests(unittest.TestCase):
         environment = dict(C_TEST_ENVIRONMENT)
         environment[jira_agent.C_ENV_TICKET_CSV_PATH] = str(self.report_path)
         configuration = jira_agent.AgentConfiguration.from_environment(environment)
+        self.assertEqual(Path(configuration.ticket_csv_path), self.report_path.resolve())
+
+    def test_default_repository_is_project_root(self) -> None:
+        """Moving the worker must preserve the checkout it edits by default."""
+        configuration = jira_agent.AgentConfiguration.from_environment(C_TEST_ENVIRONMENT)
+        project_directory = Path(__file__).resolve().parents[C_PROJECT_ROOT_PARENT_INDEX]
+        self.assertEqual(Path(configuration.repository_directory), project_directory)
+        self.assertEqual(
+            Path(configuration.ticket_csv_path),
+            project_directory / jira_agent.C_DEFAULT_TICKET_CSV_PATH,
+        )
+
+    def test_relative_csv_path_uses_configured_repository(self) -> None:
+        """An external checkout must retain its own report regardless of script location."""
+        environment = dict(C_TEST_ENVIRONMENT)
+        environment[jira_agent.C_ENV_REPOSITORY_DIRECTORY] = self.report_directory.name
+        environment[jira_agent.C_ENV_TICKET_CSV_PATH] = jira_agent.C_DEFAULT_TICKET_CSV_PATH
+        configuration = jira_agent.AgentConfiguration.from_environment(environment)
+        self.assertEqual(Path(configuration.repository_directory), Path(self.report_directory.name).resolve())
         self.assertEqual(Path(configuration.ticket_csv_path), self.report_path.resolve())
 
     def test_csv_shows_current_ticket_then_implemented_ticket(self) -> None:
@@ -502,6 +525,14 @@ class JiraAgentTests(unittest.TestCase):
             with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
                 self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
                 scheduler_type.return_value.start.assert_called_once_with()
+
+    def test_module_entry_point_calls_main(self) -> None:
+        """The documented module command must dispatch to the scheduler's main function."""
+        with patch.object(jira_agent, C_METHOD_MAIN, return_value=C_SUCCESS_CODE) as entry_point:
+            with self.assertRaises(SystemExit) as exit_context:
+                runpy.run_module(C_MODULE_ENTRY_POINT, run_name=C_MAIN_MODULE)
+        self.assertEqual(exit_context.exception.code, C_SUCCESS_CODE)
+        entry_point.assert_called_once_with()
 
 
 if __name__ == C_MAIN_MODULE:

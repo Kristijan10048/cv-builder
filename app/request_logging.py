@@ -29,7 +29,7 @@ def configure_logging() -> RotatingFileHandler:
         directory = BASE_DIR / directory
     directory.mkdir(parents=True, exist_ok=True)
     handler = RotatingFileHandler(
-        directory / "applykit.log", maxBytes=5_000_000, backupCount=3, encoding="utf-8",
+        directory / "applykit.log", maxBytes=5_000_000, backupCount=20, encoding="utf-8",
     )
     handler.setFormatter(logging.Formatter(
         "%(asctime)s %(levelname)s %(name)s %(message)s",
