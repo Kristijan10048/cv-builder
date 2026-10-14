@@ -7,6 +7,7 @@
     - Include description for every function and class
     - Write comments for important code such as logic
     - do not use short names for variables, functions or classes.
+    - Create base classes. Flollow rules for Object oriented 
     - prefix constants with C_ for example C_PI=3.14
     - use PascalCase for class names
     - Create a model class for each db table
