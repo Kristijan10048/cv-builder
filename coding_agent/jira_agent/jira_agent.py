@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import errno
 import hashlib
@@ -17,7 +18,7 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Sequence
 from urllib.parse import quote
 
 import requests
@@ -42,7 +43,7 @@ C_HTTP_TIMEOUT = 30
 C_COMMAND_TIMEOUT = 300
 C_DEFAULT_AGENT_TIMEOUT = 1800
 C_DEFAULT_POLL_INTERVAL = 600
-C_DEFAULT_JIRA_STATUS = "Waiting for AI Developer"
+C_DEFAULT_JIRA_STATUS = "Waiting for Developer"
 C_SEARCH_LIMIT = 5
 C_ERROR_LIMIT = 1800
 C_ENV_JIRA_URL = "JIRA_URL"
@@ -73,6 +74,25 @@ C_ISSUE_KEY_PATTERN = r"[A-Za-z][A-Za-z0-9_]*-[0-9]+"
 C_API_PATH = "/rest/api/2"
 C_SEARCH_PATH = "/search/jql"
 C_CURRENT_USER_PATH = "/myself"
+C_PROJECT_SEARCH_PATH = "/project/search"
+C_LIST_PAGE_SIZE = 100
+C_KEY_NEXT_PAGE_TOKEN = "nextPageToken"
+C_KEY_IS_LAST = "isLast"
+C_KEY_START_AT = "startAt"
+C_KEY_TOTAL = "total"
+C_KEY_VALUES = "values"
+C_KEY_NAME = "name"
+C_KEY_STATUS = "status"
+C_LIST_TICKET_FIELDS = "summary,status"
+C_JQL_PROJECT_TICKETS = "project = {project} ORDER BY created ASC, key ASC"
+C_FLAG_TICKETS = "--tickets"
+C_FLAG_PROJECTS = "--projects"
+C_ARGUMENT_OPTIONAL = "?"
+C_ARGUMENT_STORE_TRUE = "store_true"
+C_ARGUMENT_PROJECT = "PROJECT"
+C_COMMAND_DESCRIPTION = "Schedule Jira implementation batches, or list tickets/projects and exit."
+C_HELP_TICKETS = "List all visible tickets in JIRA_PROJECT, or the optional PROJECT, and exit."
+C_HELP_PROJECTS = "List all projects visible to the configured Jira account and exit."
 C_HTTP_UNAUTHORIZED = 401
 C_HTTP_FORBIDDEN = 403
 C_UNKNOWN_HTTP_STATUS = "unknown"
@@ -128,7 +148,20 @@ C_LOG_JIRA_EMAIL = "JIRA_EMAIL={email}"
 C_LOG_JIRA_PROJECT = "JIRA_PROJECT={project}"
 C_LOG_API_TOKEN_LOADED = "JIRA_API_TOKEN loaded: yes (value hidden)."
 C_LOG_CONNECTION_TEST = "Testing Jira connection and API token (timeout: {seconds}s)..."
-C_LOG_CONNECTION_VALID = "Jira connection successful; API token accepted. Starting scheduler."
+C_LOG_CONNECTION_VALID = "Jira connection successful; API token accepted."
+C_LOG_LIST_TICKETS = "Listing all visible tickets for project '{project}' across all statuses..."
+C_LOG_LIST_PROJECTS = "Listing all available projects visible to this Jira account..."
+C_LOG_TICKETS_HEADER = "KEY | STATUS | SUMMARY"
+C_LOG_TICKETS_ROW = "{issue_key} | {status} | {summary}"
+C_LOG_PROJECTS_HEADER = "KEY | NAME"
+C_LOG_PROJECTS_ROW = "{project_key} | {name}"
+C_LOG_LIST_FINISHED = "Listing complete: {count} result(s)."
+C_LOG_LIST_EMPTY = "No results visible to this Jira account."
+C_LOG_LIST_FAILURE = "Jira listing failed: {error}"
+C_ERROR_LIST_RESPONSE = "Unexpected Jira listing response; results may be incomplete."
+C_ERROR_LIST_PAGINATION = "Jira pagination did not advance; listing stopped to avoid incomplete results."
+C_DISPLAY_UNKNOWN = "(unknown)"
+C_DISPLAY_SPACE = " "
 C_LOG_STARTUP_FAILED = "Jira startup check failed: {error} Scheduler was not started."
 C_LOG_FORMAT = "[{timestamp}] {message}"
 C_LOG_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S UTC"
@@ -180,6 +213,31 @@ C_GIT_CONFIG_VALUE_PREFIX = "GIT_CONFIG_VALUE_"
 
 
 @dataclass(frozen=True)
+class JiraAgentCommandLine:
+    """Select the normal scheduler or an authenticated read-only listing."""
+
+    tickets: bool = False
+    projects: bool = False
+    project: str | None = None
+
+    @classmethod
+    def parse(class_type, arguments: Sequence[str] | None = None) -> JiraAgentCommandLine:
+        """Parse mutually exclusive listing flags before loading credentials or doing work."""
+        parser = argparse.ArgumentParser(description=C_COMMAND_DESCRIPTION)
+        listing_options = parser.add_mutually_exclusive_group()
+        listing_options.add_argument(
+            C_FLAG_TICKETS, nargs=C_ARGUMENT_OPTIONAL, const=C_EMPTY_TEXT,
+            metavar=C_ARGUMENT_PROJECT, help=C_HELP_TICKETS,
+        )
+        listing_options.add_argument(C_FLAG_PROJECTS, action=C_ARGUMENT_STORE_TRUE, help=C_HELP_PROJECTS)
+        options = parser.parse_args(arguments)
+        return class_type(
+            tickets=options.tickets is not None, projects=options.projects,
+            project=options.tickets if options.tickets else None,
+        )
+
+
+@dataclass(frozen=True)
 class AgentConfiguration:
     """Keep Jira credentials and local implementation settings."""
 
@@ -197,6 +255,7 @@ class AgentConfiguration:
     @classmethod
     def from_local_environment(
         class_type, environment: Mapping[str, str], environment_file: Path | None = None,
+        command_line: JiraAgentCommandLine | None = None,
     ) -> AgentConfiguration:
         """Fill missing settings from the worker's optional development .env file."""
         file_settings = dotenv_values(
@@ -208,12 +267,20 @@ class AgentConfiguration:
         }
         # Process settings take precedence without exporting local secrets to subprocesses.
         combined_settings.update(environment)
-        return class_type.from_environment(combined_settings)
+        options = command_line if command_line is not None else JiraAgentCommandLine()
+        if options.project is not None:
+            combined_settings[C_ENV_JIRA_PROJECT] = options.project
+        return class_type.from_environment(combined_settings, require_project=not options.projects)
 
     @classmethod
-    def from_environment(class_type, environment: Mapping[str, str]) -> AgentConfiguration:
+    def from_environment(
+        class_type, environment: Mapping[str, str], require_project: bool = True,
+    ) -> AgentConfiguration:
         """Validate Jira selection, agent settings, and the recurring batch interval."""
-        for setting in (C_ENV_JIRA_URL, C_ENV_JIRA_EMAIL, C_ENV_JIRA_TOKEN, C_ENV_JIRA_PROJECT):
+        required_settings = (C_ENV_JIRA_URL, C_ENV_JIRA_EMAIL, C_ENV_JIRA_TOKEN)
+        if require_project:
+            required_settings += (C_ENV_JIRA_PROJECT,)
+        for setting in required_settings:
             if not environment.get(setting, C_EMPTY_TEXT).strip():
                 raise ValueError(C_ERROR_REQUIRED_SETTING.format(setting=setting))
         repository_directory = Path(environment.get(
@@ -234,7 +301,7 @@ class AgentConfiguration:
             jira_url=environment[C_ENV_JIRA_URL].rstrip(C_SLASH),
             jira_email=environment[C_ENV_JIRA_EMAIL],
             jira_token=environment[C_ENV_JIRA_TOKEN],
-            jira_project=environment[C_ENV_JIRA_PROJECT],
+            jira_project=environment.get(C_ENV_JIRA_PROJECT, C_EMPTY_TEXT),
             repository_directory=str(repository_directory),
             agent_command=agent_command,
             agent_timeout=class_type.read_positive_integer(
@@ -401,6 +468,69 @@ class JiraClient(BaseHttpClient):
         if profile.get(C_KEY_ACTIVE) is False:
             raise RuntimeError(C_ERROR_JIRA_INACTIVE)
 
+    @staticmethod
+    def read_listing_records(response: dict, result_key: str) -> list[dict]:
+        """Reject malformed pages instead of reporting a partial list as complete."""
+        if not isinstance(response, dict) or result_key not in response:
+            raise RuntimeError(C_ERROR_LIST_RESPONSE)
+        records = response[result_key]
+        if not isinstance(records, list) or any(not isinstance(record, dict) for record in records):
+            raise RuntimeError(C_ERROR_LIST_RESPONSE)
+        return records
+
+    def list_project_tickets(self) -> list[dict]:
+        """Fetch every visible project ticket without status or completion-history filters."""
+        parameters = {
+            C_KEY_QUERY: C_JQL_PROJECT_TICKETS.format(project=json.dumps(
+                self.configuration.jira_project, ensure_ascii=False,
+            )),
+            C_KEY_FIELDS: C_LIST_TICKET_FIELDS, C_KEY_MAX_RESULTS: C_LIST_PAGE_SIZE,
+        }
+        tickets = []
+        seen_tokens = set()
+        while True:
+            response = self.request(
+                C_METHOD_GET, self.configuration.jira_url + C_API_PATH + C_SEARCH_PATH,
+                params=dict(parameters),
+            )
+            tickets.extend(self.read_listing_records(response, C_KEY_ISSUES))
+            if response.get(C_KEY_IS_LAST) is True:
+                return tickets
+            next_page_token = response.get(C_KEY_NEXT_PAGE_TOKEN)
+            if not next_page_token:
+                if response.get(C_KEY_IS_LAST) is False:
+                    raise RuntimeError(C_ERROR_LIST_PAGINATION)
+                return tickets
+            if not isinstance(next_page_token, str) or next_page_token in seen_tokens:
+                raise RuntimeError(C_ERROR_LIST_PAGINATION)
+            seen_tokens.add(next_page_token)
+            parameters[C_KEY_NEXT_PAGE_TOKEN] = next_page_token
+
+    def list_projects(self) -> list[dict]:
+        """Follow offset pagination to list every project accessible to this account."""
+        projects = []
+        start_at = C_ZERO
+        while True:
+            response = self.request(
+                C_METHOD_GET, self.configuration.jira_url + C_API_PATH + C_PROJECT_SEARCH_PATH,
+                params={C_KEY_START_AT: start_at, C_KEY_MAX_RESULTS: C_LIST_PAGE_SIZE},
+            )
+            page_projects = self.read_listing_records(response, C_KEY_VALUES)
+            projects.extend(page_projects)
+            if response.get(C_KEY_IS_LAST) is True:
+                return projects
+            next_start = response.get(C_KEY_START_AT, start_at) + len(page_projects)
+            total_projects = response.get(C_KEY_TOTAL)
+            if total_projects is not None and next_start >= total_projects:
+                return projects
+            if not page_projects:
+                if response.get(C_KEY_IS_LAST) is False or total_projects is not None:
+                    raise RuntimeError(C_ERROR_LIST_PAGINATION)
+                return projects
+            if next_start <= start_at:
+                raise RuntimeError(C_ERROR_LIST_PAGINATION)
+            start_at = next_start
+
     def find_ready_issues(self, implemented_tickets: list[str] | None = None) -> list[dict]:
         """Fetch one batch, excluding completed keys before applying the result limit."""
         project = json.dumps(self.configuration.jira_project, ensure_ascii=False)
@@ -419,6 +549,46 @@ class JiraClient(BaseHttpClient):
             },
         )
         return response.get(C_KEY_ISSUES, [])
+
+
+class JiraListingReporter(BaseConsoleReporter):
+    """Display project or ticket listings without creating workers, locks, or CSV files."""
+
+    @staticmethod
+    def display_text(value: object) -> str:
+        """Keep each result on one readable console line."""
+        return C_DISPLAY_SPACE.join(str(value).split())
+
+    def run(self, client: JiraClient, options: JiraAgentCommandLine) -> int:
+        """Fetch and print the requested list, returning a nonzero code on failure."""
+        try:
+            if options.projects:
+                self.log(C_LOG_LIST_PROJECTS)
+                records = client.list_projects()
+                self.log(C_LOG_PROJECTS_HEADER)
+                for project in records:
+                    self.log(C_LOG_PROJECTS_ROW.format(
+                        project_key=self.display_text(project[C_KEY_ISSUE_KEY]),
+                        name=self.display_text(project[C_KEY_NAME]),
+                    ))
+            else:
+                self.log(C_LOG_LIST_TICKETS.format(project=self.configuration.jira_project))
+                records = client.list_project_tickets()
+                self.log(C_LOG_TICKETS_HEADER)
+                for ticket in records:
+                    fields = ticket[C_KEY_FIELDS]
+                    self.log(C_LOG_TICKETS_ROW.format(
+                        issue_key=self.display_text(ticket[C_KEY_ISSUE_KEY]),
+                        status=self.display_text(fields.get(C_KEY_STATUS, {}).get(C_KEY_NAME, C_DISPLAY_UNKNOWN)),
+                        summary=self.display_text(fields[C_KEY_SUMMARY]),
+                    ))
+            if not records:
+                self.log(C_LOG_LIST_EMPTY)
+            self.log(C_LOG_LIST_FINISHED.format(count=len(records)))
+            return C_ZERO
+        except (requests.RequestException, RuntimeError, ValueError, KeyError, TypeError) as exception:
+            self.log(C_LOG_LIST_FAILURE.format(error=exception))
+            return C_ONE
 
 
 class CommandRunner:
@@ -733,10 +903,11 @@ class JiraAgentScheduler(BaseConsoleReporter):
             self.log(C_LOG_SCHEDULER_STOPPED)
 
 
-def main() -> int:
-    """Load configuration and keep APScheduler running until interrupted."""
+def main(arguments: Sequence[str] | None = None) -> int:
+    """Authenticate, then list Jira data or keep APScheduler running until interrupted."""
+    options = JiraAgentCommandLine.parse(arguments)
     print(C_LOG_STARTING, flush=True)
-    configuration = AgentConfiguration.from_local_environment(os.environ)
+    configuration = AgentConfiguration.from_local_environment(os.environ, command_line=options)
     reporter = BaseConsoleReporter(configuration)
     if C_ENV_FILE_PATH.is_file():
         reporter.log(C_LOG_ENV_FILE.format(path=C_ENV_FILE_PATH))
@@ -752,12 +923,15 @@ def main() -> int:
         repository=configuration.repository_directory, csv_path=configuration.ticket_csv_path,
     ))
     reporter.log(C_LOG_CONNECTION_TEST.format(seconds=C_HTTP_TIMEOUT))
+    client = JiraClient(configuration)
     try:
-        JiraClient(configuration).verify_connection()
+        client.verify_connection()
     except RuntimeError as exception:
         reporter.log(C_LOG_STARTUP_FAILED.format(error=exception))
         return C_ONE
     reporter.log(C_LOG_CONNECTION_VALID)
+    if options.tickets or options.projects:
+        return JiraListingReporter(configuration).run(client, options)
     JiraAgentScheduler(configuration).start()
     return C_ZERO
 

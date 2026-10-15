@@ -53,10 +53,44 @@ every ten minutes while it remains running. Tickets run sequentially. Press
 Ctrl+C to stop scheduling; shutdown waits for active work to finish its CSV
 update. Windows Task Scheduler is not required.
 
+## List tickets or projects
+
+Run these commands from the project root:
+
+```powershell
+# All visible tickets in JIRA_PROJECT, across every status.
+.\.venv\Scripts\python.exe -m coding_agent.jira_agent --tickets
+
+# Override JIRA_PROJECT for this command (project key or quoted name).
+.\.venv\Scripts\python.exe -m coding_agent.jira_agent --tickets YOUR_PROJECT_KEY
+
+# All projects visible to your Jira account; JIRA_PROJECT is not required.
+.\.venv\Scripts\python.exe -m coding_agent.jira_agent --projects
+
+# Show command help without connecting to Jira.
+.\.venv\Scripts\python.exe -m coding_agent.jira_agent --help
+```
+
+Ticket output includes key, status, and summary. Project output includes key and
+name. Both commands authenticate first, fetch all result pages, print a total,
+and exit. They do not start the scheduler or coding agent, or create/update the
+ticket CSV or worker lock. Jira permissions determine which results are visible.
+Choose one listing flag per invocation. With no flag, the scheduler runs normally.
+The same flags work with the direct `jira_agent.py` script.
+
+The PowerShell launcher supports equivalent switches:
+
+```powershell
+.\coding_agent\jira_agent\Run-JiraAgent.ps1 -Tickets
+.\coding_agent\jira_agent\Run-JiraAgent.ps1 -Tickets -Project YOUR_PROJECT_KEY
+.\coding_agent\jira_agent\Run-JiraAgent.ps1 -Projects
+```
+
 ## Configuration
 
-Required environment variables are `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`,
-and `JIRA_PROJECT`.
+Required environment variables are `JIRA_URL`, `JIRA_EMAIL`, and `JIRA_API_TOKEN`.
+`JIRA_PROJECT` is also required for scheduling and for `--tickets` without an
+explicit project argument. It is optional for `--projects`.
 
 See [`.env.example`](.env.example) for all supported configuration variables,
 with placeholders and optional defaults. Process settings take precedence over

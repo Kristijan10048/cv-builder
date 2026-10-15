@@ -749,7 +749,7 @@ class JiraAgentTests(unittest.TestCase):
                 ):
                     console_output = io.StringIO()
                     with redirect_stdout(console_output):
-                        self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                        self.assertEqual(jira_agent.main([]), jira_agent.C_ZERO)
                     messages = console_output.getvalue()
                     self.assertIn(jira_agent.C_LOG_JIRA_URL.format(url=self.configuration.jira_url), messages)
                     self.assertIn(jira_agent.C_LOG_JIRA_EMAIL.format(email=self.configuration.jira_email), messages)
@@ -769,7 +769,7 @@ class JiraAgentTests(unittest.TestCase):
                 ):
                     console_output = io.StringIO()
                     with redirect_stdout(console_output):
-                        self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                        self.assertEqual(jira_agent.main([]), jira_agent.C_ZERO)
                     verify_connection.assert_called_once_with()
                     configuration = scheduler_type.call_args.args[C_FIRST_CALL_INDEX]
                     messages = console_output.getvalue()
@@ -796,7 +796,7 @@ class JiraAgentTests(unittest.TestCase):
             verify_connection.side_effect = verify_before_scheduling
             console_output = io.StringIO()
             with redirect_stdout(console_output):
-                self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                self.assertEqual(jira_agent.main([]), jira_agent.C_ZERO)
             self.assertIn(jira_agent.C_LOG_CONNECTION_VALID, console_output.getvalue())
             scheduler_type.return_value.start.assert_called_once_with()
 
@@ -814,7 +814,7 @@ class JiraAgentTests(unittest.TestCase):
         ):
             console_output = io.StringIO()
             with redirect_stdout(console_output):
-                self.assertEqual(jira_agent.main(), jira_agent.C_ONE)
+                self.assertEqual(jira_agent.main([]), jira_agent.C_ONE)
             scheduler_type.assert_not_called()
             worker_type.assert_not_called()
         messages = console_output.getvalue()

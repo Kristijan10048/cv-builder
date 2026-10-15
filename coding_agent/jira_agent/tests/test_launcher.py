@@ -1,5 +1,6 @@
 """Exercise the Windows launcher with inert workers instead of Jira or coding CLIs."""
 
+import json
 import os
 import shutil
 import subprocess
@@ -48,6 +49,13 @@ C_FAILURE_MESSAGE = "ValueError: complete failure details"
 C_EXIT_MESSAGE = "Jira agent exited with code 7."
 C_NATIVE_ERROR = "NativeCommandError"
 C_JIRA_URL_SETTING = "JIRA_URL"
+C_TICKETS_SWITCH = "-Tickets"
+C_PROJECTS_SWITCH = "-Projects"
+C_PROJECT_SWITCH = "-Project"
+C_PROJECT_NAME = "Project With Spaces"
+C_TICKETS_ARGUMENT = "--tickets"
+C_PROJECTS_ARGUMENT = "--projects"
+C_WORKER_ARGUMENTS = "import json\nimport sys\nprint(json.dumps(sys.argv[1:]), flush=True)\n"
 
 
 @unittest.skipUnless(os.name == C_WINDOWS_PLATFORM and C_POWERSHELL_EXECUTABLE, C_SKIP_REASON)
@@ -67,7 +75,9 @@ class JiraLauncherTests(unittest.TestCase):
         source_launcher = Path(__file__).resolve().parent.parent / C_LAUNCHER_NAME
         shutil.copyfile(source_launcher, self.launcher_path)
 
-    def run_launcher(self, worker_source: str) -> subprocess.CompletedProcess[str]:
+    def run_launcher(
+        self, worker_source: str, arguments: tuple[str, ...] = (),
+    ) -> subprocess.CompletedProcess[str]:
         """Launch a fake worker with inert process settings and no network operations."""
         worker_path = self.agent_directory / C_WORKER_NAME
         worker_path.write_text(worker_source, encoding=C_ENCODING)
@@ -75,7 +85,7 @@ class JiraLauncherTests(unittest.TestCase):
         environment.update(C_TEST_ENVIRONMENT)
         return subprocess.run(
             [C_POWERSHELL_EXECUTABLE, *C_ARGUMENTS, str(self.launcher_path),
-             C_PYTHON_ARGUMENT, sys.executable],
+             C_PYTHON_ARGUMENT, sys.executable, *arguments],
             cwd=self.caller_directory, env=environment, capture_output=True,
             text=True, encoding=C_ENCODING, errors=C_ENCODING_ERRORS, timeout=C_TIMEOUT,
         )
@@ -99,3 +109,15 @@ class JiraLauncherTests(unittest.TestCase):
         log_output = (self.agent_directory / C_LOG_PATH).read_text(encoding=C_ENCODING)
         self.assertIn(C_STARTED_MESSAGE, log_output)
         self.assertIn(C_FAILURE_MESSAGE, log_output)
+
+    def test_listing_flags_and_project_are_forwarded_to_python(self) -> None:
+        """Forward listing requests and preserve a project containing spaces as one argument."""
+        for arguments, expected_arguments in (
+            ((C_PROJECTS_SWITCH,), [C_PROJECTS_ARGUMENT]),
+            ((C_TICKETS_SWITCH,), [C_TICKETS_ARGUMENT]),
+            ((C_TICKETS_SWITCH, C_PROJECT_SWITCH, C_PROJECT_NAME), [C_TICKETS_ARGUMENT, C_PROJECT_NAME]),
+        ):
+            with self.subTest(arguments=arguments):
+                result = self.run_launcher(C_WORKER_ARGUMENTS, arguments)
+                self.assertEqual(result.returncode, C_SUCCESS_CODE, result.stdout + result.stderr)
+                self.assertIn(json.dumps(expected_arguments), result.stdout)

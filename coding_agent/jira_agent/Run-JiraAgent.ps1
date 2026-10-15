@@ -2,10 +2,29 @@
 [CmdletBinding()]
 param(
     [string]$CodexExecutable,
-    [string]$PythonExecutable
+    [string]$PythonExecutable,
+    [switch]$Tickets,
+    [switch]$Projects,
+    [string]$Project
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Tickets -and $Projects) {
+    throw 'Choose either -Tickets or -Projects.'
+}
+if ($Project -and -not $Tickets) {
+    throw '-Project requires -Tickets.'
+}
+$workerArguments = @()
+if ($Tickets) {
+    $workerArguments += '--tickets'
+    if ($Project) {
+        $workerArguments += $Project
+    }
+}
+if ($Projects) {
+    $workerArguments += '--projects'
+}
 $settingNames = @(
     'JIRA_URL', 'JIRA_EMAIL', 'JIRA_API_TOKEN', 'JIRA_PROJECT',
     'JIRA_AGENT_REPOSITORY', 'JIRA_AGENT_CSV_PATH', 'AGENT_CMD', 'AGENT_TIMEOUT',
@@ -54,7 +73,7 @@ try {
     # Windows PowerShell treats native stderr as ErrorRecord objects. Allow the
     # process to finish so its complete traceback and real exit code are retained.
     $ErrorActionPreference = 'Continue'
-    & $PythonExecutable -u (Join-Path $PSScriptRoot 'jira_agent.py') 2>&1 | ForEach-Object {
+    & $PythonExecutable -u (Join-Path $PSScriptRoot 'jira_agent.py') @workerArguments 2>&1 | ForEach-Object {
         $outputLine = $_.ToString()
         $outputLine | Out-File -LiteralPath $logPath -Append -Encoding utf8 -ErrorAction Stop
         Write-Host $outputLine
