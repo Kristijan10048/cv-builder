@@ -77,6 +77,22 @@ C_JOB_NEXT_RUN_TIME = "next_run_time"
 C_PROJECT_ROOT_PARENT_INDEX = 3
 C_MODULE_ENTRY_POINT = "coding_agent.jira_agent.__main__"
 C_METHOD_MAIN = "main"
+C_METHOD_DOTENV_VALUES = "dotenv_values"
+C_ENV_FILE_PATH_ATTRIBUTE = "C_ENV_FILE_PATH"
+C_TEST_ENV_FILE_CONTENT = (
+    "# Local development settings\n"
+    "JIRA_URL=https://example.atlassian.net/\n"
+    "JIRA_EMAIL=worker@example.com\n"
+    "JIRA_API_TOKEN='jira-test-secret'\n"
+    "JIRA_PROJECT=\"Project Name\"\n"
+    "JIRA_STATUS='Ready for testing' # Inline comment\n"
+    "POLL_INTERVAL=45\n"
+)
+C_FILE_JIRA_STATUS = "Ready for testing"
+C_FILE_POLL_INTERVAL = 45
+C_PROCESS_JIRA_PROJECT = "PROCESS_PROJECT"
+C_MISSING_ENV_FILE = "missing.env"
+C_VALUELESS_ENV_FILE_CONTENT = "JIRA_API_TOKEN\n"
 
 
 class JiraAgentTests(unittest.TestCase):
@@ -105,6 +121,61 @@ class JiraAgentTests(unittest.TestCase):
             reader = csv.DictReader(report_file)
             self.assertEqual(reader.fieldnames, list(jira_agent.C_CSV_COLUMNS))
             return list(reader)
+
+    def write_environment_file(self, content: str = C_TEST_ENV_FILE_CONTENT) -> Path:
+        """Create a local fixture with a Windows-compatible UTF-8 byte order mark."""
+        environment_file = Path(self.report_directory.name) / jira_agent.C_ENV_FILE_PATH.name
+        environment_file.write_text(content, encoding=jira_agent.C_ENV_FILE_ENCODING)
+        return environment_file
+
+    def test_local_environment_loads_file_without_exporting_credentials(self) -> None:
+        """Read quoted settings and comments without changing the process environment."""
+        environment_file = self.write_environment_file()
+        with patch.dict(os.environ, C_EMPTY_ENVIRONMENT, clear=True):
+            configuration = jira_agent.AgentConfiguration.from_local_environment(
+                os.environ, environment_file,
+            )
+            self.assertEqual(dict(os.environ), C_EMPTY_ENVIRONMENT)
+        self.assertEqual(configuration.jira_token, C_TEST_ENVIRONMENT[jira_agent.C_ENV_JIRA_TOKEN])
+        self.assertEqual(configuration.jira_project, C_TEST_ENVIRONMENT[jira_agent.C_ENV_JIRA_PROJECT])
+        self.assertEqual(configuration.jira_status, C_FILE_JIRA_STATUS)
+        self.assertEqual(configuration.poll_interval, C_FILE_POLL_INTERVAL)
+
+    def test_local_environment_preserves_process_overrides(self) -> None:
+        """Use explicit process values ahead of file settings while filling missing keys."""
+        environment = {jira_agent.C_ENV_JIRA_PROJECT: C_PROCESS_JIRA_PROJECT}
+        configuration = jira_agent.AgentConfiguration.from_local_environment(
+            environment, self.write_environment_file(),
+        )
+        self.assertEqual(configuration.jira_project, C_PROCESS_JIRA_PROJECT)
+        self.assertEqual(configuration.jira_email, C_TEST_ENVIRONMENT[jira_agent.C_ENV_JIRA_EMAIL])
+        self.assertEqual(environment, {jira_agent.C_ENV_JIRA_PROJECT: C_PROCESS_JIRA_PROJECT})
+
+    def test_local_environment_preserves_explicit_empty_process_values(self) -> None:
+        """An invalid explicit override must still be rejected by configuration validation."""
+        with self.assertRaisesRegex(ValueError, jira_agent.C_ENV_JIRA_TOKEN):
+            jira_agent.AgentConfiguration.from_local_environment(
+                {jira_agent.C_ENV_JIRA_TOKEN: C_EMPTY_OUTPUT}, self.write_environment_file(),
+            )
+
+    def test_local_environment_allows_missing_file(self) -> None:
+        """Keep normal environment-only startup working when the local file is absent."""
+        environment_file = Path(self.report_directory.name) / C_MISSING_ENV_FILE
+        configuration = jira_agent.AgentConfiguration.from_local_environment(
+            C_TEST_ENVIRONMENT, environment_file,
+        )
+        self.assertEqual(configuration, jira_agent.AgentConfiguration.from_environment(C_TEST_ENVIRONMENT))
+        with self.assertRaisesRegex(ValueError, jira_agent.C_ENV_JIRA_URL):
+            jira_agent.AgentConfiguration.from_local_environment(C_EMPTY_ENVIRONMENT, environment_file)
+
+    def test_local_environment_ignores_valueless_entries(self) -> None:
+        """A bare dotenv key must be handled as missing and produce the usual validation error."""
+        environment = dict(C_TEST_ENVIRONMENT)
+        environment.pop(jira_agent.C_ENV_JIRA_TOKEN)
+        with self.assertRaisesRegex(ValueError, jira_agent.C_ENV_JIRA_TOKEN):
+            jira_agent.AgentConfiguration.from_local_environment(
+                environment, self.write_environment_file(C_VALUELESS_ENV_FILE_CONTENT),
+            )
 
     def test_configuration_accepts_csv_path(self) -> None:
         """Allow the report location to be configured without changing source code."""
@@ -522,9 +593,21 @@ class JiraAgentTests(unittest.TestCase):
     def test_main_starts_scheduler_without_running_a_batch_directly(self) -> None:
         """Launching the script must hand lifecycle control to APScheduler."""
         with patch.dict(os.environ, C_TEST_ENVIRONMENT, clear=True):
-            with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
-                self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
-                scheduler_type.return_value.start.assert_called_once_with()
+            with patch.object(jira_agent, C_METHOD_DOTENV_VALUES, return_value={}):
+                with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
+                    self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                    scheduler_type.return_value.start.assert_called_once_with()
+
+    def test_main_loads_worker_local_file_before_starting_scheduler(self) -> None:
+        """The entry point must resolve its local dotenv path and apply file configuration."""
+        with patch.dict(os.environ, C_EMPTY_ENVIRONMENT, clear=True):
+            with patch.object(jira_agent, C_ENV_FILE_PATH_ATTRIBUTE, self.write_environment_file()):
+                with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
+                    self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                    configuration = scheduler_type.call_args.args[C_FIRST_CALL_INDEX]
+                    self.assertEqual(configuration.jira_status, C_FILE_JIRA_STATUS)
+                    self.assertEqual(configuration.poll_interval, C_FILE_POLL_INTERVAL)
+                    scheduler_type.return_value.start.assert_called_once_with()
 
     def test_module_entry_point_calls_main(self) -> None:
         """The documented module command must dispatch to the scheduler's main function."""

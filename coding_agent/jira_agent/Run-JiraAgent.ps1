@@ -24,14 +24,7 @@ foreach ($settingName in $settingNames) {
     }
 }
 
-$requiredSettingNames = @('JIRA_URL', 'JIRA_EMAIL', 'JIRA_API_TOKEN', 'JIRA_PROJECT')
-$missingSettingNames = @($requiredSettingNames | Where-Object {
-    [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_, 'Process'))
-})
-if ($missingSettingNames.Count -gt 0) {
-    throw ('Missing required Jira environment settings: ' + ($missingSettingNames -join ', ') +
-        '. Set them in this PowerShell session or in your user environment before starting the launcher.')
-}
+# Python validates required settings after applying the optional local .env fallback.
 
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if (-not [string]::IsNullOrWhiteSpace($userPath)) {

@@ -21,6 +21,7 @@ from urllib.parse import quote
 
 import requests
 from apscheduler.schedulers.blocking import BlockingScheduler
+from dotenv import dotenv_values
 
 C_EMPTY_TEXT = ""
 C_SLASH = "/"
@@ -32,6 +33,8 @@ C_MIN_QUOTED_LENGTH = 2
 C_QUOTE_CHARACTERS = "\"'"
 C_WINDOWS_PLATFORM = "nt"
 C_ENCODING = "utf-8"
+C_ENV_FILE_ENCODING = "utf-8-sig"
+C_ENV_FILE_PATH = Path(__file__).resolve().parent / ".env"
 C_ENCODING_ERRORS = "replace"
 C_MAIN_MODULE = "__main__"
 C_HTTP_TIMEOUT = 30
@@ -145,6 +148,22 @@ class AgentConfiguration:
     ticket_csv_path: str = C_DEFAULT_TICKET_CSV_PATH
     jira_status: str = C_DEFAULT_JIRA_STATUS
     poll_interval: int = C_DEFAULT_POLL_INTERVAL
+
+    @classmethod
+    def from_local_environment(
+        class_type, environment: Mapping[str, str], environment_file: Path | None = None,
+    ) -> AgentConfiguration:
+        """Fill missing settings from the worker's optional development .env file."""
+        file_settings = dotenv_values(
+            environment_file if environment_file is not None else C_ENV_FILE_PATH,
+            encoding=C_ENV_FILE_ENCODING,
+        )
+        combined_settings = {
+            setting: value for setting, value in file_settings.items() if value is not None
+        }
+        # Process settings take precedence without exporting local secrets to subprocesses.
+        combined_settings.update(environment)
+        return class_type.from_environment(combined_settings)
 
     @classmethod
     def from_environment(class_type, environment: Mapping[str, str]) -> AgentConfiguration:
@@ -565,7 +584,7 @@ class JiraAgentScheduler:
 
 def main() -> int:
     """Load configuration and keep APScheduler running until interrupted."""
-    configuration = AgentConfiguration.from_environment(os.environ)
+    configuration = AgentConfiguration.from_local_environment(os.environ)
     JiraAgentScheduler(configuration).start()
     return C_ZERO
 

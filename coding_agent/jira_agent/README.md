@@ -23,9 +23,11 @@ $env:JIRA_STATUS = 'Waiting for AI Developer'
 .\.venv\Scripts\python.exe -m coding_agent.jira_agent
 ```
 
-Replace the example values with your Jira configuration. Settings are read from
-the process environment; `.env` files are not loaded automatically. Avoid
-putting real credentials in committed files.
+Replace the example values with your Jira configuration. For dev/testing, you
+can instead copy [`.env.example`](.env.example) to `.env` in this folder and fill
+in your values. Both entry points automatically use this file for settings absent
+from the process environment. The file is found relative to `jira_agent.py`,
+regardless of the working directory. `.env` is ignored by Git.
 
 The direct script entry point also works from any working directory when its
 path and the Python executable path are supplied correctly:
@@ -43,6 +45,12 @@ update. Windows Task Scheduler is not required.
 
 Required environment variables are `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`,
 and `JIRA_PROJECT`.
+
+See [`.env.example`](.env.example) for all supported configuration variables,
+with placeholders and optional defaults. Process settings take precedence over
+`.env` values, followed by the defaults below. A missing `.env` file is fine;
+required settings are still validated. File values are used for configuration
+without being added to the process environment.
 
 | Optional setting | Default and behavior |
 | --- | --- |
@@ -88,7 +96,8 @@ independently rerunning the project's tests.
 
 The launcher uses the project root's `.venv` and fills unset process settings
 from persistent user settings. Settings entered in the current terminal take
-precedence. Missing required Jira settings are reported before Python starts.
+precedence, followed by the local `.env` fallback. Python reports missing required
+Jira settings after loading that fallback.
 Full output, including Python tracebacks, appears in the console and is appended
 to `logs/jira-agent.log` inside this folder. The launcher's exit code matches
 Python's exit code.
