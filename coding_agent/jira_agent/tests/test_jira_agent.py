@@ -3,6 +3,7 @@
 import ast
 import csv
 import importlib
+import io
 import json
 import os
 import runpy
@@ -10,8 +11,10 @@ import subprocess
 import tempfile
 import threading
 import unittest
+from contextlib import redirect_stdout
 from dataclasses import replace
 from pathlib import Path
+from urllib.parse import quote
 from unittest.mock import Mock, patch
 
 from coding_agent.jira_agent import jira_agent
@@ -93,6 +96,21 @@ C_FILE_POLL_INTERVAL = 45
 C_PROCESS_JIRA_PROJECT = "PROCESS_PROJECT"
 C_MISSING_ENV_FILE = "missing.env"
 C_VALUELESS_ENV_FILE_CONTENT = "JIRA_API_TOKEN\n"
+C_PROGRESS_TEST_INTERVAL = 0.01
+C_PROGRESS_TEST_TIMEOUT = 2
+C_METHOD_LOG = "log"
+C_TEST_REDACTION_TOKEN = "test/token+secret"
+C_MESSAGE_SEPARATOR = " "
+C_TIMESTAMP_PATTERN = r"^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC\] "
+C_METHOD_VERIFY_CONNECTION = "verify_connection"
+C_METHOD_CONFIGURATION = "from_local_environment"
+C_TEST_ACCOUNT_ID = "test-account"
+C_VALID_USER_PROFILE = {jira_agent.C_KEY_ACCOUNT_ID: C_TEST_ACCOUNT_ID, jira_agent.C_KEY_ACTIVE: True}
+C_HTTP_RATE_LIMITED = 429
+C_HTTP_SERVER_ERROR = 500
+C_UNEXPECTED_USER_PROFILES = ({}, [], None, {jira_agent.C_KEY_ACCOUNT_ID: C_EMPTY_OUTPUT})
+C_INVALID_JSON = "<html>Login</html>"
+C_JSON_ERROR_POSITION = 0
 
 
 class JiraAgentTests(unittest.TestCase):
@@ -312,6 +330,68 @@ class JiraAgentTests(unittest.TestCase):
         self.assertEqual(parameters[C_TIMEOUT_KEY], jira_agent.C_HTTP_TIMEOUT)
         self.assertIn(C_QUOTED_PROJECT_QUERY, parameters[C_PARAMETERS_KEY][jira_agent.C_KEY_QUERY])
 
+    def test_connection_check_uses_authenticated_current_user_endpoint(self) -> None:
+        """Verify credentials without querying tickets, following redirects, or changing Jira."""
+        session = Mock()
+        session.request.return_value.content = True
+        session.request.return_value.json.return_value = C_VALID_USER_PROFILE
+        client = jira_agent.JiraClient(self.configuration, session)
+        client.verify_connection()
+        self.assertEqual(session.auth, (self.configuration.jira_email, self.configuration.jira_token))
+        session.request.assert_called_once_with(
+            jira_agent.C_METHOD_GET,
+            self.configuration.jira_url + jira_agent.C_API_PATH + jira_agent.C_CURRENT_USER_PATH,
+            timeout=jira_agent.C_HTTP_TIMEOUT, allow_redirects=False,
+        )
+
+    def test_connection_check_reports_authentication_and_http_failures(self) -> None:
+        """Distinguish rejected credentials and access restrictions from other HTTP failures."""
+        for status_code, expected_message in (
+            (jira_agent.C_HTTP_UNAUTHORIZED, jira_agent.C_ERROR_JIRA_UNAUTHORIZED),
+            (jira_agent.C_HTTP_FORBIDDEN, jira_agent.C_ERROR_JIRA_FORBIDDEN),
+            (C_HTTP_RATE_LIMITED, jira_agent.C_ERROR_JIRA_HTTP.format(status_code=C_HTTP_RATE_LIMITED)),
+            (C_HTTP_SERVER_ERROR, jira_agent.C_ERROR_JIRA_HTTP.format(status_code=C_HTTP_SERVER_ERROR)),
+        ):
+            with self.subTest(status_code=status_code):
+                response = jira_agent.requests.Response()
+                response.status_code = status_code
+                session = Mock()
+                session.request.return_value = response
+                with self.assertRaises(RuntimeError) as error_context:
+                    jira_agent.JiraClient(self.configuration, session).verify_connection()
+                self.assertEqual(str(error_context.exception), expected_message)
+
+    def test_connection_check_reports_network_and_invalid_json_failures(self) -> None:
+        """Never label transport errors or login-page responses as a valid API token."""
+        for failure, expected_message in (
+            (jira_agent.requests.Timeout(C_ERROR), jira_agent.C_ERROR_JIRA_TIMEOUT.format(
+                seconds=jira_agent.C_HTTP_TIMEOUT,
+            )),
+            (jira_agent.requests.ConnectionError(C_ERROR), jira_agent.C_ERROR_JIRA_CONNECTION),
+            (jira_agent.requests.RequestException(C_ERROR), jira_agent.C_ERROR_JIRA_REQUEST),
+            (jira_agent.requests.exceptions.JSONDecodeError(
+                C_ERROR, C_INVALID_JSON, C_JSON_ERROR_POSITION,
+            ), jira_agent.C_ERROR_JIRA_RESPONSE),
+        ):
+            with self.subTest(failure_type=type(failure)):
+                session = Mock()
+                session.request.side_effect = failure
+                with self.assertRaises(RuntimeError) as error_context:
+                    jira_agent.JiraClient(self.configuration, session).verify_connection()
+                self.assertEqual(str(error_context.exception), expected_message)
+
+    def test_connection_check_rejects_unexpected_or_inactive_profiles(self) -> None:
+        """Require a real user identity and reject explicitly inactive accounts."""
+        for profile in (*C_UNEXPECTED_USER_PROFILES, {
+            jira_agent.C_KEY_ACCOUNT_ID: C_TEST_ACCOUNT_ID, jira_agent.C_KEY_ACTIVE: False,
+        }):
+            with self.subTest(profile=profile):
+                session = Mock()
+                session.request.return_value.content = True
+                session.request.return_value.json.return_value = profile
+                with self.assertRaises(RuntimeError):
+                    jira_agent.JiraClient(self.configuration, session).verify_connection()
+
 
     def test_empty_http_response_is_not_decoded(self) -> None:
         """Empty HTTP response bodies must not be decoded as JSON."""
@@ -371,6 +451,75 @@ class JiraAgentTests(unittest.TestCase):
         self.assertEqual(self.worker.run_once(), jira_agent.C_ZERO)
         self.jira_client.find_ready_issues.assert_called_once_with([])
         self.assertEqual(self.read_ticket_rows(), [])
+
+    def test_empty_batch_reports_search_result_and_completion(self) -> None:
+        """An idle batch must explain that no tickets matched and it completed normally."""
+        self.jira_client.find_ready_issues.return_value = []
+        console_output = io.StringIO()
+        with redirect_stdout(console_output):
+            self.assertEqual(self.worker.run_once(), jira_agent.C_ZERO)
+        messages = console_output.getvalue()
+        self.assertIn(jira_agent.C_LOG_SEARCH.format(
+            project=self.configuration.jira_project, status=self.configuration.jira_status,
+            limit=jira_agent.C_SEARCH_LIMIT,
+        ), messages)
+        self.assertIn(jira_agent.C_LOG_NO_TICKETS, messages)
+        self.assertIn(jira_agent.C_LOG_BATCH_FINISHED.format(
+            total=jira_agent.C_ZERO, failures=jira_agent.C_ZERO,
+        ), messages)
+
+    def test_failed_jira_search_reports_error_and_failed_batch(self) -> None:
+        """A failed search must never be reported as an empty successful batch."""
+        self.jira_client.find_ready_issues.side_effect = RuntimeError(C_ERROR)
+        console_output = io.StringIO()
+        with redirect_stdout(console_output):
+            self.assertEqual(self.worker.run_once(), jira_agent.C_ONE)
+        messages = console_output.getvalue()
+        self.assertIn(jira_agent.C_LOG_BATCH_FAILURE.format(error=C_ERROR), messages)
+        self.assertIn(jira_agent.C_LOG_BATCH_FINISHED.format(
+            total=jira_agent.C_ZERO, failures=jira_agent.C_ONE,
+        ), messages)
+        self.assertNotIn(jira_agent.C_LOG_NO_TICKETS, messages)
+
+    def test_console_messages_have_timestamp_and_redact_tokens(self) -> None:
+        """Shared worker and scheduler output must redact plain and encoded credentials."""
+        configuration = replace(self.configuration, jira_token=C_TEST_REDACTION_TOKEN)
+        console_output = io.StringIO()
+        with redirect_stdout(console_output):
+            jira_agent.BaseConsoleReporter(configuration).log(C_MESSAGE_SEPARATOR.join((
+                C_TEST_REDACTION_TOKEN, quote(C_TEST_REDACTION_TOKEN, safe=C_EMPTY_OUTPUT),
+            )))
+        messages = console_output.getvalue()
+        self.assertRegex(messages, C_TIMESTAMP_PATTERN)
+        self.assertNotIn(C_TEST_REDACTION_TOKEN, messages)
+        self.assertNotIn(quote(C_TEST_REDACTION_TOKEN, safe=C_EMPTY_OUTPUT), messages)
+        self.assertIn(jira_agent.C_REDACTED, messages)
+
+    def test_command_progress_reports_activity_and_stops_on_exit(self) -> None:
+        """Long commands must produce progress without leaving a reporter thread running."""
+        progress_received = threading.Event()
+        progress = jira_agent.CommandProgressReporter(
+            self.worker, C_ISSUE_KEY, interval=C_PROGRESS_TEST_INTERVAL,
+        )
+        def observe_progress(message: str) -> None:
+            """Signal that the background reporter has produced an activity message."""
+            progress_received.set()
+
+        with patch.object(self.worker, C_METHOD_LOG, side_effect=observe_progress) as log_message:
+            with progress:
+                self.assertTrue(progress_received.wait(C_PROGRESS_TEST_TIMEOUT))
+        self.assertTrue(progress.finished.is_set())
+        self.assertFalse(progress.progress_thread.is_alive())
+        self.assertIn(C_ISSUE_KEY, log_message.call_args.args[C_FIRST_CALL_INDEX])
+
+    def test_command_progress_stops_after_command_failure(self) -> None:
+        """A failed command must release its progress reporter while preserving the exception."""
+        progress = jira_agent.CommandProgressReporter(self.worker, C_ISSUE_KEY)
+        with self.assertRaisesRegex(RuntimeError, C_ERROR):
+            with progress:
+                raise RuntimeError(C_ERROR)
+        self.assertTrue(progress.finished.is_set())
+        self.assertFalse(progress.progress_thread.is_alive())
 
     def test_completed_tickets_are_excluded_from_jira_query(self) -> None:
         """Completed keys must be filtered before the Jira batch limit is applied."""
@@ -594,20 +743,86 @@ class JiraAgentTests(unittest.TestCase):
         """Launching the script must hand lifecycle control to APScheduler."""
         with patch.dict(os.environ, C_TEST_ENVIRONMENT, clear=True):
             with patch.object(jira_agent, C_METHOD_DOTENV_VALUES, return_value={}):
-                with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
-                    self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                with (
+                    patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type,
+                    patch.object(jira_agent.JiraClient, C_METHOD_VERIFY_CONNECTION) as verify_connection,
+                ):
+                    console_output = io.StringIO()
+                    with redirect_stdout(console_output):
+                        self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                    messages = console_output.getvalue()
+                    self.assertIn(jira_agent.C_LOG_JIRA_URL.format(url=self.configuration.jira_url), messages)
+                    self.assertIn(jira_agent.C_LOG_JIRA_EMAIL.format(email=self.configuration.jira_email), messages)
+                    self.assertIn(jira_agent.C_LOG_JIRA_PROJECT.format(project=self.configuration.jira_project), messages)
+                    self.assertIn(jira_agent.C_LOG_API_TOKEN_LOADED, messages)
+                    self.assertNotIn(self.configuration.jira_token, messages)
+                    verify_connection.assert_called_once_with()
                     scheduler_type.return_value.start.assert_called_once_with()
 
     def test_main_loads_worker_local_file_before_starting_scheduler(self) -> None:
         """The entry point must resolve its local dotenv path and apply file configuration."""
         with patch.dict(os.environ, C_EMPTY_ENVIRONMENT, clear=True):
             with patch.object(jira_agent, C_ENV_FILE_PATH_ATTRIBUTE, self.write_environment_file()):
-                with patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type:
-                    self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                with (
+                    patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type,
+                    patch.object(jira_agent.JiraClient, C_METHOD_VERIFY_CONNECTION) as verify_connection,
+                ):
+                    console_output = io.StringIO()
+                    with redirect_stdout(console_output):
+                        self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+                    verify_connection.assert_called_once_with()
                     configuration = scheduler_type.call_args.args[C_FIRST_CALL_INDEX]
+                    messages = console_output.getvalue()
+                    self.assertIn(jira_agent.C_LOG_JIRA_URL.format(url=configuration.jira_url), messages)
+                    self.assertIn(jira_agent.C_LOG_JIRA_EMAIL.format(email=configuration.jira_email), messages)
+                    self.assertIn(jira_agent.C_LOG_JIRA_PROJECT.format(project=configuration.jira_project), messages)
+                    self.assertIn(jira_agent.C_LOG_API_TOKEN_LOADED, messages)
+                    self.assertNotIn(configuration.jira_token, messages)
                     self.assertEqual(configuration.jira_status, C_FILE_JIRA_STATUS)
                     self.assertEqual(configuration.poll_interval, C_FILE_POLL_INTERVAL)
                     scheduler_type.return_value.start.assert_called_once_with()
+
+    def test_main_checks_connection_before_constructing_scheduler(self) -> None:
+        """No scheduler instance may exist until the startup authentication test succeeds."""
+        with (
+            patch.object(jira_agent.AgentConfiguration, C_METHOD_CONFIGURATION, return_value=self.configuration),
+            patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type,
+            patch.object(jira_agent.JiraClient, C_METHOD_VERIFY_CONNECTION) as verify_connection,
+        ):
+            def verify_before_scheduling() -> None:
+                """Assert the scheduler has not been created when authentication is checked."""
+                scheduler_type.assert_not_called()
+
+            verify_connection.side_effect = verify_before_scheduling
+            console_output = io.StringIO()
+            with redirect_stdout(console_output):
+                self.assertEqual(jira_agent.main(), jira_agent.C_ZERO)
+            self.assertIn(jira_agent.C_LOG_CONNECTION_VALID, console_output.getvalue())
+            scheduler_type.return_value.start.assert_called_once_with()
+
+    def test_main_stops_without_ticket_activity_when_startup_check_fails(self) -> None:
+        """A failed preflight must exit nonzero without starting scheduling or writing a CSV."""
+        failure_message = C_MESSAGE_SEPARATOR.join((
+            jira_agent.C_ERROR_JIRA_UNAUTHORIZED, self.configuration.jira_token,
+        ))
+        with (
+            patch.object(jira_agent.AgentConfiguration, C_METHOD_CONFIGURATION, return_value=self.configuration),
+            patch.object(jira_agent, C_METHOD_SCHEDULER) as scheduler_type,
+            patch.object(jira_agent.JiraClient, C_METHOD_VERIFY_CONNECTION,
+                         side_effect=RuntimeError(failure_message)),
+            patch.object(jira_agent, C_METHOD_WORKER) as worker_type,
+        ):
+            console_output = io.StringIO()
+            with redirect_stdout(console_output):
+                self.assertEqual(jira_agent.main(), jira_agent.C_ONE)
+            scheduler_type.assert_not_called()
+            worker_type.assert_not_called()
+        messages = console_output.getvalue()
+        self.assertIn(jira_agent.C_ERROR_JIRA_UNAUTHORIZED, messages)
+        self.assertNotIn(jira_agent.C_LOG_CONNECTION_VALID, messages)
+        self.assertNotIn(self.configuration.jira_token, messages)
+        self.assertIn(jira_agent.C_REDACTED, messages)
+        self.assertFalse(self.report_path.exists())
 
     def test_module_entry_point_calls_main(self) -> None:
         """The documented module command must dispatch to the scheduler's main function."""

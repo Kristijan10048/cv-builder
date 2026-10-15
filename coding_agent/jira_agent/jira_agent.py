@@ -13,6 +13,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -71,7 +72,13 @@ C_DEFAULT_AGENT_COMMAND = "codex --ask-for-approval never exec --sandbox workspa
 C_ISSUE_KEY_PATTERN = r"[A-Za-z][A-Za-z0-9_]*-[0-9]+"
 C_API_PATH = "/rest/api/2"
 C_SEARCH_PATH = "/search/jql"
+C_CURRENT_USER_PATH = "/myself"
+C_HTTP_UNAUTHORIZED = 401
+C_HTTP_FORBIDDEN = 403
+C_UNKNOWN_HTTP_STATUS = "unknown"
 C_METHOD_GET = "GET"
+C_KEY_ACCOUNT_ID = "accountId"
+C_KEY_ACTIVE = "active"
 C_KEY_ISSUES = "issues"
 C_KEY_ISSUE_KEY = "key"
 C_KEY_FIELDS = "fields"
@@ -102,6 +109,7 @@ C_PROMPT_TEMPLATE = (
 C_MISSING_DESCRIPTION = "(none)"
 C_LOG_STARTED = "[{issue_key}] started"
 C_LOG_IMPLEMENTED = "[{issue_key}] implemented"
+C_LOG_IMPLEMENTED_UNRECORDED = "[{issue_key}] implemented, but CSV save failed; completion was not persisted."
 C_LOG_SKIPPED = "[{issue_key}] already implemented; skipped"
 C_LOG_FAILURE = "[{issue_key}] failed: {error}"
 C_LOG_REPORT_FAILURE = "[{issue_key}] CSV update failed: {error}"
@@ -111,6 +119,35 @@ C_LOG_LOCKED = "Another Jira agent run is active; skipping this invocation."
 C_LOG_SCHEDULER_STARTED = "Scheduling Jira status '{status}' every {seconds} seconds; first batch starts now."
 C_LOG_SCHEDULER_STOPPED = "Jira scheduler stopped."
 C_LOG_SCHEDULED_FAILURE = "Scheduled Jira batch failed; retrying at the next interval."
+C_LOG_STARTING = "Starting Jira agent; loading environment settings and optional local .env..."
+C_LOG_ENV_FILE = "Local .env fallback read from {path}; process settings take precedence."
+C_LOG_NO_ENV_FILE = "No local .env file found; using process settings and defaults."
+C_LOG_CONFIGURATION = "Configuration ready: project={project}; status={status}; repository={repository}; CSV={csv_path}."
+C_LOG_JIRA_URL = "JIRA_URL={url}"
+C_LOG_JIRA_EMAIL = "JIRA_EMAIL={email}"
+C_LOG_JIRA_PROJECT = "JIRA_PROJECT={project}"
+C_LOG_API_TOKEN_LOADED = "JIRA_API_TOKEN loaded: yes (value hidden)."
+C_LOG_CONNECTION_TEST = "Testing Jira connection and API token (timeout: {seconds}s)..."
+C_LOG_CONNECTION_VALID = "Jira connection successful; API token accepted. Starting scheduler."
+C_LOG_STARTUP_FAILED = "Jira startup check failed: {error} Scheduler was not started."
+C_LOG_FORMAT = "[{timestamp}] {message}"
+C_LOG_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S UTC"
+C_LOG_LOCK_ACQUIRED = "Repository lock acquired; loading ticket history."
+C_LOG_HISTORY = "Loaded {count} completed ticket(s) from CSV; excluding them from the Jira search."
+C_LOG_SEARCH = "Searching Jira project '{project}', status '{status}' (up to {limit} tickets)."
+C_LOG_FOUND = "Jira returned {count} ticket(s)."
+C_LOG_NO_TICKETS = "No matching tickets to implement."
+C_LOG_TICKET_POSITION = "Processing ticket {position}/{total}: {issue_key}."
+C_LOG_SNAPSHOT = "[{issue_key}] checking workspace before implementation."
+C_LOG_AGENT_RUNNING = "[{issue_key}] running coding agent (timeout: {seconds}s); waiting for implementation and tests."
+C_LOG_AGENT_PROGRESS = "[{issue_key}] coding agent still running ({seconds}s elapsed)."
+C_LOG_AGENT_EXITED = "[{issue_key}] coding agent exited successfully; checking completion marker and workspace changes."
+C_LOG_VERIFIED = "[{issue_key}] implementation and workspace changes confirmed."
+C_LOG_CSV_UPDATED = "[{issue_key}] CSV updated; current ticket cleared."
+C_LOG_BATCH_FINISHED = "Batch finished: {total} ticket(s) returned; {failures} failure(s)."
+C_LOG_WAITING = "Waiting for the next scheduled batch (interval: {seconds}s)."
+C_LOG_STOPPING = "Shutdown requested; waiting for active work to finish."
+C_PROGRESS_INTERVAL = 15
 C_SCHEDULER_JOB_ID = "jira-implementation-batch"
 C_SCHEDULER_TRIGGER = "interval"
 C_SCHEDULER_TIMEZONE = "UTC"
@@ -123,6 +160,14 @@ C_ERROR_COMMAND = "Command failed with exit code {return_code}:\n{output}"
 C_ERROR_NO_CHANGES = "Agent made no new changes."
 C_ERROR_INCOMPLETE = "Agent did not confirm implementation and successful validation."
 C_ERROR_CSV_COLUMNS = "Ticket CSV must have columns: implemented_ticket, currently_implementing_ticket."
+C_ERROR_JIRA_UNAUTHORIZED = "Authentication rejected (HTTP 401). Check JIRA_EMAIL and JIRA_API_TOKEN; the token may be invalid, expired, or revoked."
+C_ERROR_JIRA_FORBIDDEN = "Access denied (HTTP 403). Check account access, API token scopes, and Jira authentication restrictions."
+C_ERROR_JIRA_HTTP = "Jira returned HTTP {status_code}. Check JIRA_URL and Jira service availability."
+C_ERROR_JIRA_TIMEOUT = "Jira did not respond within {seconds}s. Check JIRA_URL and network connectivity."
+C_ERROR_JIRA_CONNECTION = "Could not connect to Jira. Check JIRA_URL, network/proxy settings, and TLS certificates."
+C_ERROR_JIRA_REQUEST = "Could not complete the Jira authentication request. Check JIRA_URL and connection settings."
+C_ERROR_JIRA_RESPONSE = "Jira did not return an authenticated user profile. Check JIRA_URL and any login proxy."
+C_ERROR_JIRA_INACTIVE = "The authenticated Jira account is inactive. Check account access."
 C_REDACTED = "[REDACTED]"
 C_GIT_EXECUTABLE = "git"
 C_GIT_DIFF_ARGUMENTS = ("diff", "--binary", "HEAD", "--")
@@ -223,6 +268,55 @@ class AgentConfiguration:
         return text
 
 
+class BaseConsoleReporter:
+    """Share timestamped, immediately flushed, credential-redacted progress output."""
+
+    def __init__(self, configuration: AgentConfiguration) -> None:
+        """Keep configuration available for redacting operational messages."""
+        self.configuration = configuration
+
+    def log(self, message: str) -> None:
+        """Print each progress message with a UTC timestamp and no Jira token."""
+        timestamp = datetime.now(timezone.utc).strftime(C_LOG_TIMESTAMP_FORMAT)
+        print(C_LOG_FORMAT.format(
+            timestamp=timestamp, message=self.configuration.redact(message),
+        ), flush=True)
+
+
+class CommandProgressReporter:
+    """Report continued coding-agent activity until its command finishes or fails."""
+
+    def __init__(
+        self, reporter: BaseConsoleReporter, issue_key: str,
+        interval: float = C_PROGRESS_INTERVAL,
+    ) -> None:
+        """Create a stoppable reporter without changing subprocess output capture."""
+        self.reporter = reporter
+        self.issue_key = issue_key
+        self.interval = interval
+        self.finished = threading.Event()
+        self.progress_thread = threading.Thread(target=self.report_progress, daemon=True)
+
+    def report_progress(self) -> None:
+        """Emit periodic activity messages while the coding command is pending."""
+        elapsed_seconds = C_ZERO
+        while not self.finished.wait(self.interval):
+            elapsed_seconds += self.interval
+            self.reporter.log(C_LOG_AGENT_PROGRESS.format(
+                issue_key=self.issue_key, seconds=int(elapsed_seconds),
+            ))
+
+    def __enter__(self) -> CommandProgressReporter:
+        """Begin reporting progress before invoking the coding command."""
+        self.progress_thread.start()
+        return self
+
+    def __exit__(self, exception_type: object, exception: object, traceback: object) -> None:
+        """Stop promptly on success, timeout, or another command failure."""
+        self.finished.set()
+        self.progress_thread.join()
+
+
 @dataclass(frozen=True)
 class JiraIssue:
     """Represent Jira fields needed to implement a local coding task."""
@@ -273,6 +367,39 @@ class JiraClient(BaseHttpClient):
         super().__init__(session)
         self.configuration = configuration
         self.session.auth = (configuration.jira_email, configuration.jira_token)
+
+    def verify_connection(self) -> None:
+        """Verify credentials with a read-only current-user request before scheduling."""
+        try:
+            # Avoid following a login redirect and mistaking its response for authentication.
+            profile = self.request(
+                C_METHOD_GET, self.configuration.jira_url + C_API_PATH + C_CURRENT_USER_PATH,
+                allow_redirects=False,
+            )
+        except requests.HTTPError as exception:
+            status_code = (
+                exception.response.status_code if exception.response is not None
+                else C_UNKNOWN_HTTP_STATUS
+            )
+            if status_code == C_HTTP_UNAUTHORIZED:
+                raise RuntimeError(C_ERROR_JIRA_UNAUTHORIZED) from exception
+            if status_code == C_HTTP_FORBIDDEN:
+                raise RuntimeError(C_ERROR_JIRA_FORBIDDEN) from exception
+            raise RuntimeError(C_ERROR_JIRA_HTTP.format(status_code=status_code)) from exception
+        except requests.Timeout as exception:
+            raise RuntimeError(C_ERROR_JIRA_TIMEOUT.format(seconds=C_HTTP_TIMEOUT)) from exception
+        except requests.ConnectionError as exception:
+            raise RuntimeError(C_ERROR_JIRA_CONNECTION) from exception
+        except requests.exceptions.JSONDecodeError as exception:
+            raise RuntimeError(C_ERROR_JIRA_RESPONSE) from exception
+        except requests.RequestException as exception:
+            raise RuntimeError(C_ERROR_JIRA_REQUEST) from exception
+        except ValueError as exception:
+            raise RuntimeError(C_ERROR_JIRA_RESPONSE) from exception
+        if not isinstance(profile, dict) or not profile.get(C_KEY_ACCOUNT_ID):
+            raise RuntimeError(C_ERROR_JIRA_RESPONSE)
+        if profile.get(C_KEY_ACTIVE) is False:
+            raise RuntimeError(C_ERROR_JIRA_INACTIVE)
 
     def find_ready_issues(self, implemented_tickets: list[str] | None = None) -> list[dict]:
         """Fetch one batch, excluding completed keys before applying the result limit."""
@@ -402,7 +529,7 @@ class RepositoryRunLock:
         self.lock_file.close()
 
 
-class JiraAgentWorker:
+class JiraAgentWorker(BaseConsoleReporter):
     """Implement a finite batch in the configured local repository."""
 
     def __init__(
@@ -410,7 +537,7 @@ class JiraAgentWorker:
         command_runner: CommandRunner, ticket_report: TicketCsvReport | None = None,
     ) -> None:
         """Accept collaborators explicitly for offline workflow tests."""
-        self.configuration = configuration
+        super().__init__(configuration)
         self.jira_client = jira_client
         self.command_runner = command_runner
         self.ticket_report = (
@@ -462,17 +589,24 @@ class JiraAgentWorker:
 
     def implement_issue(self, issue: JiraIssue) -> None:
         """Require successful CLI execution, new edits, and a validated completion marker."""
+        self.log(C_LOG_SNAPSHOT.format(issue_key=issue.issue_key))
         before_implementation = self.workspace_fingerprint()
-        result = self.command_runner.run(
-            self.build_agent_arguments(issue.build_prompt()), directory=self.configuration.repository_directory,
-            timeout=self.configuration.agent_timeout, environment=self.build_process_environment(),
-        )
+        self.log(C_LOG_AGENT_RUNNING.format(
+            issue_key=issue.issue_key, seconds=self.configuration.agent_timeout,
+        ))
+        with CommandProgressReporter(self, issue.issue_key):
+            result = self.command_runner.run(
+                self.build_agent_arguments(issue.build_prompt()), directory=self.configuration.repository_directory,
+                timeout=self.configuration.agent_timeout, environment=self.build_process_environment(),
+            )
+        self.log(C_LOG_AGENT_EXITED.format(issue_key=issue.issue_key))
         success_marker = C_SUCCESS_MARKER_TEMPLATE.format(issue_key=issue.issue_key)
         output_lines = result.stdout.rstrip().splitlines()
         if not output_lines or output_lines[C_LAST_CHARACTER] != success_marker:
             raise RuntimeError(C_ERROR_INCOMPLETE)
         if self.workspace_fingerprint() == before_implementation:
             raise RuntimeError(C_ERROR_NO_CHANGES)
+        self.log(C_LOG_VERIFIED.format(issue_key=issue.issue_key))
 
     def process_issue(self, issue: JiraIssue) -> bool:
         """Track current work and write successful implementation to the CSV."""
@@ -490,7 +624,9 @@ class JiraAgentWorker:
             ))
             return False
         recorded = self.finish_ticket_report(issue.issue_key, implemented=True)
-        self.log(C_LOG_IMPLEMENTED.format(issue_key=issue.issue_key))
+        self.log((C_LOG_IMPLEMENTED if recorded else C_LOG_IMPLEMENTED_UNRECORDED).format(
+            issue_key=issue.issue_key,
+        ))
         return recorded
 
     def finish_ticket_report(self, issue_key: str, implemented: bool) -> bool:
@@ -500,40 +636,52 @@ class JiraAgentWorker:
         except Exception as exception:
             self.log(C_LOG_REPORT_FAILURE.format(issue_key=issue_key, error=exception))
             return False
+        self.log(C_LOG_CSV_UPDATED.format(issue_key=issue_key))
         return True
-
-    def log(self, message: str) -> None:
-        """Print credential-redacted operational messages immediately."""
-        print(self.configuration.redact(message), flush=True)
 
     def run_once(self) -> int:
         """Fetch one batch, process sequentially, and return a scheduler-friendly code."""
         self.ticket_report.write()
         self.log(C_LOG_BATCH)
+        self.log(C_LOG_HISTORY.format(count=len(self.ticket_report.implemented_tickets)))
+        self.log(C_LOG_SEARCH.format(
+            project=self.configuration.jira_project, status=self.configuration.jira_status,
+            limit=C_SEARCH_LIMIT,
+        ))
         failures = C_ZERO
+        total_tickets = C_ZERO
         try:
             responses = self.jira_client.find_ready_issues(self.ticket_report.implemented_tickets)
-            for response in responses:
+            total_tickets = len(responses)
+            self.log(C_LOG_FOUND.format(count=total_tickets))
+            if not responses:
+                self.log(C_LOG_NO_TICKETS)
+            for position, response in enumerate(responses, start=C_ONE):
                 try:
-                    if not self.process_issue(JiraIssue.from_response(response)):
+                    issue = JiraIssue.from_response(response)
+                    self.log(C_LOG_TICKET_POSITION.format(
+                        position=position, total=total_tickets, issue_key=issue.issue_key,
+                    ))
+                    if not self.process_issue(issue):
                         failures += C_ONE
                 except Exception as exception:
                     failures += C_ONE
                     self.log(C_LOG_BATCH_FAILURE.format(error=exception))
         except Exception as exception:
+            failures += C_ONE
             self.log(C_LOG_BATCH_FAILURE.format(error=exception))
-            return C_ONE
+        self.log(C_LOG_BATCH_FINISHED.format(total=total_tickets, failures=failures))
         return C_ONE if failures else C_ZERO
 
 
-class JiraAgentScheduler:
+class JiraAgentScheduler(BaseConsoleReporter):
     """Run recurring batches without overlapping implementations or a polling loop."""
 
     def __init__(
         self, configuration: AgentConfiguration, scheduler: BlockingScheduler | None = None,
     ) -> None:
         """Accept a scheduler that can be replaced in offline lifecycle tests."""
-        self.configuration = configuration
+        super().__init__(configuration)
         self.scheduler = (
             scheduler if scheduler is not None
             else BlockingScheduler(timezone=C_SCHEDULER_TIMEZONE)
@@ -543,6 +691,7 @@ class JiraAgentScheduler:
         """Reload CSV history under the repository lock for each scheduled batch."""
         try:
             with RepositoryRunLock(self.configuration.repository_directory):
+                self.log(C_LOG_LOCK_ACQUIRED)
                 # Recreate the report after acquiring the lock so another run's
                 # completed history is retained and its active row is never cleared.
                 worker = JiraAgentWorker(
@@ -550,14 +699,16 @@ class JiraAgentScheduler:
                 )
                 result = worker.run_once()
                 if result != C_ZERO:
-                    print(C_LOG_SCHEDULED_FAILURE, flush=True)
+                    self.log(C_LOG_SCHEDULED_FAILURE)
                 return result
         except BlockingIOError:
-            print(C_LOG_LOCKED, flush=True)
+            self.log(C_LOG_LOCKED)
             return C_ZERO
         except Exception as exception:
-            print(self.configuration.redact(C_LOG_BATCH_FAILURE.format(error=exception)), flush=True)
+            self.log(C_LOG_BATCH_FAILURE.format(error=exception))
             return C_ONE
+        finally:
+            self.log(C_LOG_WAITING.format(seconds=self.configuration.poll_interval))
 
     def start(self) -> None:
         """Start immediately, repeat at the configured interval, and stop gracefully."""
@@ -568,23 +719,45 @@ class JiraAgentScheduler:
             max_instances=C_ONE, coalesce=True,
             misfire_grace_time=self.configuration.poll_interval,
         )
-        print(self.configuration.redact(C_LOG_SCHEDULER_STARTED.format(
+        self.log(C_LOG_SCHEDULER_STARTED.format(
             status=self.configuration.jira_status, seconds=self.configuration.poll_interval,
-        )), flush=True)
+        ))
         try:
             self.scheduler.start()
         except (KeyboardInterrupt, SystemExit):
-            pass
+            self.log(C_LOG_STOPPING)
         finally:
             # Let an active implementation finish its CSV update before exiting.
             if self.scheduler.running:
                 self.scheduler.shutdown(wait=True)
-            print(C_LOG_SCHEDULER_STOPPED, flush=True)
+            self.log(C_LOG_SCHEDULER_STOPPED)
 
 
 def main() -> int:
     """Load configuration and keep APScheduler running until interrupted."""
+    print(C_LOG_STARTING, flush=True)
     configuration = AgentConfiguration.from_local_environment(os.environ)
+    reporter = BaseConsoleReporter(configuration)
+    if C_ENV_FILE_PATH.is_file():
+        reporter.log(C_LOG_ENV_FILE.format(path=C_ENV_FILE_PATH))
+    else:
+        reporter.log(C_LOG_NO_ENV_FILE)
+    reporter.log(C_LOG_JIRA_URL.format(url=configuration.jira_url))
+    reporter.log(C_LOG_JIRA_EMAIL.format(email=configuration.jira_email))
+    reporter.log(C_LOG_JIRA_PROJECT.format(project=configuration.jira_project))
+    # Required-setting validation has already rejected a missing or blank API token.
+    reporter.log(C_LOG_API_TOKEN_LOADED)
+    reporter.log(C_LOG_CONFIGURATION.format(
+        project=configuration.jira_project, status=configuration.jira_status,
+        repository=configuration.repository_directory, csv_path=configuration.ticket_csv_path,
+    ))
+    reporter.log(C_LOG_CONNECTION_TEST.format(seconds=C_HTTP_TIMEOUT))
+    try:
+        JiraClient(configuration).verify_connection()
+    except RuntimeError as exception:
+        reporter.log(C_LOG_STARTUP_FAILED.format(error=exception))
+        return C_ONE
+    reporter.log(C_LOG_CONNECTION_VALID)
     JiraAgentScheduler(configuration).start()
     return C_ZERO
 

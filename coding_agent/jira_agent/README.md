@@ -36,7 +36,19 @@ path and the Python executable path are supplied correctly:
 .\.venv\Scripts\python.exe .\coding_agent\jira_agent\jira_agent.py
 ```
 
-The scheduler starts a batch of up to five tickets immediately, then repeats
+Before scheduling, the script tests the connection and API token with a read-only
+[`GET /rest/api/2/myself`](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-myself/#api-rest-api-2-myself-get)
+request. It prints whether authentication succeeded. Invalid credentials, denied
+access, timeouts, connection failures, or an unexpected response stop startup
+with exit code 1, before any ticket is fetched or implemented. The request has a
+30-second timeout. This confirms authentication; project and ticket permissions
+are checked when the normal Jira search runs.
+
+Startup output shows the effective `JIRA_URL`, `JIRA_EMAIL`, and `JIRA_PROJECT`
+and confirms `JIRA_API_TOKEN loaded: yes (value hidden)`. A missing or blank token
+fails required-setting validation; the token value is never included in the summary.
+
+After the check succeeds, the scheduler starts a batch of up to five tickets immediately, then repeats
 every ten minutes while it remains running. Tickets run sequentially. Press
 Ctrl+C to stop scheduling; shutdown waits for active work to finish its CSV
 update. Windows Task Scheduler is not required.
@@ -89,6 +101,14 @@ run appropriate tests. The scheduler checks that confirmation rather than
 independently rerunning the project's tests.
 
 ## PowerShell launcher
+
+Both Python entry points and the launcher print progress immediately. Messages
+include UTC timestamps, configuration paths, repository locking, Jira search
+criteria and results, ticket position, coding-agent execution and verification,
+CSV updates, batch failure counts, and waiting/shutdown status. While a coding
+command is active, a progress message appears every 15 seconds. These messages
+show that the command is still running; detailed coding-agent output remains
+captured for completion checks and error reporting. Jira API tokens are redacted.
 
 ```powershell
 .\coding_agent\jira_agent\Run-JiraAgent.ps1
