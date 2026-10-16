@@ -55,6 +55,14 @@ $env:APPLYKIT_LOG_LEVEL = 'TRACE'
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
+## Appearance
+
+Open **Settings > Appearance** to switch between light and dark mode. The first
+visit follows your system theme; choosing a mode applies it immediately and saves
+it in this browser, including across tabs and reloads. If browser storage is
+unavailable, the switch still works for the current page. Document editors use
+a monospace font for easier editing of source text.
+
 ## LM Studio
 
 Start LM Studio's local server and load a model. In ApplyKit, open **Settings**,
@@ -178,6 +186,11 @@ Run the automated checks with:
 ```
 
 Tests use temporary databases and preserve your saved applications and settings.
+Run the theme behavior regression tests with Node.js (no npm packages required):
+
+```powershell
+node --test tests/theme.test.cjs
+```
 
 ## Local merge checks
 
