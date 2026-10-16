@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20261014-jobs-ribbon">
+  <script src="/static/theme.js?v=20261016-dark-mode"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20261016-dark-mode">
   <script defer src="/static/app.js?v=20261015-llm-settings"></script>
   <script defer src="/static/job-search-locations.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/job_search_preferences.js?v=20261009-location-dropdowns"></script>
@@ -251,8 +252,16 @@
         </section>
 
         <section class="view" id="settingsView">
-          <div class="section-heading page-heading"><div><p class="eyebrow">AI CONFIGURATION</p><h2>Settings</h2><p class="subcopy">Manage the LLM server API used to draft tailored documents.</p></div></div>
+          <div class="section-heading page-heading"><div><p class="eyebrow">WORKSPACE PREFERENCES</p><h2>Settings</h2><p class="subcopy">Choose your appearance and configure the LLM server API.</p></div></div>
           <div class="settings-stack">
+            <article class="panel settings-card" aria-labelledby="appearanceHeading">
+              <div class="panel-heading"><span class="doc-icon" aria-hidden="true">&#9680;</span><div><h3 id="appearanceHeading">Appearance</h3><p>A comfortable workspace, day or night.</p></div></div>
+              <div class="theme-setting">
+                <div><span class="theme-label" id="themeLabel">Dark mode</span><p class="field-help" id="themeHelp">Starts with your system theme. Changes apply instantly and are saved in this browser.</p></div>
+                <button type="button" class="theme-toggle" id="themeToggle" role="switch" aria-checked="false" aria-labelledby="themeLabel" aria-describedby="themeHelp"><span class="theme-toggle-thumb" aria-hidden="true"></span></button>
+              </div>
+              <p class="theme-status" id="themeStatus" role="status" aria-live="polite">Light mode on</p>
+            </article>
             <form id="settingsForm" class="panel settings-card">
               <div class="panel-heading"><span class="doc-icon">AI</span><div><h3>LLM server API</h3><p>Connect to an OpenAI-compatible API to draft tailored documents.</p></div></div>
               <label>LLM server API URL<input id="llmServerUrl" type="url" placeholder="http://localhost:1234/v1"></label>
