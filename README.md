@@ -33,7 +33,7 @@ target repository root so existing runs retain their completed-ticket history.
 
 Python's standard logging records every HTTP request, including API routers,
 pages, static files, validation failures, and errors. Logs go to
-`logs/applykit.log` by default. Files rotate at 5 MB, keeping three backups.
+`logs/applykit.log` by default. Files rotate at 5 MB, keeping 20 backups.
 Application logs (including job searches and failures) use the same file.
 
 Set `APPLYKIT_LOG_DIR` to change the directory (relative paths are resolved from
@@ -178,3 +178,26 @@ Run the automated checks with:
 ```
 
 Tests use temporary databases and preserve your saved applications and settings.
+
+## Local merge checks
+
+The versioned hooks in `.githooks/` run staged whitespace checks, the full
+Python test suite, and JavaScript syntax checks before a merge commit. They
+require the project `.venv` and Node.js. From the Git repository root, enable
+them once per checkout:
+
+```powershell
+git config --local core.hooksPath 'Documents/CV Builder/.githooks'
+```
+
+In SmartGit, choose **Create Merge-Commit** when merging into `master`.
+**Fast-Forward** creates no commit and cannot trigger the merge hook. The
+`pre-commit` hook also checks merges finished after conflict resolution and
+squash commits when Git has left a squash message. Ordinary commits are not
+checked by this hook. Run all checks manually with:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File '.githooks/Invoke-MergeChecks.ps1' -Force
+```
+
+This Git setting is local to the checkout; repeat it after cloning the repository.

@@ -1,0 +1,2 @@
+pre-commit text eol=lf
+pre-merge-commit text eol=lf

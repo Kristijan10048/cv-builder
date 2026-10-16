@@ -82,7 +82,7 @@ def test_log_directory_and_repeat_configuration(directory, tmp_path, monkeypatch
     try:
         assert first.stream is None
         assert second.maxBytes == 5_000_000
-        assert second.backupCount == 3
+        assert second.backupCount == 20
         logging.getLogger("app.job_search").info("configuration-test")
         content = (expected / "applykit.log").read_text(encoding="utf-8")
         assert content.count("configuration-test") == 1
