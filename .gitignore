@@ -8,3 +8,6 @@ data/*.db-wal
 /.idea/
 /.venv/
 /logs/
+/jira_agent_tickets.csv
+/.jira_agent.lock
+/coding_agent/jira_agent/logs/

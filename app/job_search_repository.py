@@ -116,6 +116,7 @@ class JobSearchQueryCatalog:
             AvailableJobModel.job_title,
             AvailableJobModel.company,
             AvailableJobModel.location,
+            AvailableJobModel.description,
             AvailableJobModel.date_posted,
             AvailableJobModel.job_type,
             AvailableJobModel.is_remote,

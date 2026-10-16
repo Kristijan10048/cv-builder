@@ -6,6 +6,10 @@ from typing import Mapping
 from sqlalchemy import ForeignKey, Integer, JSON, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column
 
+from .job_language_requirements import RegexLanguageRequirementExtractor
+
+C_LANGUAGE_REQUIREMENTS_KEY = "language_requirements"
+
 
 class DatabaseModel(MappedAsDataclass, DeclarativeBase):
     """Share mapped dataclass metadata while leaving schema changes to migrations."""
@@ -163,7 +167,7 @@ class AvailableJobModel(DatabaseModel):
         }
 
     def to_list_item(self, applied: bool) -> dict:
-        """Serialize the existing listing fields and convert SQLite flags to booleans."""
+        """Serialize listing fields with language requirements derived from the stored brief."""
         return {
             "id": self.id,
             "site": self.site,
@@ -171,6 +175,7 @@ class AvailableJobModel(DatabaseModel):
             "job_title": self.job_title,
             "company": self.company,
             "location": self.location,
+            C_LANGUAGE_REQUIREMENTS_KEY: RegexLanguageRequirementExtractor().extract(self.description),
             "date_posted": self.date_posted,
             "job_type": self.job_type,
             "is_remote": None if self.is_remote is None else bool(self.is_remote),

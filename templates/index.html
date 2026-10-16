@@ -8,11 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20261008-columns">
-  <script defer src="/static/app.js?v=20261008-sidebar"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20261014-jobs-ribbon">
+  <script defer src="/static/app.js?v=20261015-llm-settings"></script>
   <script defer src="/static/job-search-locations.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/job_search_preferences.js?v=20261009-location-dropdowns"></script>
-  <script defer src="/static/available_jobs.js?v=20261008-columns-fit"></script>
+  <script defer src="/static/available_jobs.js?v=20261014-jobs-language"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -26,9 +26,9 @@
       <nav aria-label="Main navigation">
         <p class="nav-label">Workspace</p>
         <button class="nav-item active" data-view="dashboard" aria-label="Overview" title="Overview"><span aria-hidden="true">⌂</span><span class="nav-text">Overview</span></button>
+        <button class="nav-item" data-view="availableJobs" aria-label="Available Jobs" title="Available Jobs"><span aria-hidden="true">&#128188;</span><span class="nav-text">Available Jobs</span></button>
         <button class="nav-item" data-view="editor" aria-label="New application" title="New application"><span aria-hidden="true">＋</span><span class="nav-text">New application</span></button>
         <button class="nav-item" data-view="applications" aria-label="Applications" title="Applications"><span aria-hidden="true">▤</span><span class="nav-text">Applications</span></button>
-        <button class="nav-item" data-view="availableJobs" aria-label="Available Jobs" title="Available Jobs"><span aria-hidden="true">&#128188;</span><span class="nav-text">Available Jobs</span></button>
         <button class="nav-item" data-view="jobSearchPreferences" aria-label="Job Search Preferences" title="Job Search Preferences"><span aria-hidden="true">&#8981;</span><span class="nav-text">Job Search Preferences</span></button>
         <p class="nav-label">Library</p>
         <button class="nav-item" data-view="profile" aria-label="Profile" title="Profile"><span class="profile-nav-icon" aria-hidden="true">&#128100;</span><span class="nav-text">Profile</span></button>
@@ -44,7 +44,7 @@
     <section class="workspace">
       <header class="topbar">
         <button class="icon-button mobile-menu" id="menuButton" aria-label="Open menu">☰</button>
-        <div>
+        <div id="topbarHeading">
           <p class="eyebrow">APPLICATION WORKSPACE</p>
           <h1 id="pageTitle">Overview</h1>
         </div>
@@ -52,6 +52,7 @@
           <span class="save-state" id="saveState">All changes saved</span>
           <button class="primary small" data-action="new">New application</button>
         </div>
+        {% include "job_search_toolbar.html" %}
       </header>
 
       <main>
@@ -250,14 +251,13 @@
         </section>
 
         <section class="view" id="settingsView">
-          <div class="section-heading page-heading"><div><p class="eyebrow">LOCAL CONFIGURATION</p><h2>Settings</h2><p class="subcopy">Manage the local AI connection used to draft tailored documents.</p></div></div>
+          <div class="section-heading page-heading"><div><p class="eyebrow">AI CONFIGURATION</p><h2>Settings</h2><p class="subcopy">Manage the LLM server API used to draft tailored documents.</p></div></div>
           <div class="settings-stack">
             <form id="settingsForm" class="panel settings-card">
-              <div class="panel-heading"><span class="doc-icon">AI</span><div><h3>LM Studio</h3><p>Connect to an OpenAI-compatible model running on this computer.</p></div></div>
-              <label>LM Studio server URL<input id="lmStudioUrl" type="url" placeholder="http://localhost:1234/v1"></label>
-              <label>Model identifier<input id="lmStudioModel" placeholder="Leave blank to use the loaded model"></label>
-              <div class="connection-row"><button class="secondary" type="button" id="testConnection">Test connection</button><span id="connectionState">Not tested</span></div>
-              <button class="primary" type="submit">Save LM Studio settings</button>
+              <div class="panel-heading"><span class="doc-icon">AI</span><div><h3>LLM server API</h3><p>Connect to an OpenAI-compatible API to draft tailored documents.</p></div></div>
+              <label>LLM server API URL<input id="llmServerUrl" type="url" placeholder="http://localhost:1234/v1"></label>
+              <div class="connection-row"><button class="secondary" type="button" id="testConnection">Test connection</button><span id="connectionState" role="status" aria-live="polite">Not tested</span></div>
+              <button class="primary" type="submit">Save settings</button>
             </form>
           </div>
         </section>

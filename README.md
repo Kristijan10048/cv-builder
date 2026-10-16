@@ -13,6 +13,22 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 
 Open `http://127.0.0.1:8000`.
 
+## Scheduled Jira implementation
+
+Jira development automation lives in [`coding_agent/jira_agent`](coding_agent/jira_agent/README.md),
+including its script, PowerShell launcher, dependencies, and offline tests.
+See that folder's README for setup and configuration. From the project root,
+after configuring the required environment variables:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r coding_agent/jira_agent/requirements.txt
+.\.venv\Scripts\python.exe -m coding_agent.jira_agent
+```
+
+The scheduler edits this checkout by default and checks Jira immediately, then
+every ten minutes. Generated CSV history and the concurrency lock remain in the
+target repository root so existing runs retain their completed-ticket history.
+
 ## Endpoint logging
 
 Python's standard logging records every HTTP request, including API routers,
@@ -111,6 +127,18 @@ precision depend on each board. Fetching can take several minutes.
 Filter stored jobs by saved search, board, or text. Previous/Next and the page
 size control browse the database without fetching again. Applied status reflects
 saved applications with the same job URL in Applied, Interview, or Offer status.
+
+Available Jobs appears directly below Overview and uses the workspace width,
+including when the sidebar is collapsed. Its **Language** column lists explicit
+spoken-language requirements detected in each stored description. The initial
+regex parser recognizes common English, German, and Dutch requirement phrases,
+including proficiency and CEFR levels, and ignores incidental, optional, or
+negated mentions. Language names are normalized; the column does not display
+proficiency levels or distinguish alternative languages from joint requirements.
+**Not specified** means no explicit requirement was detected, rather than proof
+that none exists. Unusual wording can be missed. Existing jobs are parsed when
+listed, so no refetch or database migration is needed. The parser has a replaceable
+interface for a future local LLM integration.
 
 - `POST /api/job-search`: `{ "preference_id": 1, "sites": ["indeed", "linkedin"], "results_wanted": 50 }`
 - `GET /api/available-jobs?page=1&page_size=20`: paginated results and totals;

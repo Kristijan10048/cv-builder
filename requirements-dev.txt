@@ -1,2 +1,3 @@
 -r requirements.txt
+-r coding_agent/jira_agent/requirements.txt
 pytest==9.1.1

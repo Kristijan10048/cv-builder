@@ -37,6 +37,12 @@ const titles = {
 };
 
 async function showView(name) {
+  $('main').classList.toggle('available-jobs-layout', name === 'availableJobs')
+  // Use the shared header as a ribbon while keeping the results area compact.
+  $('.topbar').classList.toggle('job-search-topbar', name === 'availableJobs')
+  $('#topbarHeading').classList.toggle('sr-only', name === 'availableJobs')
+  $('.topbar-actions').classList.toggle('hidden', name === 'availableJobs')
+  $('#jobSearchForm').classList.toggle('hidden', name !== 'availableJobs')
   $$(".view").forEach(view => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
   $$(".nav-item").forEach(item => item.classList.toggle("active", item.dataset.view === name));
@@ -329,8 +335,7 @@ async function loadProfile() {
 
 async function loadSettings() {
   const settings = await api("/api/settings");
-  $("#lmStudioUrl").value = settings.lm_studio_url;
-  $("#lmStudioModel").value = settings.lm_studio_model;
+  $("#llmServerUrl").value = settings.lm_studio_url;
 }
 
 function openProfileEditor() {
@@ -361,13 +366,13 @@ $("#personalDetailsForm").addEventListener("submit", async event => {
 });
 $("#settingsForm").addEventListener("submit", async event => {
   event.preventDefault();
-  try { await api("/api/settings", { method: "PUT", body: JSON.stringify({ lm_studio_url: $("#lmStudioUrl").value, lm_studio_model: $("#lmStudioModel").value }) }); toast("Settings saved"); }
+  try { await api("/api/settings", { method: "PUT", body: JSON.stringify({ lm_studio_url: $("#llmServerUrl").value }) }); toast("Settings saved"); }
   catch (error) { toast(error.message, true); }
 });
 $("#testConnection").addEventListener("click", async () => {
   const state = $("#connectionState"); state.className = ""; state.textContent = "Testing…";
   try {
-    await api("/api/settings", { method: "PUT", body: JSON.stringify({ lm_studio_url: $("#lmStudioUrl").value, lm_studio_model: $("#lmStudioModel").value }) });
+    await api("/api/settings", { method: "PUT", body: JSON.stringify({ lm_studio_url: $("#llmServerUrl").value }) });
     const data = await api("/api/lm-studio/models");
     state.className = "success"; state.textContent = `Connected · ${data.data?.length || 0} model(s) available`;
   } catch (error) { state.className = "error"; state.textContent = error.message; }

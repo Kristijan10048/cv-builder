@@ -117,12 +117,15 @@ async function loadAvailableJobs() {
 }
 
 function availableJobMarkup(item) {
+  const languageRequirements = (item.language_requirements || []).join(', ')
+  const languageMarkup = languageRequirements ? escapeHtml(languageRequirements) : '<span class="table-empty-value">Not specified</span>'
   const source = safeExternalUrl(item.job_url);
   const link = source ? `<a href="${escapeHtml(source.href)}" target="_blank" rel="noopener noreferrer">View job &#8599;</a>` : '<span class="table-empty-value">Unavailable</span>';
   return `<tr class="application-table-row available-job-row">
     <td data-label="Company"><strong>${escapeHtml(item.company || "Not listed")}</strong></td>
     <td data-label="Title">${escapeHtml(item.job_title)}</td>
     <td data-label="Location">${escapeHtml(item.location || (item.is_remote ? "Remote" : "Not listed"))}</td>
+    <td data-label="Language">${languageMarkup}</td>
     <td data-label="Source">${escapeHtml(boardNames[item.site] || item.site)}</td>
     <td data-label="Date Fetched"><time>${escapeHtml(formatUtcDateTime(item.fetched_at))}</time></td>
     <td data-label="Job link">${link}</td>
@@ -143,7 +146,7 @@ async function loadJobsPage(page = jobsPage) {
     if (request !== jobsRequest) return;
     jobsPage = data.page;
     $("#availableJobsList").innerHTML = data.items.length ? data.items.map(availableJobMarkup).join("") :
-      '<tr><td colspan="7"><div class="empty-state"><strong>No matching jobs</strong>Fetch jobs for a saved search or adjust your filters.</div></td></tr>';
+      '<tr><td colspan="8"><div class="empty-state"><strong>No matching jobs</strong>Fetch jobs for a saved search or adjust your filters.</div></td></tr>'
     $("#availableJobsNote").textContent = data.total ? `${(data.page - 1) * data.page_size + 1}–${Math.min(data.page * data.page_size, data.total)} of ${data.total} fetched jobs` : "No matching fetched jobs.";
     $("#jobsPageLabel").textContent = `Page ${data.page} of ${data.total_pages}`;
     $("#jobsPrevious").disabled = !data.has_previous;
