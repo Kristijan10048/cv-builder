@@ -26,6 +26,8 @@ from .models import (
 
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
+C_LLM_URL_ERROR = "LLM server API URL must start with http:// or https://"
+C_LLM_CONNECTION_ERROR = "Could not connect to the LLM server API."
 
 
 @asynccontextmanager
@@ -241,9 +243,11 @@ def get_settings():
 
 @app.put("/api/settings")
 def save_settings(payload: SettingsInput):
-    for key, value in payload.model_dump().items():
+    """Save supplied settings while preserving configuration omitted by the UI."""
+    # The simplified form omits the optional model; retain existing API configuration.
+    for key, value in payload.model_dump(exclude_unset=True).items():
         if key == "lm_studio_url" and not value.startswith(("http://", "https://")):
-            raise HTTPException(400, "LM Studio URL must start with http:// or https://")
+            raise HTTPException(400, C_LLM_URL_ERROR)
         with connect() as db:
             db.execute(
                 """INSERT INTO settings(key, value) VALUES (?, ?)
@@ -285,6 +289,7 @@ def save_personal_details(payload: PersonalDetailsInput):
 
 @app.get("/api/lm-studio/models")
 async def lm_studio_models():
+    """Check the configured OpenAI-compatible API and return its available models."""
     settings = _settings()
     try:
         async with httpx.AsyncClient(timeout=5) as client:
@@ -292,7 +297,7 @@ async def lm_studio_models():
             response.raise_for_status()
         return response.json()
     except httpx.HTTPError as exc:
-        raise HTTPException(502, "Could not connect to LM Studio.") from exc
+        raise HTTPException(502, C_LLM_CONNECTION_ERROR) from exc
 
 
 @app.post("/api/generate")
