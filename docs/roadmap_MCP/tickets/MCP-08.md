@@ -36,4 +36,30 @@ user's data; all four outputs agree with API semantics; logs omit payloads;
 business records remain unchanged; subprocesses terminate cleanly.
 Run existing application regression checks if shared application code changes.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-08-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/tests/conftest.py`
+- `mcp_server/tests/helpers/disposable_application.py`
+- `mcp_server/tests/integration/test_api_equivalence.py`
+- `mcp_server/tests/integration/test_stdio_workflow.py`
+- `mcp_server/tests/integration/test_data_preservation.py`
+- `mcp_server/docs/verification.md`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv-integration\Scripts\python.exe -m pytest .\mcp_server\tests
+~~~
+
+Create the integration environment as described in the guide. Isolate DATA_DIR, DB_PATH, and log paths in each application process. Check profiles through the settings table, use bounded process waits, and record the complete suite's results.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-07](MCP-07.md). **Estimate:** 3 hours.

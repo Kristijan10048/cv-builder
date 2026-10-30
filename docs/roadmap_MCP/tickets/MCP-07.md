@@ -24,4 +24,28 @@ overview counts/recent items, empty and populated job pages, filters, invalid
 boards, unknown preferences, invalid pagination, page clamping, and nullable job
 fields. Results match the API and successful calls still work after errors.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-07-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/src/applykit_mcp/tools/overview.py`
+- `mcp_server/src/applykit_mcp/tools/available_jobs.py`
+- `mcp_server/src/applykit_mcp/server.py`
+- `mcp_server/tests/test_overview_job_tools.py`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv\Scripts\python.exe -m pytest .\mcp_server\tests\test_overview_job_tools.py
+~~~
+
+Verify discovery returns exactly four tools, preserve nullable fields/applied flags, and assert neither tool triggers a scraper, importer, generator, or write route.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-06](MCP-06.md). **Estimate:** 2 hours.

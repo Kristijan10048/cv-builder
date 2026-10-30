@@ -14,7 +14,21 @@ application changes, job fetching, and personal-profile access are later increme
 
 ## Architecture grounded in the current application
 
-Run a small standalone MCP process alongside the existing FastAPI application:
+**Decision: build the MCP server as a separate application.** Give it its own
+package, environment, entry point, tests, and release dependencies. CV Builder
+continues running as the existing FastAPI application; the two communicate through
+its local API.
+
+For the initial stdio transport, the MCP host launches the MCP application as a
+child process and owns its lifetime. Each host connection has its own process.
+CV Builder must be started independently. Closing the MCP session shuts down its
+MCP process without stopping CV Builder.
+
+An always-running Windows service is a different deployment mode. It would need
+Streamable HTTP, a listening endpoint, process supervision, and an access-control
+contract. Defer that to a separate increment; no Windows service installation is
+required for this local stdio milestone. The transport distinction follows the
+[official SDK transport guide](https://py.sdk.modelcontextprotocol.io/run/).
 
 MCP host -> stdio -> ApplyKit MCP server -> local HTTP GET -> CV Builder API -> SQLite.
 
@@ -24,7 +38,7 @@ run database migrations from MCP. The existing application owns database startup
 It must be running before a tool can retrieve data; MCP initialization itself
 does not require it to be available.
 
-Proposed package location: `mcp_server/` under the CV Builder project root,
+Planned package location: `mcp_server/` under the CV Builder project root,
 with importable code in `src/applykit_mcp/`, isolated dependency declarations,
 tests, and a README. Installing it must not change the application's dependencies.
 
@@ -114,7 +128,14 @@ temporary databases and log locations, never the user's saved data.
 ## Small implementation tasks
 
 Each ticket has a short summary, implementation steps, deliverables, acceptance
-criteria, dependencies, and an estimate. All implementation tickets remain pending.
+criteria, dependencies, file targets, validation commands, and a coding-agent
+handoff. Every ticket also has a separate short summary file in
+[the summary index](summaries/README.md). All implementation tickets remain pending.
+
+The coding agent starts with [the execution guide](coding_agent_execution.md),
+then reads the assigned full ticket. Summary files are for quick review; the full
+ticket and roadmap contain the implementation requirements. Estimates describe
+human development effort, not a promised coding-agent runtime or scheduler timeout.
 
 | Ticket | Summary | Dependencies | Estimate |
 | --- | --- | --- | --- |
@@ -126,7 +147,7 @@ criteria, dependencies, and an estimate. All implementation tickets remain pendi
 | [MCP-06 - Expose application history tools](tickets/MCP-06.md) | Add filtered application listing and single-application retrieval. | MCP-05 | 3 hours |
 | [MCP-07 - Expose overview and stored-job tools](tickets/MCP-07.md) | Add application statistics and paginated stored-job browsing. | MCP-06 | 2 hours |
 | [MCP-08 - Verify protocol and CV Builder integration](tickets/MCP-08.md) | Exercise all tools, upstream failures, and data preservation. | MCP-07 | 3 hours |
-| [MCP-09 - Connect Inspector and a local host](tickets/MCP-09.md) | Verify discovery and tool use in real MCP clients. | MCP-08 | 1 hour |
+| [MCP-09 - Automate Inspector verification](tickets/MCP-09.md) | Verify tool discovery and invocation through the Inspector CLI. | MCP-08 | 1 hour |
 | [MCP-10 - Document setup and troubleshooting](tickets/MCP-10.md) | Explain how to run CV Builder and connect the MCP server. | MCP-09 | 1 hour |
 
 ## Delivery order and completion criteria
@@ -137,13 +158,26 @@ assume the API remains as inspected; any API change should update its affected
 ticket and contract before implementation.
 
 Complete the milestone when a fresh environment can install the isolated package,
-a local host discovers exactly the four tools, results match the CV Builder API,
+an SDK client and the Inspector CLI discover exactly the four tools, results match the CV Builder API,
 invalid calls leave the session usable, and the documented tests demonstrate that
 application records, stored jobs, templates, settings, and profiles are unchanged.
 
 The automated test suite uses a temporary seeded application, plus SDK subprocess
-tests for stdio. Inspector and host smoke tests also use that disposable instance.
-Do not run tests against the user's normal database.
+tests for stdio. Inspector verification also uses that disposable instance.
+Desktop-host verification is an optional manual follow-up when an installed host
+is available; keep it separate from the automated completion criteria and label
+unverified host examples. Do not run tests against the user's normal database.
+
+Execute one ticket at a time in dependency order. Each ticket produces its listed
+files, a passing focused check, and a completion report with commands and results.
+If a prerequisite or required external tool is unavailable, record that exact
+limitation; do not mark its verification complete or make up results. The execution
+guide explains bootstrap checks, integration fixtures, and the final handoff.
+
+The brief contains the unfinished line "Take in to account that" without a
+following condition. No extra requirement is inferred from that fragment. The
+read-only first milestone and local stdio deployment remain explicit planning
+assumptions that can be revised if a further condition is supplied.
 
 Possible later tickets: retrieve document templates or tailored documents; expose
 saved search preferences; generate a tailored CV/cover letter through the existing

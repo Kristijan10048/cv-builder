@@ -8,3 +8,6 @@
 - Take in to account that
 - Create a separate file for each task/ticket
 Development roadmap: [Small MCP server roadmap](mcp_server_roadmap.md).
+
+Task summaries: [Summary index](summaries/README.md).
+Coding-agent instructions: [Execution guide](coding_agent_execution.md).

@@ -26,4 +26,29 @@
 clearly on stderr before serving; a captured log creates no stdout output.
 No API call, database connection, or migration is performed while loading config.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-03-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/src/applykit_mcp/constants.py`
+- `mcp_server/src/applykit_mcp/configuration.py`
+- `mcp_server/src/applykit_mcp/diagnostic_logging.py`
+- `mcp_server/tests/test_configuration.py`
+- `mcp_server/tests/test_diagnostic_logging.py`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv\Scripts\python.exe -m pytest .\mcp_server\tests\test_configuration.py .\mcp_server\tests\test_diagnostic_logging.py
+~~~
+
+Use table-driven cases for valid/invalid URLs and timeouts. Assert stderr output and empty stdout; avoid any actual API connection while loading settings.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-02](MCP-02.md). **Estimate:** 2 hours.

@@ -27,4 +27,28 @@ history, multiple pages, excessive-page clamping, a known application, an unknow
 application, malformed input, and recovery with a successful call after failure.
 Excluded fields never appear in tool responses, and calls make no mutations.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-06-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/src/applykit_mcp/tools/__init__.py`
+- `mcp_server/src/applykit_mcp/tools/applications.py`
+- `mcp_server/src/applykit_mcp/server.py`
+- `mcp_server/tests/test_application_tools.py`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv\Scripts\python.exe -m pytest .\mcp_server\tests\test_application_tools.py
+~~~
+
+Test with an SDK client and an injected fake BaseApplyKitClient. Assert strict argument validation, output schemas, field omissions, pagination, and recovery after errors.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-05](MCP-05.md). **Estimate:** 3 hours.

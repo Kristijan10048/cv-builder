@@ -24,4 +24,27 @@ configured server identity, and shuts down cleanly without CV Builder running.
 Importing the module starts nothing. Diagnostics do not corrupt stdout, and
 cleanup leaves no child process or open client behind.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-05-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/src/applykit_mcp/server.py`
+- `mcp_server/src/applykit_mcp/__main__.py`
+- `mcp_server/tests/test_server_lifecycle.py`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv\Scripts\python.exe -m pytest .\mcp_server\tests\test_server_lifecycle.py
+~~~
+
+Verify startup without CV Builder, handshake, EOF/shutdown cleanup, and failed startup cleanup. Do not install a Windows service or add an MCP HTTP listener.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-04](MCP-04.md). **Estimate:** 2 hours.

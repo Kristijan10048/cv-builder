@@ -28,4 +28,26 @@ preserve API filter semantics; known API limits are explicit; the contract exclu
 writes, generation, job fetching, personal-profile access, raw HTML, imported
 payloads, and tailored-document content. Review it against the actual routes.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-01-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/docs/tool_contract.md`
+- `mcp_server/docs/contract_examples.json`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+Get-Content -LiteralPath .\mcp_server\docs\contract_examples.json -Raw | ConvertFrom-Json | Out-Null
+~~~
+
+Compare every field and mapped route with the current application code. Include empty-result, invalid-input, not-found, and unavailable-API examples.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** None. **Estimate:** 2 hours.

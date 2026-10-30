@@ -23,4 +23,29 @@ dependency declarations. The server behavior is added in later tickets.
 starting a process or touching the application database, and collects tests.
 The CV Builder requirements files remain unchanged.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-02-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/pyproject.toml`
+- `mcp_server/.gitignore`
+- `mcp_server/src/applykit_mcp/__init__.py`
+- `mcp_server/src/applykit_mcp/__main__.py`
+- `mcp_server/tests/test_imports.py`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv\Scripts\python.exe -m pytest .\mcp_server\tests\test_imports.py
+~~~
+
+Use the guide's bootstrap commands. Assert imports do not launch a server or access the API/database. Add package-local ignore rules for both environments, caches, metadata, node_modules, and generated results.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-01](MCP-01.md). **Estimate:** 1 hour.

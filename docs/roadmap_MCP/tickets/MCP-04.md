@@ -32,4 +32,28 @@ Every outbound method is GET on an allowed route; no production import of
 app.main, direct SQLite access, SQL, migrations, scraping, or LM Studio is used.
 Note that upstream application retrieval remains unpaginated.
 
+## Coding-agent handoff
+
+Read [the execution guide](../coding_agent_execution.md) and [this ticket's short summary](../summaries/MCP-04-summary.md).
+File paths below are planned outputs relative to the CV Builder project root.
+
+**File targets:**
+
+- `mcp_server/src/applykit_mcp/client.py`
+- `mcp_server/src/applykit_mcp/models.py`
+- `mcp_server/src/applykit_mcp/errors.py`
+- `mcp_server/tests/test_api_client.py`
+
+**Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):
+
+~~~powershell
+.\mcp_server\.venv\Scripts\python.exe -m pytest .\mcp_server\tests\test_api_client.py
+~~~
+
+Use mocked HTTP transport. Cover all four routes and each error category, verify parameters and field projection, and use deterministic pagination examples.
+
+**Handoff result:** Report changed files, commands actually run, outcomes, and any
+unmet acceptance criteria. Mark this ticket complete only after its required
+checks pass; keep this ticket, roadmap, and summary consistent.
+
 **Depends on:** [MCP-01](MCP-01.md), [MCP-03](MCP-03.md). **Estimate:** 3 hours.
