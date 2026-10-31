@@ -45,7 +45,12 @@ async function showView(name) {
   $('#jobSearchForm').classList.toggle('hidden', name !== 'availableJobs')
   $$(".view").forEach(view => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
-  $$(".nav-item").forEach(item => item.classList.toggle("active", item.dataset.view === name));
+  $$(".nav-item").forEach(item => {
+    const isCurrentView = item.dataset.view === name;
+    item.classList.toggle("active", isCurrentView);
+    if (isCurrentView) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
+  });
   $("#pageTitle").textContent = titles[name];
   closeMenu();
   if (name === "dashboard") await loadOverview();
@@ -194,12 +199,16 @@ $$("[data-generate]").forEach(button => button.addEventListener("click", async (
   const document = button.dataset.generate;
   const target = document === "cv" ? $("#adjustedCv") : $("#adjustedCoverLetter");
   const instructions = document === "cv" ? $("#cvInstructions").value : $("#coverInstructions").value;
-  const original = button.textContent; button.disabled = true; button.textContent = "Drafting…";
+  // Update only the label so the shared outline icon survives a drafting request.
+  const buttonLabel = button.querySelector(".ai-button-label");
+  const originalLabel = buttonLabel.textContent;
+  button.disabled = true;
+  buttonLabel.textContent = "Drafting…";
   try {
     const result = await api("/api/generate", { method: "POST", body: JSON.stringify({ application_id: Number(id), document, instructions }) });
     target.value = result.content; toast(`Draft created with ${result.model}`);
   } catch (error) { toast(error.message, true); }
-  finally { button.disabled = false; button.textContent = original; }
+  finally { button.disabled = false; buttonLabel.textContent = originalLabel; }
 }));
 
 async function loadTemplates() {
@@ -309,7 +318,9 @@ function renderProfile(profile) {
 
   $("#profileDisplayName").textContent = fullName || "Your profile";
   $("#profileDisplayRole").textContent = role || profile.email || "Personal details saved locally";
-  $("#profileAvatar").textContent = initials || "👤";
+  $("#profileInitials").textContent = initials;
+  $("#profileInitials").classList.toggle("hidden", !initials);
+  $("#profileFallbackIcon").classList.toggle("hidden", Boolean(initials));
   $("#profileEmpty").classList.toggle("hidden", hasProfile);
   $("#profileDetails").classList.toggle("hidden", !hasProfile);
   $("#editProfileButton").textContent = hasProfile ? "Edit profile" : "Add details";
@@ -429,8 +440,8 @@ sidebarToggle.addEventListener("click", () => {
 mobileLayout.addEventListener("change", () => { closeMenu(); updateSidebar(); });
 updateSidebar();
 
-function openMenu(){ $("#sidebar").classList.add("open"); $("#mobileOverlay").classList.add("visible"); }
-function closeMenu(){ $("#sidebar").classList.remove("open"); $("#mobileOverlay").classList.remove("visible"); }
+function openMenu(){ $("#sidebar").classList.add("open"); $("#mobileOverlay").classList.add("visible"); $("#menuButton").setAttribute("aria-expanded", "true"); }
+function closeMenu(){ $("#sidebar").classList.remove("open"); $("#mobileOverlay").classList.remove("visible"); $("#menuButton").setAttribute("aria-expanded", "false"); }
 $("#menuButton").addEventListener("click", openMenu);
 $("#mobileOverlay").addEventListener("click", closeMenu);
 function escapeHtml(value = "") { const div = document.createElement("div"); div.textContent = value; return div.innerHTML.replaceAll('"', "&quot;"); }

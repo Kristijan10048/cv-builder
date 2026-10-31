@@ -1,3 +1,4 @@
+{% from "navigation_icons.html" import icon %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -9,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="/static/theme.js?v=20261016-dark-mode"></script>
-  <link rel="stylesheet" href="/static/app.css?v=20261016-dark-mode">
-  <script defer src="/static/app.js?v=20261015-llm-settings"></script>
+  <link rel="stylesheet" href="/static/app.css?v=20261030-neutral-controls">
+  <script defer src="/static/app.js?v=20261030-pages"></script>
   <script defer src="/static/job-search-locations.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/job_search_preferences.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/available_jobs.js?v=20261014-jobs-language"></script>
@@ -19,32 +20,32 @@
   <div class="app-shell">
     <div class="mobile-overlay" id="mobileOverlay"></div>
     <aside class="sidebar" id="sidebar">
-      <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu"><span aria-hidden="true">&#9776;</span></button>
-      <a class="brand" href="#" data-view="dashboard" aria-label="ApplyKit home">
-        <span class="brand-mark">A</span>
-        <span class="brand-text"><strong>ApplyKit</strong><small>Application workspace</small></span>
-      </a>
-      <nav aria-label="Main navigation">
-        <p class="nav-label">Workspace</p>
-        <button class="nav-item active" data-view="dashboard" aria-label="Overview" title="Overview"><span aria-hidden="true">⌂</span><span class="nav-text">Overview</span></button>
-        <button class="nav-item" data-view="availableJobs" aria-label="Available Jobs" title="Available Jobs"><span aria-hidden="true">&#128188;</span><span class="nav-text">Available Jobs</span></button>
-        <button class="nav-item" data-view="editor" aria-label="New application" title="New application"><span aria-hidden="true">＋</span><span class="nav-text">New application</span></button>
-        <button class="nav-item" data-view="applications" aria-label="Applications" title="Applications"><span aria-hidden="true">▤</span><span class="nav-text">Applications</span></button>
-        <button class="nav-item" data-view="jobSearchPreferences" aria-label="Job Search Preferences" title="Job Search Preferences"><span aria-hidden="true">&#8981;</span><span class="nav-text">Job Search Preferences</span></button>
-        <p class="nav-label">Library</p>
-        <button class="nav-item" data-view="profile" aria-label="Profile" title="Profile"><span class="profile-nav-icon" aria-hidden="true">&#128100;</span><span class="nav-text">Profile</span></button>
-        <button class="nav-item" data-view="templates" aria-label="Base documents" title="Base documents"><span aria-hidden="true">◫</span><span class="nav-text">Base documents</span></button>
-        <button class="nav-item" data-view="settings" aria-label="Settings" title="Settings"><span aria-hidden="true">⚙</span><span class="nav-text">Settings</span></button>
-      </nav>
-      <div class="sidebar-note">
-        <span class="pulse"></span>
-        <div><strong>Private by default</strong><small>Data stays in your local SQLite file.</small></div>
+      <div class="sidebar-header">
+        <a class="brand" href="#" data-view="dashboard" aria-label="ApplyKit home">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <span class="brand-text"><strong>ApplyKit</strong></span>
+        </a>
+        <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu">{{ icon('panel') }}</button>
       </div>
+      <nav class="sidebar-navigation" aria-label="Main navigation">
+        <div class="nav-primary">
+          <button class="nav-item active" data-view="dashboard" aria-current="page" aria-label="Overview" title="Overview">{{ icon('overview') }}<span class="nav-text">Overview</span></button>
+          <button class="nav-item" data-view="availableJobs" aria-label="Available Jobs" title="Available Jobs">{{ icon('jobs') }}<span class="nav-text">Available Jobs</span></button>
+          <button class="nav-item" data-view="editor" aria-label="New application" title="New application">{{ icon('new') }}<span class="nav-text">New application</span></button>
+          <button class="nav-item" data-view="applications" aria-label="Applications" title="Applications">{{ icon('applications') }}<span class="nav-text">Applications</span></button>
+          <button class="nav-item" data-view="jobSearchPreferences" aria-label="Job Search Preferences" title="Job Search Preferences">{{ icon('preferences') }}<span class="nav-text">Search preferences</span></button>
+          <button class="nav-item" data-view="templates" aria-label="Base documents" title="Base documents">{{ icon('documents') }}<span class="nav-text">Base documents</span></button>
+        </div>
+        <div class="nav-utilities">
+          <button class="nav-item" data-view="profile" aria-label="Profile" title="Profile">{{ icon('profile') }}<span class="nav-text">Profile</span></button>
+          <button class="nav-item" data-view="settings" aria-label="Settings" title="Settings">{{ icon('settings') }}<span class="nav-text">Settings</span></button>
+        </div>
+      </nav>
     </aside>
 
     <section class="workspace">
       <header class="topbar">
-        <button class="icon-button mobile-menu" id="menuButton" aria-label="Open menu">☰</button>
+        <button class="icon-button mobile-menu" id="menuButton" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">{{ icon('menu') }}</button>
         <div id="topbarHeading">
           <p class="eyebrow">APPLICATION WORKSPACE</p>
           <h1 id="pageTitle">Overview</h1>
@@ -63,22 +64,17 @@
               <span class="kicker">Your next move</span>
               <h2>Turn a promising role into a focused application.</h2>
               <p>Bring the job description. ApplyKit keeps the brief, your tailored documents, and every follow-up together.</p>
-              <button class="primary" data-action="new">Start an application <span>→</span></button>
-            </div>
-            <div class="hero-card" aria-hidden="true">
-              <div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line"></div>
-              <div class="match-ring"><strong>86</strong><small>role fit</small></div>
-              <div class="paper-line"></div><div class="paper-line medium"></div>
+              <button class="primary" data-action="new">Start an application {{ icon('arrow') }}</button>
             </div>
           </div>
           <div class="metrics">
-            <article><span class="metric-icon lavender">▤</span><div><strong id="metricTotal">0</strong><small>Total applications</small></div></article>
-            <article><span class="metric-icon amber">◷</span><div><strong id="metricDraft">0</strong><small>Drafts in progress</small></div></article>
-            <article><span class="metric-icon mint">✓</span><div><strong id="metricActive">0</strong><small>Active pipeline</small></div></article>
+            <article><span class="metric-icon">{{ icon('applications') }}</span><div><strong id="metricTotal">0</strong><small>Total applications</small></div></article>
+            <article><span class="metric-icon">{{ icon('clock') }}</span><div><strong id="metricDraft">0</strong><small>Drafts in progress</small></div></article>
+            <article><span class="metric-icon">{{ icon('check') }}</span><div><strong id="metricActive">0</strong><small>Active pipeline</small></div></article>
           </div>
           <div class="section-heading">
             <div><p class="eyebrow">LATEST ACTIVITY</p><h3>Recent applications</h3></div>
-            <button class="text-button" data-view="applications">View all →</button>
+            <button class="text-button" data-view="applications">View all {{ icon('arrow') }}</button>
           </div>
           <div class="application-list" id="recentList"></div>
         </section>
@@ -108,12 +104,12 @@
                     <button type="button" data-document="cover_letter">Cover letter</button>
                   </div>
                   <div class="document-pane active" id="cvPane">
-                    <div class="generate-row"><label>Optional AI direction<input id="cvInstructions" placeholder="Focus on backend systems and mentoring"></label><button type="button" class="ai-button" data-generate="cv">✦ Draft with LM Studio</button></div>
+                    <div class="generate-row"><label>Optional AI direction<input id="cvInstructions" placeholder="Focus on backend systems and mentoring"></label><button type="button" class="ai-button" data-generate="cv">{{ icon('sparkles') }}<span class="ai-button-label">Draft with LM Studio</span></button></div>
                     <label class="sr-only" for="adjustedCv">Tailored CV</label>
                     <textarea class="document-editor" id="adjustedCv" rows="20" placeholder="Your tailored CV will appear here…"></textarea>
                   </div>
                   <div class="document-pane" id="coverLetterPane">
-                    <div class="generate-row"><label>Optional AI direction<input id="coverInstructions" placeholder="Warm, concise, and specific"></label><button type="button" class="ai-button" data-generate="cover_letter">✦ Draft with LM Studio</button></div>
+                    <div class="generate-row"><label>Optional AI direction<input id="coverInstructions" placeholder="Warm, concise, and specific"></label><button type="button" class="ai-button" data-generate="cover_letter">{{ icon('sparkles') }}<span class="ai-button-label">Draft with LM Studio</span></button></div>
                     <label class="sr-only" for="adjustedCoverLetter">Tailored cover letter</label>
                     <textarea class="document-editor" id="adjustedCoverLetter" rows="20" placeholder="Your tailored cover letter will appear here…"></textarea>
                   </div>
@@ -138,7 +134,7 @@
             <button class="primary" data-action="new">New application</button>
           </div>
           <div class="filters">
-            <label class="search-field">⌕<input id="searchInput" placeholder="Search company, role, or description"></label>
+            <label class="search-field">{{ icon('search') }}<input id="searchInput" placeholder="Search company, role, or description" aria-label="Search applications"></label>
             <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option>Draft</option><option>Ready</option><option>Applied</option><option>Interview</option><option>Offer</option><option>Closed</option></select>
           </div>
           <div class="application-table-wrap">
@@ -156,20 +152,20 @@
           <div class="section-heading page-heading"><div><p class="eyebrow">SOURCE MATERIAL</p><h2>Base documents</h2><p class="subcopy">These are the truthful source documents used when tailoring an application.</p></div></div>
           <form id="templateForm" class="template-grid">
             <article class="panel upload-card">
-              <div class="panel-heading"><span class="doc-icon">CV</span><div><h3>Template CV</h3><p>Upload your complete, factual LaTeX source.</p></div></div>
+              <div class="panel-heading"><span class="doc-icon">{{ icon('applications') }}</span><div><h3>Template CV</h3><p>Upload your complete, factual LaTeX source.</p></div></div>
               <label class="file-drop" for="templateCvFile">
                 <input id="templateCvFile" name="cv" type="file" accept=".tex,text/x-tex">
-                <span class="upload-icon">↑</span>
+                <span class="upload-icon">{{ icon('upload') }}</span>
                 <strong>Choose a .tex file</strong>
                 <small>UTF-8 LaTeX source · maximum 2 MB</small>
               </label>
               <div class="current-file" id="currentCvFile"><span>—</span><small>No CV uploaded</small></div>
             </article>
             <article class="panel upload-card">
-              <div class="panel-heading"><span class="doc-icon">Aa</span><div><h3>Template cover letter</h3><p>Upload your reusable LaTeX starting point.</p></div></div>
+              <div class="panel-heading"><span class="doc-icon">{{ icon('letter') }}</span><div><h3>Template cover letter</h3><p>Upload your reusable LaTeX starting point.</p></div></div>
               <label class="file-drop" for="templateCoverLetterFile">
                 <input id="templateCoverLetterFile" name="cover_letter" type="file" accept=".tex,text/x-tex">
-                <span class="upload-icon">↑</span>
+                <span class="upload-icon">{{ icon('upload') }}</span>
                 <strong>Choose a .tex file</strong>
                 <small>UTF-8 LaTeX source · maximum 2 MB</small>
               </label>
@@ -184,7 +180,7 @@
           <div class="settings-stack">
             <article class="panel profile-summary" id="profileSummary">
               <div class="profile-identity">
-                <span class="profile-avatar" id="profileAvatar" aria-hidden="true">&#128100;</span>
+                <span class="profile-avatar" id="profileAvatar" aria-hidden="true"><span id="profileInitials" class="hidden"></span><span id="profileFallbackIcon">{{ icon('profile') }}</span></span>
                 <div><h3 id="profileDisplayName">Your profile</h3><p id="profileDisplayRole">Add your details to speed up applications.</p></div>
               </div>
               <div class="profile-empty" id="profileEmpty">
@@ -195,7 +191,7 @@
               <div class="profile-detail-sections hidden" id="profileDetails"></div>
             </article>
             <form id="personalDetailsForm" class="panel profile-edit-card hidden">
-              <div class="panel-heading"><span class="doc-icon">ID</span><div><h3>Edit personal details</h3><p>Stored locally and shared only when you activate the Firefox extension.</p></div></div>
+              <div class="panel-heading"><span class="doc-icon">{{ icon('profile') }}</span><div><h3>Edit personal details</h3><p>Stored locally and shared only when you activate the Firefox extension.</p></div></div>
               <div class="field-row">
                 <label>First name<input id="profileFirstName" autocomplete="given-name" maxlength="100"></label>
                 <label>Last name<input id="profileLastName" autocomplete="family-name" maxlength="100"></label>
@@ -255,7 +251,7 @@
           <div class="section-heading page-heading"><div><p class="eyebrow">WORKSPACE PREFERENCES</p><h2>Settings</h2><p class="subcopy">Choose your appearance and configure the LLM server API.</p></div></div>
           <div class="settings-stack">
             <article class="panel settings-card" aria-labelledby="appearanceHeading">
-              <div class="panel-heading"><span class="doc-icon" aria-hidden="true">&#9680;</span><div><h3 id="appearanceHeading">Appearance</h3><p>A comfortable workspace, day or night.</p></div></div>
+              <div class="panel-heading"><span class="doc-icon">{{ icon('appearance') }}</span><div><h3 id="appearanceHeading">Appearance</h3><p>A comfortable workspace, day or night.</p></div></div>
               <div class="theme-setting">
                 <div><span class="theme-label" id="themeLabel">Dark mode</span><p class="field-help" id="themeHelp">Starts with your system theme. Changes apply instantly and are saved in this browser.</p></div>
                 <button type="button" class="theme-toggle" id="themeToggle" role="switch" aria-checked="false" aria-labelledby="themeLabel" aria-describedby="themeHelp"><span class="theme-toggle-thumb" aria-hidden="true"></span></button>
@@ -263,7 +259,7 @@
               <p class="theme-status" id="themeStatus" role="status" aria-live="polite">Light mode on</p>
             </article>
             <form id="settingsForm" class="panel settings-card">
-              <div class="panel-heading"><span class="doc-icon">AI</span><div><h3>LLM server API</h3><p>Connect to an OpenAI-compatible API to draft tailored documents.</p></div></div>
+              <div class="panel-heading"><span class="doc-icon">{{ icon('server') }}</span><div><h3>LLM server API</h3><p>Connect to an OpenAI-compatible API to draft tailored documents.</p></div></div>
               <label>LLM server API URL<input id="llmServerUrl" type="url" placeholder="http://localhost:1234/v1"></label>
               <div class="connection-row"><button class="secondary" type="button" id="testConnection">Test connection</button><span id="connectionState" role="status" aria-live="polite">Not tested</span></div>
               <button class="primary" type="submit">Save settings</button>
