@@ -2,9 +2,9 @@
 
 import math
 import sqlite3
+from abc import ABC, abstractmethod
 
-from fastapi import HTTPException
-from sqlalchemy import create_engine, event, exists, func, or_, select
+from sqlalchemy import create_engine, delete, event, exists, func, or_, select
 from sqlalchemy.dialects.sqlite import Insert, insert
 from sqlalchemy.engine import Connection
 from sqlalchemy.pool import NullPool
@@ -13,10 +13,13 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from .database import connect
 from .database_models import ApplicationModel, AvailableJobModel, JobSearchPreferenceModel, JobSearchResultModel
+from .services.job_search_errors import PreferenceDeletedError, PreferenceNotFoundError
 
 C_APPLIED_STATUSES = ("Applied", "Interview", "Offer")
 C_READ_TRANSACTION = "BEGIN"
 C_WRITE_TRANSACTION = "BEGIN IMMEDIATE"
+C_ENGINE_URL = "sqlite://"
+C_BEGIN_EVENT = "begin"
 C_UPDATED_JOB_FIELDS = (
     "job_title",
     "company",
@@ -27,6 +30,15 @@ C_UPDATED_JOB_FIELDS = (
     "is_remote",
     "raw_data",
 )
+
+
+class BasePreferenceDeletionGuard(ABC):
+    """Allow SCH-06 to enforce deletion policy inside the repository write transaction."""
+
+    @abstractmethod
+    def validate_deletion(self, connection: Connection, preference_id: int) -> None:
+        """Raise a domain error to veto deletion using this already-locked connection."""
+        raise NotImplementedError
 
 
 class JobSearchQueryCatalog:
@@ -45,6 +57,11 @@ class JobSearchQueryCatalog:
         return select(JobSearchPreferenceModel.id).where(
             JobSearchPreferenceModel.id == preference_id,
         )
+
+    @staticmethod
+    def delete_preference_query(preference_id: int):
+        """Delete a saved search with the existing foreign-key cascade behavior."""
+        return delete(JobSearchPreferenceModel).where(JobSearchPreferenceModel.id == preference_id)
 
     @staticmethod
     def upsert_job_query(job: AvailableJobModel) -> Insert:
@@ -136,8 +153,25 @@ class JobSearchRepository:
         """Create an engine using the existing connection factory and close-on-return pool."""
         self.query_catalog = JobSearchQueryCatalog()
         # The creator resolves the current database path for each connection, including tests.
-        self.engine = create_engine("sqlite://", creator=self.create_connection, poolclass=NullPool)
-        event.listen(self.engine, "begin", self.begin_transaction)
+        self.engine = create_engine(C_ENGINE_URL, creator=self.create_connection, poolclass=NullPool)
+        event.listen(self.engine, C_BEGIN_EVENT, self.begin_transaction)
+
+    def close(self) -> None:
+        """Dispose the owned engine after all operations have finished."""
+        self.engine.dispose()
+
+    def delete_preference(
+        self, preference_id: int, guard: BasePreferenceDeletionGuard | None = None,
+    ) -> None:
+        """Check policy and delete atomically; SCH-06 supplies the schedule-specific guard."""
+        with self.engine.connect().execution_options(job_search_write=True) as connection:
+            with connection.begin():
+                if not self.preference_exists(connection, preference_id):
+                    raise PreferenceNotFoundError()
+                if guard is not None:
+                    # A separate preflight query would race schedule creation or replacement.
+                    guard.validate_deletion(connection, preference_id)
+                connection.execute(self.query_catalog.delete_preference_query(preference_id))
 
     @staticmethod
     def create_connection() -> sqlite3.Connection:
@@ -167,7 +201,7 @@ class JobSearchRepository:
         with self.engine.begin() as connection:
             record = connection.execute(statement).mappings().first()
         if record is None:
-            raise HTTPException(404, "Job search preference not found.")
+            raise PreferenceNotFoundError()
         return JobSearchPreferenceModel.from_record(record)
 
     def save_jobs(self, preference_id: int, jobs: list[AvailableJobModel]) -> None:
@@ -176,7 +210,7 @@ class JobSearchRepository:
             with connection.begin():
                 # Acquire the lock before checking: the preference may be deleted during scraping.
                 if not self.preference_exists(connection, preference_id):
-                    raise HTTPException(409, "The saved search was deleted while fetching jobs.")
+                    raise PreferenceDeletedError()
                 for job in jobs:
                     self.save_job(connection, preference_id, job)
 
@@ -193,7 +227,7 @@ class JobSearchRepository:
         count_statement = self.query_catalog.count_jobs_query(conditions)
         with self.engine.begin() as connection:
             if preference_id is not None and not self.preference_exists(connection, preference_id):
-                raise HTTPException(404, "Job search preference not found.")
+                raise PreferenceNotFoundError()
             total = connection.execute(count_statement).scalar_one()
             total_pages = max(1, math.ceil(total / page_size))
             page = min(page, total_pages)
