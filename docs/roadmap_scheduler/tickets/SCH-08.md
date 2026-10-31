@@ -1,0 +1,46 @@
+# SCH-08: Build the Scheduled Tasks screen
+
+**Status:** Pending. **Depends on:** [SCH-07](SCH-07.md).
+**Estimate:** 1.5–2.5 days.
+
+[Roadmap](../scheduler_roadmap.md) | [Agent guide](../coding_agent_execution.md)
+
+## Outcome
+
+Users can configure schedules and understand worker status, upcoming runs, and
+past outcomes through the existing ApplyKit interface.
+
+## Work and file ownership
+
+- Create `static/scheduled_tasks.js`, `static/scheduled_tasks.css`, and
+  `templates/scheduled_tasks.html`; wire the page/navigation in
+  `templates/index.html`, using SCH-07 registration instead of new global branches.
+- Use SCH-01 API fixtures while SCH-06 is in progress. No live API dependency is
+  needed to build the page; final integration is mandatory in SCH-10.
+- Implement create/edit forms for saved search, boards, result limit, name,
+  interval or once, and future start. Convert user input to offset-bearing UTC
+  dates and display the applicable timezone. Explain elapsed-time intervals.
+- List next run and last result, plus pause/resume, run now, deletion confirmation,
+  and paginated history. Reuse a request key on run-now retry until the response
+  is known. Show revision conflicts with refresh/reload guidance.
+- Poll worker health and active runs only while the page is visible; cancel on
+  leave, ignore stale responses, and avoid duplicate listeners on re-entry.
+- Distinguish saved/queued/running/completed, offline worker, partial failure,
+  missed and interrupted runs. Show board warnings and no-saved-search guidance.
+  Explain that deleting or pausing cannot stop already-running work.
+- Escape all user/source text. Preserve focus, labels, keyboard access, mobile
+  usability, and both themes; do not expose scheduler internals in user copy.
+
+## Acceptance and validation
+
+Create/run `tests/scheduled_tasks.test.cjs` with contract fixtures. Cover form
+validation, timezone serialization, lifecycle cleanup, double-click/run-now retry,
+stale response suppression, conflicts, offline state, and history pagination.
+
+Syntax-check both new and changed scripts and run theme regressions. Review the
+page visually in light/dark and narrow/wide layouts using disposable data. Record
+screenshots or a concise visual checklist. Live API compatibility is a SCH-10
+release gate even if this fixture-driven ticket passes.
+
+**Handoff:** page assets, fixture-driven checks, visible-state coverage, and any
+contract discrepancies for SCH-06 to resolve before integration.
