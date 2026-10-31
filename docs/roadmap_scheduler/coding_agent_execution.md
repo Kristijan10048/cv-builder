@@ -12,10 +12,42 @@ payloads, lifecycle states, paths, or error mappings.
 
 Use the CV Builder project root as the working directory, not this documentation
 folder. Give each simultaneously editing agent a separate branch and isolated
-checkout/worktree. Suggested branch names: `codex/scheduler-sch-02`, etc. Create
+checkout/worktree. Use the required ticket branch names described below. Create
 those workspaces using the host's supported worktree facility. A single shared
 checkout is suitable only for sequential implementation. No worktrees or agents
 are created by this planning deliverable.
+
+## Branch workflow
+
+Before starting implementation of any scheduler ticket, create and switch to a
+new branch using `SCH-XX_<Ticket_description>`. Each ticket's **Implementation
+branch** section specifies its exact name. Keep the uppercase ticket ID and use
+underscores between description words, with no spaces or `codex/` prefix.
+For example, SCH-02 uses `SCH-02_Extract_the_reusable_job_fetch_backend`.
+
+Before creating and checking out a new ticket branch, verify that the current
+branch is `master` and the working tree is clean: no staged, unstaged, or
+untracked changes. All completed prerequisites must already be merged into
+`master`; do not branch from another implementation branch.
+
+Check with `git branch --show-current` and `git status --porcelain=v1 --untracked-files=all`.
+The first command must report `master`, and the second must return no entries.
+If either check fails, stop branch creation and resolve the condition without
+discarding changes or automatically committing or stashing them. Recheck both
+conditions immediately before creating the branch.
+
+When using an isolated worktree, perform these checks in the source checkout,
+then create the worktree on the ticket's required new branch from `master`
+through the host's supported worktree facility. Otherwise, create and switch
+to the branch from the verified clean `master` checkout before editing.
+Keep one ticket's implementation per branch and report the exact name in its
+handoff.
+
+If that branch already exists because the ticket is being resumed, inspect it
+and continue the existing ticket work on that branch; do not reset, overwrite,
+or repurpose it. If the name belongs to unrelated work, resolve the collision
+before implementation. This rule applies to future implementation work and does
+not require renaming historical branches for completed tickets.
 
 ## Parallel assignments and file ownership
 
@@ -52,6 +84,13 @@ Paste this into a coding agent such as Codex CLI, substituting the ticket ID:
 
 > Implement docs/roadmap_scheduler/tickets/SCH-XX.md in this isolated checkout.
 > Read AGENTS.md, scheduler_roadmap.md, and coding_agent_execution.md first.
+> Before creating and checking out a new branch, verify the current branch is master
+> and the working tree is clean, with no staged, unstaged, or untracked changes.
+> Completed prerequisites must already be merged into master. If either check fails,
+> stop branch creation; do not discard, automatically commit, or stash changes.
+> Then create and switch from master to the exact SCH-XX_<Ticket_description>
+> branch named in the ticket. If resuming
+> that ticket's existing branch, inspect and reuse it without resetting it.
 > Verify prerequisite implementations and their checks before editing. Preserve
 > unrelated changes. Follow the agreed contracts and own only the ticket's file
 > targets; propose shared-interface changes for integration instead of silently

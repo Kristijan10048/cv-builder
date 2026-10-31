@@ -5,6 +5,21 @@
 
 [Roadmap](../scheduler_roadmap.md) | [Agent guide](../coding_agent_execution.md)
 
+## Implementation branch
+
+Before creating and checking out the new branch, verify that the current branch
+is `master` and the working tree is clean: no staged, unstaged, or untracked
+changes. The completed prerequisites must already be merged into `master`.
+If either check fails, stop branch creation and resolve it without discarding
+changes or automatically committing or stashing them.
+
+Once these checks pass, create and switch from `master` to a new branch named
+`SCH-03_Add_scheduler_persistence_and_safe_startup`.
+This follows the required `SCH-XX_<Ticket_description>` format. Keep this
+ticket's implementation on that branch and include its name in the handoff.
+Follow the [branch workflow](../coding_agent_execution.md#branch-workflow) when
+resuming existing work or using an isolated worktree.
+
 ## Outcome
 
 Schedules, run requests, results, and cooldowns survive restarts while web and

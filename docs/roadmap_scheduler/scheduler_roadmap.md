@@ -292,6 +292,16 @@ Suggested waves:
 5. SCH-10 and SCH-11 proceed independently.
 6. SCH-12 validates the complete release.
 
+Before creating and checking out each new ticket branch, verify that the current
+branch is `master` and the working tree is clean, with no staged, unstaged, or
+untracked changes. Completed prerequisites must already be merged into `master`.
+If either check fails, stop branch creation and resolve it without discarding
+changes or automatically committing or stashing them. Then create and switch
+from `master` to the specified `SCH-XX_<Ticket_description>` branch before
+implementation. Each ticket records the exact branch name. Resume existing ticket
+branches without resetting them, following the
+[branch workflow](coding_agent_execution.md#branch-workflow).
+
 See the [coding-agent guide](coding_agent_execution.md) for ownership boundaries,
 isolated checkout recommendations, prompts, and handoff rules.
 
