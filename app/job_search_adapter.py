@@ -2,6 +2,7 @@
 
 import json
 import math
+from abc import ABC, abstractmethod
 from typing import Callable
 from urllib.parse import urlsplit
 
@@ -14,6 +15,28 @@ C_HTTP_SCHEMES = frozenset({"http", "https"})
 C_COUNTRY_REQUIRED_BOARDS = frozenset({"indeed", "glassdoor"})
 C_ZIP_RECRUITER_COUNTRIES = frozenset({"USA", "CANADA"})
 C_GLASSDOOR_GUARD = GlassdoorSearchGuard()
+C_SITE_NAME_ARGUMENT = "site_name"
+C_FIRST_SITE_INDEX = 0
+
+
+class BaseJobBoardCoordinator(ABC):
+    """Proposed SCH-02 seam for SCH-01/SCH-05 integration; not a frozen contract."""
+
+    @abstractmethod
+    def search(self, scraper: Callable, arguments: dict) -> tuple[object, str | None]:
+        """Call one board under coordination, returning its frame and optional warning."""
+        raise NotImplementedError
+
+
+class LocalJobBoardCoordinator(BaseJobBoardCoordinator):
+    """Preserve the current process-local Glassdoor guard until SCH-05 integration."""
+
+    def search(self, scraper: Callable, arguments: dict) -> tuple[object, str | None]:
+        """Use the replaceable Glassdoor guard and call other boards directly."""
+        site = arguments[C_SITE_NAME_ARGUMENT][C_FIRST_SITE_INDEX]
+        if site == C_GLASSDOOR_SITE:
+            return C_GLASSDOOR_GUARD.search(scraper, arguments)
+        return scraper(**arguments), None
 
 
 class JobBoardSearchError(ValueError):
@@ -29,20 +52,17 @@ class JobBoardSearchError(ValueError):
 class JobSearchAdapter:
     """Build board-specific requests and normalize returned JobSpy postings."""
 
-    def __init__(self, scraper: Callable):
-        """Accept a scraper callable so searches can be tested without networking."""
+    def __init__(self, scraper: Callable, coordinator: BaseJobBoardCoordinator | None = None):
+        """Borrow a scraper and optional coordinator; callers retain resource ownership."""
         self.scraper = scraper
+        self.coordinator = coordinator if coordinator is not None else LocalJobBoardCoordinator()
 
     def search_board(
         self, preference: JobSearchPreferenceModel, site: str, results_wanted: int,
     ) -> tuple[list[AvailableJobModel], int]:
         """Fetch one board and return accepted postings and incomplete-record count."""
         arguments = self.build_arguments(preference, site, results_wanted)
-        warning = None
-        if site == C_GLASSDOOR_SITE:
-            result_frame, warning = C_GLASSDOOR_GUARD.search(self.scraper, arguments)
-        else:
-            result_frame = self.scraper(**arguments)
+        result_frame, warning = self.coordinator.search(self.scraper, arguments)
         accepted_jobs, skipped_count = self.normalize_records(result_frame, site, preference.keywords)
         if warning:
             raise JobBoardSearchError(warning, accepted_jobs, skipped_count)
