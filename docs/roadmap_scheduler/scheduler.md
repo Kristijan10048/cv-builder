@@ -8,4 +8,7 @@
  - Currently there will be tasks for fetching jobs from different web sites
  - There might be other tasks in the future
  - Ask questions when something is not clear
- - 
+ - Also include in the roadmap refactoring strategy for the UI and for the back end part.
+ - Do implement the roadmap. Just the planing
+ - Also include suggestions how to split and immanent the tasks which are independent with coding agents such as codex cli.
+ - Use APScheduler library
