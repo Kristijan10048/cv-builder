@@ -1,7 +1,9 @@
 # ApplyKit task scheduler roadmap
 
-Status: planned. Prepared 2026-10-31. These documents define future work; they do
-not install dependencies, start services, or implement the scheduler.
+Status: SCH-01 complete; remaining implementation tickets pending. Updated
+2026-10-31. Contracts, configuration, fixtures and dependency pins are implemented;
+no scheduler worker or management routes have been started or implemented.
+See the [frozen contract](contracts.md) and [SCH-01 handoff](tickets/SCH-01.md).
 
 ## Outcome and first release
 
@@ -90,8 +92,8 @@ supported deployment; network shares and multi-host workers are out of scope.
 
 ## Schedule and execution contract
 
-Proposed defaults below are design decisions for SCH-01 to freeze, not claims
-about existing behavior:
+The defaults below are frozen by SCH-01 in [contracts.md](contracts.md); their
+runtime and persistence behavior remains work for the dependent tickets:
 
 - Names: trimmed, 1–120 characters. Maximum 100 nondeleted schedules.
 - Task type: `fetch_jobs`, payload version 1, `preference_id`, distinct supported
@@ -253,13 +255,14 @@ abandoned runs interrupted. Do not claim that an executor timeout cancels scrapi
 
 ## Implementation tasks and dependency order
 
-All tasks are pending. Estimates are hands-on planning ranges, excluding live
-board troubleshooting. Dependency IDs are completion gates, not just suggested
-reading. Independent branches may use contract fixtures before integration.
+SCH-01 is complete; all other tasks are pending. Estimates are hands-on planning
+ranges, excluding live board troubleshooting. Dependency IDs are completion gates,
+not just suggested reading. Independent branches may use the frozen contract
+fixtures before integration.
 
 | Task | Deliverable | Depends on | Estimate |
 | --- | --- | --- | --- |
-| [SCH-01](tickets/SCH-01.md) | Freeze contracts and configuration | None | 0.5–1 day |
+| [SCH-01](tickets/SCH-01.md) | Freeze contracts and configuration — complete | None | 0.5–1 day |
 | [SCH-02](tickets/SCH-02.md) | Extract reusable job-fetch backend | SCH-01 | 1–2 days |
 | [SCH-03](tickets/SCH-03.md) | Persistence, migrations, repository | SCH-01 | 1.5–2.5 days |
 | [SCH-04](tickets/SCH-04.md) | Independent APScheduler runtime | SCH-03 | 1.5–2.5 days |

@@ -8,3 +8,5 @@ python-jobspy==1.2.0
 SQLAlchemy==2.0.44
 geonamescache==3.0.1
 requests==2.34.2
+APScheduler==3.11.3
+portalocker==3.2.0

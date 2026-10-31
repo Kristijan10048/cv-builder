@@ -1,0 +1,2879 @@
+{
+  "contract_version": 1,
+  "frozen_now": "2030-01-01T00:00:00Z",
+  "models": {
+    "create_interval": {
+      "model": "CreateScheduleRequest",
+      "value": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        }
+      }
+    },
+    "create_once": {
+      "model": "CreateScheduleRequest",
+      "value": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "once",
+          "run_at": "2035-01-01T00:00:00Z"
+        }
+      }
+    },
+    "replace": {
+      "model": "ReplaceScheduleRequest",
+      "value": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "revision": 1
+      }
+    },
+    "schedule": {
+      "model": "ScheduleRecord",
+      "value": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "id": 1,
+        "revision": 1,
+        "enabled": true,
+        "deleted": false,
+        "next_run_at": "2035-01-01T00:00:00Z",
+        "created_at": "2030-01-01T00:00:00Z",
+        "updated_at": "2030-01-01T00:00:00Z",
+        "active_run_id": null,
+        "latest_run": null
+      }
+    },
+    "paused_schedule": {
+      "model": "ScheduleRecord",
+      "value": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "id": 1,
+        "revision": 2,
+        "enabled": false,
+        "deleted": false,
+        "next_run_at": null,
+        "created_at": "2030-01-01T00:00:00Z",
+        "updated_at": "2030-01-01T00:00:00Z",
+        "active_run_id": null,
+        "latest_run": null
+      }
+    },
+    "resumed_schedule": {
+      "model": "ScheduleRecord",
+      "value": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "id": 1,
+        "revision": 3,
+        "enabled": true,
+        "deleted": false,
+        "next_run_at": "2035-01-01T00:00:00Z",
+        "created_at": "2030-01-01T00:00:00Z",
+        "updated_at": "2030-01-01T00:00:00Z",
+        "active_run_id": null,
+        "latest_run": null
+      }
+    },
+    "manual_run": {
+      "model": "RunRecord",
+      "value": {
+        "id": 1,
+        "state": "queued",
+        "source": "manual",
+        "scheduled_for": null,
+        "queued_at": "2030-01-01T00:00:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "skipped_count": 0,
+        "result": null,
+        "error": null,
+        "schedule_id": 1,
+        "revision": 1,
+        "idempotency_key": "request-001",
+        "expires_at": "2030-01-01T00:05:00Z",
+        "owner_token": null,
+        "claim_snapshot": {
+          "name": "Engineering jobs",
+          "task_type": "fetch_jobs",
+          "payload_version": 1,
+          "payload": {
+            "preference_id": 1,
+            "sites": [
+              "linkedin",
+              "indeed"
+            ],
+            "results_wanted": 50
+          },
+          "trigger": {
+            "kind": "interval",
+            "seconds": 3600,
+            "starts_at": "2035-01-01T00:00:00Z"
+          },
+          "schedule_id": 1,
+          "revision": 1
+        },
+        "effective_preference": null
+      }
+    },
+    "success": {
+      "model": "TaskResult",
+      "value": {
+        "state": "succeeded",
+        "fetched": 2,
+        "boards": {
+          "linkedin": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          }
+        },
+        "warnings": [],
+        "error": null
+      }
+    },
+    "partial": {
+      "model": "TaskResult",
+      "value": {
+        "state": "partial",
+        "fetched": 1,
+        "boards": {
+          "linkedin": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "busy",
+            "count": 0,
+            "warnings": [
+              "Board is busy."
+            ]
+          }
+        },
+        "warnings": [
+          "indeed: Board is busy."
+        ],
+        "error": null
+      }
+    },
+    "failure": {
+      "model": "TaskResult",
+      "value": {
+        "state": "failed",
+        "fetched": 0,
+        "boards": {
+          "linkedin": {
+            "status": "failed",
+            "count": 0,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "cooldown",
+            "count": 0,
+            "warnings": []
+          }
+        },
+        "warnings": [
+          "indeed: Board is cooling down."
+        ],
+        "error": {
+          "code": "task_failed",
+          "message": "All selected boards failed.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "offline_worker": {
+      "model": "WorkerStatus",
+      "value": {
+        "state": "stopped",
+        "heartbeat_at": null,
+        "started_at": null,
+        "stopped_at": null,
+        "queued_count": 0,
+        "running_count": 0,
+        "freshness_seconds": 30
+      }
+    },
+    "fresh_worker": {
+      "model": "WorkerStatus",
+      "value": {
+        "state": "fresh",
+        "heartbeat_at": "2030-01-01T00:00:00Z",
+        "started_at": "2030-01-01T00:00:00Z",
+        "stopped_at": null,
+        "queued_count": 1,
+        "running_count": 0,
+        "freshness_seconds": 30
+      }
+    },
+    "stale_worker": {
+      "model": "WorkerStatus",
+      "value": {
+        "state": "stale",
+        "heartbeat_at": "2029-12-31T23:59:00Z",
+        "started_at": "2029-12-31T23:58:00Z",
+        "stopped_at": null,
+        "queued_count": 0,
+        "running_count": 0,
+        "freshness_seconds": 30
+      }
+    },
+    "run_now": {
+      "model": "RunNowResponse",
+      "value": {
+        "run": {
+          "id": 1,
+          "state": "queued",
+          "source": "manual",
+          "scheduled_for": null,
+          "queued_at": "2030-01-01T00:00:00Z",
+          "started_at": null,
+          "finished_at": null,
+          "skipped_count": 0,
+          "result": null,
+          "error": null,
+          "schedule_id": 1,
+          "revision": 1,
+          "idempotency_key": "request-001",
+          "expires_at": "2030-01-01T00:05:00Z",
+          "owner_token": null,
+          "claim_snapshot": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "schedule_id": 1,
+            "revision": 1
+          },
+          "effective_preference": null
+        },
+        "deduplicated": false,
+        "worker": {
+          "state": "fresh",
+          "heartbeat_at": "2030-01-01T00:00:00Z",
+          "started_at": "2030-01-01T00:00:00Z",
+          "stopped_at": null,
+          "queued_count": 1,
+          "running_count": 0,
+          "freshness_seconds": 30
+        },
+        "warning": null
+      }
+    },
+    "offline_run_now": {
+      "model": "RunNowResponse",
+      "value": {
+        "run": {
+          "id": 1,
+          "state": "queued",
+          "source": "manual",
+          "scheduled_for": null,
+          "queued_at": "2030-01-01T00:00:00Z",
+          "started_at": null,
+          "finished_at": null,
+          "skipped_count": 0,
+          "result": null,
+          "error": null,
+          "schedule_id": 1,
+          "revision": 1,
+          "idempotency_key": "request-001",
+          "expires_at": "2030-01-01T00:05:00Z",
+          "owner_token": null,
+          "claim_snapshot": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "schedule_id": 1,
+            "revision": 1
+          },
+          "effective_preference": null
+        },
+        "deduplicated": false,
+        "worker": {
+          "state": "stopped",
+          "heartbeat_at": null,
+          "started_at": null,
+          "stopped_at": null,
+          "queued_count": 0,
+          "running_count": 0,
+          "freshness_seconds": 30
+        },
+        "warning": "Worker is offline; this request is queued and may expire."
+      }
+    },
+    "revision_conflict": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "revision_conflict",
+          "message": "Reload the current schedule before editing.",
+          "path": [],
+          "current_revision": 2,
+          "schedule_ids": []
+        }
+      }
+    },
+    "active_run_conflict": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "active_run_conflict",
+          "message": "This schedule already has active work.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "idempotency_conflict": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "idempotency_conflict",
+          "message": "This key belongs to a different request revision.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "schedule_limit_reached": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "schedule_limit_reached",
+          "message": "The schedule limit has been reached.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "preference_in_use": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "preference_in_use",
+          "message": "Delete the referencing schedules first.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": [
+            1
+          ]
+        }
+      }
+    },
+    "preference_not_found": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "preference_not_found",
+          "message": "The saved search no longer exists.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "validation_error": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "validation_error",
+          "message": "Check the supplied value.",
+          "path": [
+            "revision"
+          ],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "unsupported_task": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "unsupported_task",
+          "message": "This task type or version is unavailable.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "storage_unavailable": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "storage_unavailable",
+          "message": "Storage is busy. Try again shortly.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    },
+    "schedule_not_found": {
+      "model": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "schedule_not_found",
+          "message": "The schedule was not found.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/task-schedules",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "SchedulePage",
+          "response": {
+            "items": [
+              {
+                "name": "Engineering jobs",
+                "task_type": "fetch_jobs",
+                "payload_version": 1,
+                "payload": {
+                  "preference_id": 1,
+                  "sites": [
+                    "linkedin",
+                    "indeed"
+                  ],
+                  "results_wanted": 50
+                },
+                "trigger": {
+                  "kind": "interval",
+                  "seconds": 3600,
+                  "starts_at": "2035-01-01T00:00:00Z"
+                },
+                "id": 1,
+                "revision": 1,
+                "enabled": true,
+                "deleted": false,
+                "next_run_at": "2035-01-01T00:00:00Z",
+                "created_at": "2030-01-01T00:00:00Z",
+                "updated_at": "2030-01-01T00:00:00Z",
+                "active_run_id": null,
+                "latest_run": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "page_size": 20,
+            "total_pages": 1
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "SchedulePage",
+          "response": {
+            "items": [
+              {
+                "name": "Engineering jobs",
+                "task_type": "fetch_jobs",
+                "payload_version": 1,
+                "payload": {
+                  "preference_id": 1,
+                  "sites": [
+                    "linkedin",
+                    "indeed"
+                  ],
+                  "results_wanted": 50
+                },
+                "trigger": {
+                  "kind": "interval",
+                  "seconds": 3600,
+                  "starts_at": "2035-01-01T00:00:00Z"
+                },
+                "id": 1,
+                "revision": 1,
+                "enabled": true,
+                "deleted": false,
+                "next_run_at": "2035-01-01T00:00:00Z",
+                "created_at": "2030-01-01T00:00:00Z",
+                "updated_at": "2030-01-01T00:00:00Z",
+                "active_run_id": null,
+                "latest_run": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "page_size": 20,
+            "total_pages": 1
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "empty": {
+          "status": 200,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "SchedulePage",
+          "response": {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 20,
+            "total_pages": 0
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": true,
+            "page_size": 20
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "page"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/task-schedules",
+      "cases": {
+        "populated": {
+          "status": 201,
+          "request_model": "CreateScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            }
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 1,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "offline": {
+          "status": 201,
+          "request_model": "CreateScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            }
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 1,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "CreateScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            }
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "conflict": {
+          "status": 409,
+          "request_model": "CreateScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            }
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_limit_reached",
+              "message": "The schedule limit has been reached.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "CreateScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": true,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            }
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "payload_version"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/task-schedules/{id}",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": null,
+          "request": null,
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 1,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": null,
+          "request": null,
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 1,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": null,
+          "request": null,
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": null,
+          "request": null,
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "id"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          },
+          "path_parameters": {
+            "id": "invalid"
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": null,
+          "request": null,
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/task-schedules/{id}",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": "ReplaceScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "revision": 1
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 2,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": "ReplaceScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "revision": 1
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 2,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "ReplaceScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "conflict": {
+          "status": 409,
+          "request_model": "ReplaceScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "revision_conflict",
+              "message": "Reload the current schedule before editing.",
+              "path": [],
+              "current_revision": 2,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "ReplaceScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "revision": true
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "revision"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": "ReplaceScheduleRequest",
+          "request": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/task-schedules/{id}/pause",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 2,
+            "enabled": false,
+            "deleted": false,
+            "next_run_at": null,
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 2,
+            "enabled": false,
+            "deleted": false,
+            "next_run_at": null,
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "conflict": {
+          "status": 409,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "revision_conflict",
+              "message": "Reload the current schedule before editing.",
+              "path": [],
+              "current_revision": 2,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": true
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "revision"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/task-schedules/{id}/resume",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 2
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 3,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 2
+          },
+          "response_model": "ScheduleRecord",
+          "response": {
+            "name": "Engineering jobs",
+            "task_type": "fetch_jobs",
+            "payload_version": 1,
+            "payload": {
+              "preference_id": 1,
+              "sites": [
+                "linkedin",
+                "indeed"
+              ],
+              "results_wanted": 50
+            },
+            "trigger": {
+              "kind": "interval",
+              "seconds": 3600,
+              "starts_at": "2035-01-01T00:00:00Z"
+            },
+            "id": 1,
+            "revision": 3,
+            "enabled": true,
+            "deleted": false,
+            "next_run_at": "2035-01-01T00:00:00Z",
+            "created_at": "2030-01-01T00:00:00Z",
+            "updated_at": "2030-01-01T00:00:00Z",
+            "active_run_id": null,
+            "latest_run": null
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 2
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "conflict": {
+          "status": 409,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 2
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "revision_conflict",
+              "message": "Reload the current schedule before editing.",
+              "path": [],
+              "current_revision": 2,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": true
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "revision"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 2
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/task-schedules/{id}",
+      "cases": {
+        "populated": {
+          "status": 204,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": null,
+          "response": null
+        },
+        "offline": {
+          "status": 204,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": null,
+          "response": null
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "conflict": {
+          "status": 409,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "revision_conflict",
+              "message": "Reload the current schedule before editing.",
+              "path": [],
+              "current_revision": 2,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": true
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "revision"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": "RevisionRequest",
+          "request": {
+            "revision": 1
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/task-schedules/{id}/run-now",
+      "cases": {
+        "populated": {
+          "status": 202,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "RunNowResponse",
+          "response": {
+            "run": {
+              "id": 1,
+              "state": "queued",
+              "source": "manual",
+              "scheduled_for": null,
+              "queued_at": "2030-01-01T00:00:00Z",
+              "started_at": null,
+              "finished_at": null,
+              "skipped_count": 0,
+              "result": null,
+              "error": null,
+              "schedule_id": 1,
+              "revision": 1,
+              "idempotency_key": "request-001",
+              "expires_at": "2030-01-01T00:05:00Z",
+              "owner_token": null,
+              "claim_snapshot": {
+                "name": "Engineering jobs",
+                "task_type": "fetch_jobs",
+                "payload_version": 1,
+                "payload": {
+                  "preference_id": 1,
+                  "sites": [
+                    "linkedin",
+                    "indeed"
+                  ],
+                  "results_wanted": 50
+                },
+                "trigger": {
+                  "kind": "interval",
+                  "seconds": 3600,
+                  "starts_at": "2035-01-01T00:00:00Z"
+                },
+                "schedule_id": 1,
+                "revision": 1
+              },
+              "effective_preference": null
+            },
+            "deduplicated": false,
+            "worker": {
+              "state": "fresh",
+              "heartbeat_at": "2030-01-01T00:00:00Z",
+              "started_at": "2030-01-01T00:00:00Z",
+              "stopped_at": null,
+              "queued_count": 1,
+              "running_count": 0,
+              "freshness_seconds": 30
+            },
+            "warning": null
+          }
+        },
+        "offline": {
+          "status": 202,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "RunNowResponse",
+          "response": {
+            "run": {
+              "id": 1,
+              "state": "queued",
+              "source": "manual",
+              "scheduled_for": null,
+              "queued_at": "2030-01-01T00:00:00Z",
+              "started_at": null,
+              "finished_at": null,
+              "skipped_count": 0,
+              "result": null,
+              "error": null,
+              "schedule_id": 1,
+              "revision": 1,
+              "idempotency_key": "request-001",
+              "expires_at": "2030-01-01T00:05:00Z",
+              "owner_token": null,
+              "claim_snapshot": {
+                "name": "Engineering jobs",
+                "task_type": "fetch_jobs",
+                "payload_version": 1,
+                "payload": {
+                  "preference_id": 1,
+                  "sites": [
+                    "linkedin",
+                    "indeed"
+                  ],
+                  "results_wanted": 50
+                },
+                "trigger": {
+                  "kind": "interval",
+                  "seconds": 3600,
+                  "starts_at": "2035-01-01T00:00:00Z"
+                },
+                "schedule_id": 1,
+                "revision": 1
+              },
+              "effective_preference": null
+            },
+            "deduplicated": false,
+            "worker": {
+              "state": "stopped",
+              "heartbeat_at": null,
+              "started_at": null,
+              "stopped_at": null,
+              "queued_count": 0,
+              "running_count": 0,
+              "freshness_seconds": 30
+            },
+            "warning": "Worker is offline; this request is queued and may expire."
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "conflict": {
+          "status": 409,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "revision_conflict",
+              "message": "Reload the current schedule before editing.",
+              "path": [],
+              "current_revision": 2,
+              "schedule_ids": []
+            }
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": true,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "revision"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "deduplicated": {
+          "status": 202,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "RunNowResponse",
+          "response": {
+            "run": {
+              "id": 1,
+              "state": "queued",
+              "source": "manual",
+              "scheduled_for": null,
+              "queued_at": "2030-01-01T00:00:00Z",
+              "started_at": null,
+              "finished_at": null,
+              "skipped_count": 0,
+              "result": null,
+              "error": null,
+              "schedule_id": 1,
+              "revision": 1,
+              "idempotency_key": "request-001",
+              "expires_at": "2030-01-01T00:05:00Z",
+              "owner_token": null,
+              "claim_snapshot": {
+                "name": "Engineering jobs",
+                "task_type": "fetch_jobs",
+                "payload_version": 1,
+                "payload": {
+                  "preference_id": 1,
+                  "sites": [
+                    "linkedin",
+                    "indeed"
+                  ],
+                  "results_wanted": 50
+                },
+                "trigger": {
+                  "kind": "interval",
+                  "seconds": 3600,
+                  "starts_at": "2035-01-01T00:00:00Z"
+                },
+                "schedule_id": 1,
+                "revision": 1
+              },
+              "effective_preference": null
+            },
+            "deduplicated": true,
+            "worker": {
+              "state": "fresh",
+              "heartbeat_at": "2030-01-01T00:00:00Z",
+              "started_at": "2030-01-01T00:00:00Z",
+              "stopped_at": null,
+              "queued_count": 1,
+              "running_count": 0,
+              "freshness_seconds": 30
+            },
+            "warning": null
+          }
+        },
+        "active_run_conflict": {
+          "status": 409,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "active_run_conflict",
+              "message": "This schedule already has active work.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "idempotency_conflict": {
+          "status": 409,
+          "request_model": "RunNowRequest",
+          "request": {
+            "revision": 1,
+            "idempotency_key": "request-001"
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "idempotency_conflict",
+              "message": "This key belongs to a different request revision.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/task-schedules/{id}/runs",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "RunPage",
+          "response": {
+            "items": [
+              {
+                "id": 1,
+                "state": "queued",
+                "source": "manual",
+                "scheduled_for": null,
+                "queued_at": "2030-01-01T00:00:00Z",
+                "started_at": null,
+                "finished_at": null,
+                "skipped_count": 0,
+                "result": null,
+                "error": null,
+                "schedule_id": 1,
+                "revision": 1,
+                "idempotency_key": "request-001",
+                "expires_at": "2030-01-01T00:05:00Z",
+                "owner_token": null,
+                "claim_snapshot": {
+                  "name": "Engineering jobs",
+                  "task_type": "fetch_jobs",
+                  "payload_version": 1,
+                  "payload": {
+                    "preference_id": 1,
+                    "sites": [
+                      "linkedin",
+                      "indeed"
+                    ],
+                    "results_wanted": 50
+                  },
+                  "trigger": {
+                    "kind": "interval",
+                    "seconds": 3600,
+                    "starts_at": "2035-01-01T00:00:00Z"
+                  },
+                  "schedule_id": 1,
+                  "revision": 1
+                },
+                "effective_preference": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "page_size": 20,
+            "total_pages": 1
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "RunPage",
+          "response": {
+            "items": [
+              {
+                "id": 1,
+                "state": "queued",
+                "source": "manual",
+                "scheduled_for": null,
+                "queued_at": "2030-01-01T00:00:00Z",
+                "started_at": null,
+                "finished_at": null,
+                "skipped_count": 0,
+                "result": null,
+                "error": null,
+                "schedule_id": 1,
+                "revision": 1,
+                "idempotency_key": "request-001",
+                "expires_at": "2030-01-01T00:05:00Z",
+                "owner_token": null,
+                "claim_snapshot": {
+                  "name": "Engineering jobs",
+                  "task_type": "fetch_jobs",
+                  "payload_version": 1,
+                  "payload": {
+                    "preference_id": 1,
+                    "sites": [
+                      "linkedin",
+                      "indeed"
+                    ],
+                    "results_wanted": 50
+                  },
+                  "trigger": {
+                    "kind": "interval",
+                    "seconds": 3600,
+                    "starts_at": "2035-01-01T00:00:00Z"
+                  },
+                  "schedule_id": 1,
+                  "revision": 1
+                },
+                "effective_preference": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "page_size": 20,
+            "total_pages": 1
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "empty": {
+          "status": 200,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "RunPage",
+          "response": {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 20,
+            "total_pages": 0
+          }
+        },
+        "validation_error": {
+          "status": 422,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": true,
+            "page_size": 20
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "validation_error",
+              "message": "Check the supplied value.",
+              "path": [
+                "page"
+              ],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "not_found": {
+          "status": 404,
+          "request_model": "PaginationRequest",
+          "request": {
+            "page": 1,
+            "page_size": 20
+          },
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "schedule_not_found",
+              "message": "The schedule was not found.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduler/status",
+      "cases": {
+        "populated": {
+          "status": 200,
+          "request_model": null,
+          "request": null,
+          "response_model": "WorkerStatus",
+          "response": {
+            "state": "fresh",
+            "heartbeat_at": "2030-01-01T00:00:00Z",
+            "started_at": "2030-01-01T00:00:00Z",
+            "stopped_at": null,
+            "queued_count": 1,
+            "running_count": 0,
+            "freshness_seconds": 30
+          }
+        },
+        "offline": {
+          "status": 200,
+          "request_model": null,
+          "request": null,
+          "response_model": "WorkerStatus",
+          "response": {
+            "state": "stopped",
+            "heartbeat_at": null,
+            "started_at": null,
+            "stopped_at": null,
+            "queued_count": 0,
+            "running_count": 0,
+            "freshness_seconds": 30
+          }
+        },
+        "storage_error": {
+          "status": 503,
+          "request_model": null,
+          "request": null,
+          "response_model": "ErrorResponse",
+          "response": {
+            "error": {
+              "code": "storage_unavailable",
+              "message": "Storage is busy. Try again shortly.",
+              "path": [],
+              "current_revision": null,
+              "schedule_ids": []
+            }
+          }
+        },
+        "empty": {
+          "status": 200,
+          "request_model": null,
+          "request": null,
+          "response_model": "WorkerStatus",
+          "response": {
+            "state": "stopped",
+            "heartbeat_at": null,
+            "started_at": null,
+            "stopped_at": null,
+            "queued_count": 0,
+            "running_count": 0,
+            "freshness_seconds": 30
+          }
+        }
+      }
+    }
+  ],
+  "lifecycle_runs": [
+    {
+      "id": 1,
+      "state": "cancelled",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": null,
+      "finished_at": "2030-01-01T00:00:00Z",
+      "skipped_count": 0,
+      "result": null,
+      "error": {
+        "code": "claim_invalidated",
+        "message": "Execution did not complete.",
+        "path": [],
+        "current_revision": null,
+        "schedule_ids": []
+      },
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": null,
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": null
+    },
+    {
+      "id": 1,
+      "state": "failed",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": "2030-01-01T00:00:00Z",
+      "finished_at": "2030-01-01T00:00:00Z",
+      "skipped_count": 0,
+      "result": {
+        "state": "failed",
+        "fetched": 0,
+        "boards": {
+          "linkedin": {
+            "status": "failed",
+            "count": 0,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "cooldown",
+            "count": 0,
+            "warnings": []
+          }
+        },
+        "warnings": [
+          "indeed: Board is cooling down."
+        ],
+        "error": {
+          "code": "task_failed",
+          "message": "All selected boards failed.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      },
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": "fixture-worker",
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": {
+        "job_title": "Software Engineer",
+        "country": "Germany",
+        "city": "Berlin",
+        "radius_km": 25,
+        "keywords": [
+          "Python"
+        ],
+        "posted_within_days": 7
+      }
+    },
+    {
+      "id": 1,
+      "state": "interrupted",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": "2030-01-01T00:00:00Z",
+      "finished_at": "2030-01-01T00:00:00Z",
+      "skipped_count": 0,
+      "result": null,
+      "error": {
+        "code": "worker_interrupted",
+        "message": "Execution did not complete.",
+        "path": [],
+        "current_revision": null,
+        "schedule_ids": []
+      },
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": "fixture-worker",
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": {
+        "job_title": "Software Engineer",
+        "country": "Germany",
+        "city": "Berlin",
+        "radius_km": 25,
+        "keywords": [
+          "Python"
+        ],
+        "posted_within_days": 7
+      }
+    },
+    {
+      "id": 1,
+      "state": "missed",
+      "source": "timed",
+      "scheduled_for": "2035-01-01T00:00:00Z",
+      "queued_at": "2035-01-01T00:10:00Z",
+      "started_at": null,
+      "finished_at": "2035-01-01T00:10:00Z",
+      "skipped_count": 1,
+      "result": null,
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": null,
+      "expires_at": null,
+      "owner_token": null,
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": null
+    },
+    {
+      "id": 1,
+      "state": "partial",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": "2030-01-01T00:00:00Z",
+      "finished_at": "2030-01-01T00:00:00Z",
+      "skipped_count": 0,
+      "result": {
+        "state": "partial",
+        "fetched": 1,
+        "boards": {
+          "linkedin": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "busy",
+            "count": 0,
+            "warnings": [
+              "Board is busy."
+            ]
+          }
+        },
+        "warnings": [
+          "indeed: Board is busy."
+        ],
+        "error": null
+      },
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": "fixture-worker",
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": {
+        "job_title": "Software Engineer",
+        "country": "Germany",
+        "city": "Berlin",
+        "radius_km": 25,
+        "keywords": [
+          "Python"
+        ],
+        "posted_within_days": 7
+      }
+    },
+    {
+      "id": 1,
+      "state": "queued",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": null,
+      "finished_at": null,
+      "skipped_count": 0,
+      "result": null,
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": null,
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": null
+    },
+    {
+      "id": 1,
+      "state": "running",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": "2030-01-01T00:00:00Z",
+      "finished_at": null,
+      "skipped_count": 0,
+      "result": null,
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": "fixture-worker",
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": {
+        "job_title": "Software Engineer",
+        "country": "Germany",
+        "city": "Berlin",
+        "radius_km": 25,
+        "keywords": [
+          "Python"
+        ],
+        "posted_within_days": 7
+      }
+    },
+    {
+      "id": 1,
+      "state": "skipped_overlap",
+      "source": "timed",
+      "scheduled_for": "2035-01-01T00:00:00Z",
+      "queued_at": "2035-01-01T00:10:00Z",
+      "started_at": null,
+      "finished_at": "2035-01-01T00:10:00Z",
+      "skipped_count": 1,
+      "result": null,
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": null,
+      "expires_at": null,
+      "owner_token": null,
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": null
+    },
+    {
+      "id": 1,
+      "state": "succeeded",
+      "source": "manual",
+      "scheduled_for": null,
+      "queued_at": "2030-01-01T00:00:00Z",
+      "started_at": "2030-01-01T00:00:00Z",
+      "finished_at": "2030-01-01T00:00:00Z",
+      "skipped_count": 0,
+      "result": {
+        "state": "succeeded",
+        "fetched": 2,
+        "boards": {
+          "linkedin": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          }
+        },
+        "warnings": [],
+        "error": null
+      },
+      "error": null,
+      "schedule_id": 1,
+      "revision": 1,
+      "idempotency_key": "request-001",
+      "expires_at": "2030-01-01T00:05:00Z",
+      "owner_token": "fixture-worker",
+      "claim_snapshot": {
+        "name": "Engineering jobs",
+        "task_type": "fetch_jobs",
+        "payload_version": 1,
+        "payload": {
+          "preference_id": 1,
+          "sites": [
+            "linkedin",
+            "indeed"
+          ],
+          "results_wanted": 50
+        },
+        "trigger": {
+          "kind": "interval",
+          "seconds": 3600,
+          "starts_at": "2035-01-01T00:00:00Z"
+        },
+        "schedule_id": 1,
+        "revision": 1
+      },
+      "effective_preference": {
+        "job_title": "Software Engineer",
+        "country": "Germany",
+        "city": "Berlin",
+        "radius_km": 25,
+        "keywords": [
+          "Python"
+        ],
+        "posted_within_days": 7
+      }
+    }
+  ],
+  "fake_handlers": [
+    {
+      "name": "succeeded",
+      "run": {
+        "id": 1,
+        "state": "running",
+        "source": "manual",
+        "scheduled_for": null,
+        "queued_at": "2030-01-01T00:00:00Z",
+        "started_at": "2030-01-01T00:00:00Z",
+        "finished_at": null,
+        "skipped_count": 0,
+        "result": null,
+        "error": null,
+        "schedule_id": 1,
+        "revision": 1,
+        "idempotency_key": "request-001",
+        "expires_at": "2030-01-01T00:05:00Z",
+        "owner_token": "fixture-worker",
+        "claim_snapshot": {
+          "name": "Engineering jobs",
+          "task_type": "fetch_jobs",
+          "payload_version": 1,
+          "payload": {
+            "preference_id": 1,
+            "sites": [
+              "linkedin",
+              "indeed"
+            ],
+            "results_wanted": 50
+          },
+          "trigger": {
+            "kind": "interval",
+            "seconds": 3600,
+            "starts_at": "2035-01-01T00:00:00Z"
+          },
+          "schedule_id": 1,
+          "revision": 1
+        },
+        "effective_preference": {
+          "job_title": "Software Engineer",
+          "country": "Germany",
+          "city": "Berlin",
+          "radius_km": 25,
+          "keywords": [
+            "Python"
+          ],
+          "posted_within_days": 7
+        }
+      },
+      "result": {
+        "state": "succeeded",
+        "fetched": 2,
+        "boards": {
+          "linkedin": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          }
+        },
+        "warnings": [],
+        "error": null
+      }
+    },
+    {
+      "name": "partial",
+      "run": {
+        "id": 1,
+        "state": "running",
+        "source": "manual",
+        "scheduled_for": null,
+        "queued_at": "2030-01-01T00:00:00Z",
+        "started_at": "2030-01-01T00:00:00Z",
+        "finished_at": null,
+        "skipped_count": 0,
+        "result": null,
+        "error": null,
+        "schedule_id": 1,
+        "revision": 1,
+        "idempotency_key": "request-001",
+        "expires_at": "2030-01-01T00:05:00Z",
+        "owner_token": "fixture-worker",
+        "claim_snapshot": {
+          "name": "Engineering jobs",
+          "task_type": "fetch_jobs",
+          "payload_version": 1,
+          "payload": {
+            "preference_id": 1,
+            "sites": [
+              "linkedin",
+              "indeed"
+            ],
+            "results_wanted": 50
+          },
+          "trigger": {
+            "kind": "interval",
+            "seconds": 3600,
+            "starts_at": "2035-01-01T00:00:00Z"
+          },
+          "schedule_id": 1,
+          "revision": 1
+        },
+        "effective_preference": {
+          "job_title": "Software Engineer",
+          "country": "Germany",
+          "city": "Berlin",
+          "radius_km": 25,
+          "keywords": [
+            "Python"
+          ],
+          "posted_within_days": 7
+        }
+      },
+      "result": {
+        "state": "partial",
+        "fetched": 1,
+        "boards": {
+          "linkedin": {
+            "status": "completed",
+            "count": 1,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "busy",
+            "count": 0,
+            "warnings": [
+              "Board is busy."
+            ]
+          }
+        },
+        "warnings": [
+          "indeed: Board is busy."
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "failed",
+      "run": {
+        "id": 1,
+        "state": "running",
+        "source": "manual",
+        "scheduled_for": null,
+        "queued_at": "2030-01-01T00:00:00Z",
+        "started_at": "2030-01-01T00:00:00Z",
+        "finished_at": null,
+        "skipped_count": 0,
+        "result": null,
+        "error": null,
+        "schedule_id": 1,
+        "revision": 1,
+        "idempotency_key": "request-001",
+        "expires_at": "2030-01-01T00:05:00Z",
+        "owner_token": "fixture-worker",
+        "claim_snapshot": {
+          "name": "Engineering jobs",
+          "task_type": "fetch_jobs",
+          "payload_version": 1,
+          "payload": {
+            "preference_id": 1,
+            "sites": [
+              "linkedin",
+              "indeed"
+            ],
+            "results_wanted": 50
+          },
+          "trigger": {
+            "kind": "interval",
+            "seconds": 3600,
+            "starts_at": "2035-01-01T00:00:00Z"
+          },
+          "schedule_id": 1,
+          "revision": 1
+        },
+        "effective_preference": {
+          "job_title": "Software Engineer",
+          "country": "Germany",
+          "city": "Berlin",
+          "radius_km": 25,
+          "keywords": [
+            "Python"
+          ],
+          "posted_within_days": 7
+        }
+      },
+      "result": {
+        "state": "failed",
+        "fetched": 0,
+        "boards": {
+          "linkedin": {
+            "status": "failed",
+            "count": 0,
+            "warnings": []
+          },
+          "indeed": {
+            "status": "cooldown",
+            "count": 0,
+            "warnings": []
+          }
+        },
+        "warnings": [
+          "indeed: Board is cooling down."
+        ],
+        "error": {
+          "code": "task_failed",
+          "message": "All selected boards failed.",
+          "path": [],
+          "current_revision": null,
+          "schedule_ids": []
+        }
+      }
+    }
+  ]
+}
