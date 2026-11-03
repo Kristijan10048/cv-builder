@@ -1,4 +1,4 @@
-const C_OTHER_CITY = '__applykit_other_city__'
+const C_OTHER_CITY = '__cv_builder_other_city__'
 
 class SearchPreferenceLocationFields {
   /** Manage country-dependent dropdowns while preserving saved location strings. */

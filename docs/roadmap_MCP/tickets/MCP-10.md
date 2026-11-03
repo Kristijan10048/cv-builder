@@ -9,9 +9,9 @@
 
 1. Complete the package README with Windows PowerShell commands for creating the
    isolated environment, installing the pinned dependencies, running tests, and
-   launching python -m applykit_mcp.
+   launching python -m cv_builder_mcp.
 2. Show how to start the existing CV Builder application separately with Uvicorn,
-   then configure APPLYKIT_MCP_API_URL and APPLYKIT_MCP_REQUEST_TIMEOUT_SECONDS.
+   then configure CV_BUILDER_MCP_API_URL and CV_BUILDER_MCP_REQUEST_TIMEOUT_SECONDS.
    Explain that the stdio process waits for a client and opens no MCP HTTP port.
 3. Include the labeled local-host configuration, tested Inspector CLI procedure, and synthetic
    examples of overview, filtered history, application detail, and stored-job

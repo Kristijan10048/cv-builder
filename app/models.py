@@ -1,4 +1,4 @@
-"""Pydantic models used by the ApplyKit API."""
+"""Pydantic models used by the CV Builder API."""
 
 from typing import Annotated, Literal
 

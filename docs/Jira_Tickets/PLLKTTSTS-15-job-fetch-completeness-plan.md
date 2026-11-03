@@ -81,7 +81,7 @@ historical runs or remove the Asia exclusion as a side effect of expansion.
 | Evidence in this repository | Current behavior | Completeness gap |
 | --- | --- | --- |
 | [JobSearchInput](../app/models.py) and [search form](../templates/available_jobs.html) | Default 50 results per board; API permits 1-1000; UI offers 20, 50, 100, 250, 500, 1000. | Broad searches still stop at the requested limit; the larger bound does not prove exhaustion. |
-| [JobSearchAdapter.search_board](../app/job_search_adapter.py) | Calls JobSpy once per board, without an explicit offset or traversal report. | JobSpy may paginate internally, but ApplyKit cannot prove exhaustion. |
+| [JobSearchAdapter.search_board](../app/job_search_adapter.py) | Calls JobSpy once per board, without an explicit offset or traversal report. | JobSpy may paginate internally, but CV Builder cannot prove exhaustion. |
 | [JobSearchAdapter.build_arguments](../app/job_search_adapter.py) | Sends title, combined city/country, radius rounded up to miles, and age converted to hours. | Passed parameters do not demonstrate that each board applied equivalent filters. |
 | [JobSearchAdapter.normalize_records](../app/job_search_adapter.py) | Requires a title and safe HTTP URL; all keywords must occur as case-insensitive description substrings. | Keyword filtering occurs after the result cap; missing descriptions can discard possible matches. Keyword rejections are not counted. |
 | [JobSearchOutcome](../app/job_search.py) | A returned dataframe becomes `completed`, including empty data; escaped exceptions become `failed`. | Successful execution is treated as successful retrieval without source coverage evidence. |
@@ -139,7 +139,7 @@ caps, terminal-page evidence, detail availability, and error signals. Confirm
 behavior with saved responses from the pinned library. Live comparisons are
 limited to eligible regions, in priority order; excluded regions use offline probes.
 
-| Board | Current ApplyKit country handling | Planned scope and first probe |
+| Board | Current CV Builder country handling | Planned scope and first probe |
 | --- | --- | --- |
 | LinkedIn | No country restriction in the adapter. | High-priority Europe, then USA; test offset alignment, caps, blocked HTTP responses, and missing details. |
 | Indeed | Requires a resolvable non-worldwide JobSpy country. | High-priority Europe, then USA, where supported; inspect cursor exhaustion and caught page errors. |

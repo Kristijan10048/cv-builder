@@ -1,6 +1,6 @@
-# ApplyKit database migrations
+# CV Builder database migrations
 
-`app.database.init_db()` runs every migration in this directory when ApplyKit starts. Applied versions are recorded in the `schema_migrations` table.
+`app.database.init_db()` runs every migration in this directory when CV Builder starts. Applied versions are recorded in the `schema_migrations` table.
 
 ## Add a schema change
 

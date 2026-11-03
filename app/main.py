@@ -26,6 +26,7 @@ from .models import (
 
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
+C_APPLICATION_NAME = "CV Builder"
 C_LLM_URL_ERROR = "LLM server API URL must start with http:// or https://"
 C_LLM_CONNECTION_ERROR = "Could not connect to the LLM server API."
 
@@ -40,7 +41,7 @@ async def lifespan(_: FastAPI):
         close_logging(log_handler)
 
 
-app = FastAPI(title="ApplyKit", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title=C_APPLICATION_NAME, version="0.1.0", lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
 app.include_router(job_search_preferences_router)
 app.include_router(job_search_router)

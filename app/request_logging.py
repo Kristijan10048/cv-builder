@@ -10,6 +10,12 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from .database import BASE_DIR
 
+C_ENV_LOG_LEVEL = "CV_BUILDER_LOG_LEVEL"
+C_ENV_LOG_DIRECTORY = "CV_BUILDER_LOG_DIR"
+C_LEGACY_ENV_LOG_LEVEL = "APPLYKIT_LOG_LEVEL"
+C_LEGACY_ENV_LOG_DIRECTORY = "APPLYKIT_LOG_DIR"
+C_DEFAULT_LOG_LEVEL = "TRACE"
+C_LOG_FILENAME = "cv_builder.log"
 TRACE = 5
 logging.addLevelName(TRACE, "TRACE")
 logger = logging.getLogger("app.requests")
@@ -17,19 +23,19 @@ logger = logging.getLogger("app.requests")
 
 def configure_logging() -> RotatingFileHandler:
     """Configure only application logs, leaving Uvicorn and root handlers alone."""
-    level_name = os.getenv("APPLYKIT_LOG_LEVEL", "TRACE").strip().upper()
+    level_name = os.getenv(C_ENV_LOG_LEVEL, os.getenv(C_LEGACY_ENV_LOG_LEVEL, C_DEFAULT_LOG_LEVEL)).strip().upper()
     levels = {
         "TRACE": TRACE, "DEBUG": logging.DEBUG, "INFO": logging.INFO,
         "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL,
     }
     if level_name not in levels:
-        raise ValueError(f"Invalid APPLYKIT_LOG_LEVEL: {level_name}")
-    directory = Path(os.getenv("APPLYKIT_LOG_DIR") or BASE_DIR / "logs").expanduser()
+        raise ValueError(f"Invalid CV_BUILDER_LOG_LEVEL: {level_name}")
+    directory = Path(os.getenv(C_ENV_LOG_DIRECTORY, os.getenv(C_LEGACY_ENV_LOG_DIRECTORY)) or BASE_DIR / "logs").expanduser()
     if not directory.is_absolute():
         directory = BASE_DIR / directory
     directory.mkdir(parents=True, exist_ok=True)
     handler = RotatingFileHandler(
-        directory / "applykit.log", maxBytes=5_000_000, backupCount=20, encoding="utf-8",
+        directory / C_LOG_FILENAME, maxBytes=5_000_000, backupCount=20, encoding="utf-8",
     )
     handler.setFormatter(logging.Formatter(
         "%(asctime)s %(levelname)s %(name)s %(message)s",
@@ -38,10 +44,10 @@ def configure_logging() -> RotatingFileHandler:
     application_logger.setLevel(levels[level_name])
     # Reconfiguration must not duplicate entries or leave old files open.
     for previous in list(application_logger.handlers):
-        if getattr(previous, "_applykit_file_handler", False):
+        if getattr(previous, "_cv_builder_file_handler", False):
             application_logger.removeHandler(previous)
             previous.close()
-    handler._applykit_file_handler = True
+    handler._cv_builder_file_handler = True
     application_logger.addHandler(handler)
     return handler
 

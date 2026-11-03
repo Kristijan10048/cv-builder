@@ -68,9 +68,9 @@ C_FRAME_DESCRIPTION = "description"
 C_SITE_NAME = "site_name"
 C_SEARCH_TERM = "search_term"
 C_PAGE_SIZE = 20
-C_ENV_DATABASE = "APPLYKIT_DATABASE_PATH"
-C_ENV_LOCKS = "APPLYKIT_LOCK_DIR"
-C_ENV_LOGS = "APPLYKIT_SCHEDULER_LOG_DIR"
+C_ENV_DATABASE = "CV_BUILDER_DATABASE_PATH"
+C_ENV_LOCKS = "CV_BUILDER_LOCK_DIR"
+C_ENV_LOGS = "CV_BUILDER_SCHEDULER_LOG_DIR"
 C_DATABASE_NAME = "child.db"
 C_LOCKS_NAME = "locks"
 C_LOGS_NAME = "logs"
@@ -84,7 +84,7 @@ import importlib.abc
 import os
 from pathlib import Path
 import sys
-C_REQUIRED = ("APPLYKIT_DATABASE_PATH", "APPLYKIT_LOCK_DIR", "APPLYKIT_SCHEDULER_LOG_DIR")
+C_REQUIRED = ("CV_BUILDER_DATABASE_PATH", "CV_BUILDER_LOCK_DIR", "CV_BUILDER_SCHEDULER_LOG_DIR")
 assert all(os.environ.get(name) for name in C_REQUIRED)
 C_BLOCKED = ("app.main", "app.job_search", "fastapi")
 class RejectTransportImports(importlib.abc.MetaPathFinder):

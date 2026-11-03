@@ -13,7 +13,7 @@ from app.request_logging import RequestLoggingMiddleware, close_logging, configu
 
 @pytest.mark.parametrize("level", ["INFO", "DEBUG", "TRACE"])
 def test_levels_and_endpoint_coverage(level, tmp_path, monkeypatch):
-    monkeypatch.setenv("APPLYKIT_LOG_LEVEL", level)
+    monkeypatch.setenv("CV_BUILDER_LOG_LEVEL", level)
     with TestClient(app) as client:
         assert client.get("/").status_code == 200
         assert client.get("/static/app.css").status_code == 200
@@ -37,7 +37,7 @@ def test_levels_and_endpoint_coverage(level, tmp_path, monkeypatch):
             "cv": ("private-filename.tex", b"private-document", "text/x-tex"),
         }).status_code == 200
 
-    content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+    content = (tmp_path / "logs" / "cv_builder.log").read_text(encoding="utf-8")
     entries = [line for line in content.splitlines() if "request_completed" in line]
     assert len(entries) == 12
     assert "route=/api/applications/{application_id} status=204" in content
@@ -62,7 +62,7 @@ def test_unhandled_failure_is_logged_and_preserves_server_behavior(tmp_path, mon
             client.get("/api/overview")
     with TestClient(app, raise_server_exceptions=False) as client:
         assert client.get("/api/overview").status_code == 500
-    content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+    content = (tmp_path / "logs" / "cv_builder.log").read_text(encoding="utf-8")
     assert "ERROR app.requests request_failed method=GET error_type=RuntimeError" in content
     assert content.count("route=/api/overview status=500") == 2
     assert "private-error-content" not in content
@@ -72,11 +72,11 @@ def test_unhandled_failure_is_logged_and_preserves_server_behavior(tmp_path, mon
 def test_log_directory_and_repeat_configuration(directory, tmp_path, monkeypatch):
     monkeypatch.setattr(request_logging, "BASE_DIR", tmp_path)
     if directory is None:
-        monkeypatch.delenv("APPLYKIT_LOG_DIR")
+        monkeypatch.delenv("CV_BUILDER_LOG_DIR")
         expected = tmp_path / "logs"
     else:
         expected = tmp_path / directory
-        monkeypatch.setenv("APPLYKIT_LOG_DIR", str(expected) if directory == "absolute" else directory)
+        monkeypatch.setenv("CV_BUILDER_LOG_DIR", str(expected) if directory == "absolute" else directory)
     first = configure_logging()
     second = configure_logging()
     try:
@@ -84,7 +84,7 @@ def test_log_directory_and_repeat_configuration(directory, tmp_path, monkeypatch
         assert second.maxBytes == 5_000_000
         assert second.backupCount == 20
         logging.getLogger("app.job_search").info("configuration-test")
-        content = (expected / "applykit.log").read_text(encoding="utf-8")
+        content = (expected / "cv_builder.log").read_text(encoding="utf-8")
         assert content.count("configuration-test") == 1
     finally:
         close_logging(second)
@@ -92,24 +92,24 @@ def test_log_directory_and_repeat_configuration(directory, tmp_path, monkeypatch
 
 
 def test_invalid_level_fails_with_clear_message(monkeypatch):
-    monkeypatch.setenv("APPLYKIT_LOG_LEVEL", "verbose")
-    with pytest.raises(ValueError, match="Invalid APPLYKIT_LOG_LEVEL: VERBOSE"):
+    monkeypatch.setenv("CV_BUILDER_LOG_LEVEL", "verbose")
+    with pytest.raises(ValueError, match="Invalid CV_BUILDER_LOG_LEVEL: VERBOSE"):
         configure_logging()
 
 
 def test_trace_is_enabled_by_default(tmp_path, monkeypatch):
-    monkeypatch.delenv("APPLYKIT_LOG_LEVEL")
+    monkeypatch.delenv("CV_BUILDER_LOG_LEVEL")
     handler = configure_logging()
     try:
         logging.getLogger("app.job_search").log(request_logging.TRACE, "default-trace-enabled")
-        content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+        content = (tmp_path / "logs" / "cv_builder.log").read_text(encoding="utf-8")
         assert " TRACE app.job_search default-trace-enabled" in content
     finally:
         close_logging(handler)
 
 
 def test_middleware_preserves_streaming_messages(tmp_path, monkeypatch):
-    monkeypatch.setenv("APPLYKIT_LOG_LEVEL", "TRACE")
+    monkeypatch.setenv("CV_BUILDER_LOG_LEVEL", "TRACE")
     received = [
         {"type": "http.request", "body": b"first", "more_body": True},
         {"type": "http.request", "body": b"second", "more_body": False},
@@ -140,7 +140,7 @@ def test_middleware_preserves_streaming_messages(tmp_path, monkeypatch):
     finally:
         close_logging(handler)
     assert sent == outgoing
-    content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+    content = (tmp_path / "logs" / "cv_builder.log").read_text(encoding="utf-8")
     assert "type=http.request bytes=5 more_body=True" in content
     assert "type=http.response.body bytes=9 more_body=True" in content
     assert "chunk-one" not in content

@@ -1,4 +1,4 @@
-"""Small, versioned SQLite migration runner for ApplyKit."""
+"""Small, versioned SQLite migration runner for CV Builder."""
 
 from collections.abc import Callable
 from dataclasses import dataclass

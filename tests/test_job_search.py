@@ -47,7 +47,7 @@ def fetch(client, preference_id, sites=None):
 
 @pytest.mark.parametrize("level", ["INFO", "DEBUG", "TRACE"])
 def test_search_logging_and_result_level(level, tmp_path, monkeypatch):
-    monkeypatch.setenv("APPLYKIT_LOG_LEVEL", level)
+    monkeypatch.setenv("CV_BUILDER_LOG_LEVEL", level)
     monkeypatch.setattr(job_search, "scrape_jobs", lambda **kwargs: frame(2, company="Trace Company"))
     with TestClient(app) as client:
         saved = preference(client, city="Boston", radius_km=50, posted_within_days=7, keywords=["python"])
@@ -55,7 +55,7 @@ def test_search_logging_and_result_level(level, tmp_path, monkeypatch):
         assert response.status_code == 200
         assert response.json()["fetched"] == 2
 
-    content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+    content = (tmp_path / "logs" / "cv_builder.log").read_text(encoding="utf-8")
     assert f"job_search_started preference_id={saved}" in content
     assert 'sites=["indeed"] results_wanted=50' in content
     assert '"job_title": "Developer"' in content
@@ -110,18 +110,18 @@ def test_all_four_boards_run_concurrently_with_saved_filters(client, monkeypatch
 def test_installed_jobspy_adapter_and_schema(client, monkeypatch):
     # Exercise the real pinned library, replacing only its HTTP scraper.
     import jobspy
-    from jobspy.model import Country, JobPost, JobResponse, Location
+    from jobspy.model import Country, JobPost, Location
 
     def scrape(scraper, inputs):
-        assert inputs.country == Country.GERMANY
+        assert inputs.country_indeed == Country.GERMANY
         assert inputs.fetch_description is True
         assert inputs.distance == 16
-        return JobResponse(jobs=[JobPost(
-            title="Backend Developer", company_name="Actual schema",
+        return [JobPost(
+            title="Backend Developer", company="Actual schema",
             job_url="https://example.test/real-schema",
             location=Location(city="Berlin", country=Country.GERMANY),
             description="Python services", date_posted=date(2026, 10, 7),
-        )])
+        )]
 
     monkeypatch.setattr(jobspy.Indeed, "scrape", scrape)
     saved = preference(client, country="Germany", city="Berlin", radius_km=25)

@@ -31,9 +31,9 @@ File paths below are planned outputs relative to the CV Builder project root.
 
 **File targets:**
 
-- `mcp_server/src/applykit_mcp/tools/overview.py`
-- `mcp_server/src/applykit_mcp/tools/available_jobs.py`
-- `mcp_server/src/applykit_mcp/server.py`
+- `mcp_server/src/cv_builder_mcp/tools/overview.py`
+- `mcp_server/src/cv_builder_mcp/tools/available_jobs.py`
+- `mcp_server/src/cv_builder_mcp/server.py`
 - `mcp_server/tests/test_overview_job_tools.py`
 
 **Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):

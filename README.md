@@ -1,6 +1,6 @@
-# ApplyKit
+# CV Builder
 
-ApplyKit is a local, private workspace for building and tracking tailored job
+CV Builder is a local, private workspace for building and tracking tailored job
 applications. It uses FastAPI and SQLite, stores reusable source documents, and
 can ask a locally running LM Studio model to tailor a CV or cover letter.
 
@@ -9,7 +9,7 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 From the repository root, create the local environment once:
 
 ~~~powershell
-py -m venv .venv
+py -3.14 -m venv .venv
 ~~~
 
 ```powershell
@@ -39,11 +39,11 @@ target repository root so existing runs retain their completed-ticket history.
 
 Python's standard logging records every HTTP request, including API routers,
 pages, static files, validation failures, and errors. Logs go to
-`logs/applykit.log` by default. Files rotate at 5 MB, keeping 20 backups.
+`logs/cv_builder.log` by default. Files rotate at 5 MB, keeping 20 backups.
 Application logs (including job searches and failures) use the same file.
 
-Set `APPLYKIT_LOG_DIR` to change the directory (relative paths are resolved from
-the project directory), and `APPLYKIT_LOG_LEVEL` to select verbosity:
+Set `CV_BUILDER_LOG_DIR` to change the directory (relative paths are resolved from
+the project directory), and `CV_BUILDER_LOG_LEVEL` to select verbosity:
 
 - `INFO`: method, route template, HTTP status, elapsed milliseconds, job-search
   parameters, board counts, and search completion summaries.
@@ -56,10 +56,18 @@ not included in request logs. Unhandled failures record the exception type and
 are re-raised for the normal server error handling.
 
 ```powershell
-$env:APPLYKIT_LOG_DIR = 'C:\ApplyKitLogs'
-$env:APPLYKIT_LOG_LEVEL = 'TRACE'
+$env:CV_BUILDER_LOG_DIR = 'C:\CvBuilderLogs'
+$env:CV_BUILDER_LOG_LEVEL = 'TRACE'
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
+
+## Configuration compatibility
+
+Use the `CV_BUILDER_` prefix for application and scheduler environment settings.
+Existing `APPLYKIT_` settings remain supported as aliases; a `CV_BUILDER_` value
+takes precedence when both are present. New application logs use `cv_builder.log`;
+existing log files and the `data/cv_builder.db` database are unchanged.
+Saved browser appearance and sidebar preferences migrate automatically.
 
 ## Appearance
 
@@ -71,7 +79,7 @@ a monospace font for easier editing of source text.
 
 ## LM Studio
 
-Start LM Studio's local server and load a model. In ApplyKit, open **Settings**,
+Start LM Studio's local server and load a model. In CV Builder, open **Settings**,
 keep the default URL (`http://localhost:1234/v1`) or enter your server URL, then
 use **Test connection**. Save an application before generating its tailored
 documents.
@@ -164,9 +172,10 @@ hours** in Job Search Preferences, then choose **1,000** in Available Jobs. This
 passes `hours_old=24` and `results_wanted=1000` to JobSpy without changing other
 saved criteria. Description keywords filter that source batch afterward.
 
-Larger requests can take longer and do not prove full coverage. The installed
-JobSpy 1.2.0 Glassdoor scraper clamps requests to 900 postings; its LinkedIn
-scraper stops at a source start offset of 1000. Board blocking, inaccessible
+Larger requests can take longer and do not prove full coverage. JobSpy 1.4.1
+follows Glassdoor's pagination cursors until the requested count is reached,
+cursors end, or a page yields no new IDs. Its LinkedIn scraper stops at a source
+start offset of 1000. Board blocking, inaccessible
 details, filter precision, and additional postings beyond the requested limit can
 still leave matches unfetched. Stored result pages continue to support 1–100 jobs.
 Migration 4 adds `available_jobs` and `job_search_results` and preserves existing
@@ -192,10 +201,10 @@ Run the automated checks with:
 ```
 
 Tests use temporary databases and preserve your saved applications and settings.
-Run the theme behavior regression tests with Node.js (no npm packages required):
+Run browser preference and extension regression tests with Node.js (no npm packages required):
 
 ```powershell
-node --test tests/theme.test.cjs
+node --test tests/theme.test.cjs tests/extension.test.cjs
 ```
 
 ## Local merge checks

@@ -37,7 +37,7 @@ restarts, stale workers, logs, and retained history have predictable behavior.
 - Write owner-scoped heartbeats from successful dispatcher progress, with a
   30-second freshness threshold. Stop freshness when dispatch is stuck/failing;
   distinguish running tasks from a failed dispatcher.
-- Configure `scheduler.log` separately from `applykit.log`, INFO by default,
+- Configure `scheduler.log` separately from `cv_builder.log`, INFO by default,
   including identifiers, duration, and safe outcomes. Prevent inherited service
   TRACE/payload logging from leaking job descriptions into worker logs.
 - Run bounded retention batches for terminal records; preserve active records,

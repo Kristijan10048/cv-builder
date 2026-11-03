@@ -1,4 +1,4 @@
-"""SQLAlchemy models for the tables maintained by ApplyKit's SQLite migrations."""
+"""SQLAlchemy models for the tables maintained by CV Builder's SQLite migrations."""
 
 import json
 from typing import Mapping
@@ -24,8 +24,7 @@ class DocumentTemplateModel(DatabaseModel):
     content: Mapped[str] = mapped_column(Text, default="")
     updated_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
     filename: Mapped[str] = mapped_column(Text, default="")
@@ -50,14 +49,12 @@ class ApplicationModel(DatabaseModel):
     imported_data: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
     updated_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
 
@@ -80,8 +77,7 @@ class SchemaMigrationModel(DatabaseModel):
     name: Mapped[str] = mapped_column(Text)
     applied_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
 
@@ -101,14 +97,12 @@ class JobSearchPreferenceModel(DatabaseModel):
     posted_within_days: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
     updated_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
 
@@ -140,14 +134,12 @@ class AvailableJobModel(DatabaseModel):
     id: Mapped[int | None] = mapped_column(Integer, primary_key=True, nullable=False, default=None)
     first_fetched_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
     fetched_at: Mapped[str] = mapped_column(
         Text,
-        default="",
-        insert_default=func.current_timestamp(),
+        default=None,
         server_default=func.current_timestamp(),
     )
 

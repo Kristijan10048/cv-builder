@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CV Builder">
+  <rect width="64" height="64" rx="15" fill="#303653"/>
+  <path d="M27 22C12 17 12 47 27 42M34 22L43 43L52 22" fill="none" stroke="#ee765e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

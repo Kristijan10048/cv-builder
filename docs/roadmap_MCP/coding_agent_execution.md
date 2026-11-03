@@ -22,7 +22,7 @@ No server, service, scheduler, or external ticket is created by these planning f
 
 ## Separate application and lifecycle
 
-Implement an independently installable applykit_mcp application in mcp_server/.
+Implement an independently installable cv_builder_mcp application in mcp_server/.
 For this milestone, an MCP host launches it over stdio and closes it with the
 session. Run CV Builder separately on loopback HTTP. Do not register an operating
 system service or add MCP routes to the existing FastAPI application.
@@ -39,12 +39,12 @@ outputs, not claims that files already exist.
 | Owner | Main planned outputs |
 | --- | --- |
 | MCP-01 | mcp_server/docs/tool_contract.md; mcp_server/docs/contract_examples.json |
-| MCP-02 | mcp_server/pyproject.toml; mcp_server/.gitignore; src/applykit_mcp/__init__.py and __main__.py; tests/test_imports.py |
-| MCP-03 | src/applykit_mcp/constants.py, configuration.py, diagnostic_logging.py; configuration/logging tests |
-| MCP-04 | src/applykit_mcp/client.py, models.py, errors.py; tests/test_api_client.py |
-| MCP-05 | src/applykit_mcp/server.py; __main__.py wiring; tests/test_server_lifecycle.py |
-| MCP-06 | src/applykit_mcp/tools/__init__.py and applications.py; tests/test_application_tools.py |
-| MCP-07 | src/applykit_mcp/tools/overview.py and available_jobs.py; tests/test_overview_job_tools.py |
+| MCP-02 | mcp_server/pyproject.toml; mcp_server/.gitignore; src/cv_builder_mcp/__init__.py and __main__.py; tests/test_imports.py |
+| MCP-03 | src/cv_builder_mcp/constants.py, configuration.py, diagnostic_logging.py; configuration/logging tests |
+| MCP-04 | src/cv_builder_mcp/client.py, models.py, errors.py; tests/test_api_client.py |
+| MCP-05 | src/cv_builder_mcp/server.py; __main__.py wiring; tests/test_server_lifecycle.py |
+| MCP-06 | src/cv_builder_mcp/tools/__init__.py and applications.py; tests/test_application_tools.py |
+| MCP-07 | src/cv_builder_mcp/tools/overview.py and available_jobs.py; tests/test_overview_job_tools.py |
 | MCP-08 | tests/conftest.py; tests/integration/; tests/helpers/disposable_application.py; integration dependency instructions |
 | MCP-09 | scripts/Verify-Inspector.ps1; tools/package.json and package-lock.json; docs/stdio-launch.example.json |
 | MCP-10 | mcp_server/README.md; mcp_server/docs/verification.md |
@@ -98,10 +98,10 @@ test setup; do not silently upgrade the application requirements.
 The existing root tests/conftest.py applies only to tests under that directory.
 It does not protect mcp_server/tests/. Create explicit fixture isolation there.
 app/database.py currently has no database-path environment override: setting
-APPLYKIT_MCP_API_URL does not isolate data.
+CV_BUILDER_MCP_API_URL does not isolate data.
 
 The test helper must set app.database.DATA_DIR and DB_PATH to a temporary directory
-and APPLYKIT_LOG_DIR to a temporary log directory before importing app.main or
+and CV_BUILDER_LOG_DIR to a temporary log directory before importing app.main or
 entering application startup. Do this inside every application subprocess as
 well as in-process tests. Only then initialize migrations and synthetic fixtures.
 The personal-details profile currently lives in the settings table under the

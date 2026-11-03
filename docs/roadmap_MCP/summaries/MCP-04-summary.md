@@ -4,7 +4,7 @@ Implement the typed GET-only adapter, field selection, pagination, and upstream 
 
 **Owner:** Coding agent. **Status:** Pending.
 
-**Result:** `mcp_server/src/applykit_mcp/client.py`; `mcp_server/src/applykit_mcp/models.py`; `mcp_server/src/applykit_mcp/errors.py`; `mcp_server/tests/test_api_client.py`.
+**Result:** `mcp_server/src/cv_builder_mcp/client.py`; `mcp_server/src/cv_builder_mcp/models.py`; `mcp_server/src/cv_builder_mcp/errors.py`; `mcp_server/tests/test_api_client.py`.
 
 **Verify:** Use mocked HTTP transport. Cover all four routes and each error category, verify parameters and field projection, and use deterministic pagination examples.
 Run the focused command in the full ticket.

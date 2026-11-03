@@ -227,12 +227,12 @@ directories and report permissions/open failures before becoming healthy.
 
 | Variable | Default | Validation |
 | --- | --- | --- |
-| APPLYKIT_DATABASE_PATH | data/cv_builder.db | local file path |
-| APPLYKIT_LOCK_DIR | data/locks | local directory path |
-| APPLYKIT_SCHEDULER_LOG_DIR | logs | local directory path |
-| APPLYKIT_SCHEDULER_MAX_WORKERS | 2 | decimal integer 1–32 |
-| APPLYKIT_SCHEDULER_POLL_SECONDS | 5 | decimal integer 1–10 |
-| APPLYKIT_SCHEDULER_RETENTION_DAYS | 90 | decimal integer 1–3650 |
+| CV_BUILDER_DATABASE_PATH | data/cv_builder.db | local file path |
+| CV_BUILDER_LOCK_DIR | data/locks | local directory path |
+| CV_BUILDER_SCHEDULER_LOG_DIR | logs | local directory path |
+| CV_BUILDER_SCHEDULER_MAX_WORKERS | 2 | decimal integer 1–32 |
+| CV_BUILDER_SCHEDULER_POLL_SECONDS | 5 | decimal integer 1–10 |
+| CV_BUILDER_SCHEDULER_RETENTION_DAYS | 90 | decimal integer 1–3650 |
 
 Worker freshness=30s, SQLite busy wait=5s, migration lock wait=30s, history
 batch=100, manual expiry/lateness=300s. Log file scheduler.log, INFO,
@@ -251,21 +251,19 @@ until protected work ends; process death releases the OS lock. Persist Glassdoor
 cooldown in the database while holding the shared board lock; a busy board returns
 a warning immediately, never occupies worker capacity waiting on another search.
 
-Application dependency pins: **APScheduler==3.11.3**, **portalocker==3.2.0**.
-No Jira requirements changed. Tested platform: Windows x64, CPython **3.14.7**;
-this is the supported/tested SCH-01 baseline, not a claim of a full Python matrix.
-APScheduler metadata requires Python >=3.8; portalocker >=3.9. Existing app syntax
-requires >=3.10. Observed environment: Pydantic 2.13.4, FastAPI 0.116.1,
-SQLAlchemy 2.0.44, tzlocal 5.4.4, pywin32 312 (portalocker's Windows dependency).
-The latter are observed transitive versions, not new top-level pins.
+Application dependency pins: **APScheduler==3.11.3**, **portalocker==4.4.2**.
+The dependency upgrade uses Windows x64, CPython **3.14.7**. The full application
+requires Python >=3.11 with these pins; other platforms have not been verified.
+Portalocker 4.x uses the standard-library Windows backend for the exclusive locks
+used here. Shared Windows locks require its optional win32 extra. Tests verify
+exclusion and release after normal exit, exceptions, and process termination.
 
-References checked for the selected versions:
+References for the selected versions:
 [APScheduler 3.x guide](https://apscheduler.readthedocs.io/en/3.x/userguide.html),
 [3.11.3 metadata](https://pypi.org/pypi/APScheduler/3.11.3/json),
-[portalocker 3.2.0 README](https://github.com/wolph/portalocker/blob/v3.2.0/README.rst),
-[3.2.0 Windows implementation](https://github.com/wolph/portalocker/blob/v3.2.0/portalocker/portalocker.py),
-[3.2.0 metadata](https://pypi.org/pypi/portalocker/3.2.0/json).
-The current portalocker latest docs describe 4.x; they are not the selected API.
+[portalocker 4.x migration guide](https://portalocker.readthedocs.io/en/latest/migration.html),
+[4.4.2 metadata](https://pypi.org/pypi/portalocker/4.4.2/json).
+
 Use BlockingScheduler, memory store, one dispatcher with coalesce=True and
 max_instances=1; business work has its own bounded executor. Compatibility tests
 configure this object without starting any scheduler.

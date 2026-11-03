@@ -420,7 +420,17 @@ $("#statusFilter").addEventListener("change", loadApplications);
 const sidebarToggle = $("#sidebarToggle");
 const mobileLayout = window.matchMedia("(max-width: 900px)");
 let sidebarCollapsed = false;
-try { sidebarCollapsed = localStorage.getItem("applykit.sidebarCollapsed") === "true"; }
+const C_SIDEBAR_STORAGE_KEY = "cv_builder.sidebarCollapsed";
+const C_LEGACY_SIDEBAR_STORAGE_KEY = "applykit.sidebarCollapsed";
+try {
+  const savedSidebar = localStorage.getItem(C_SIDEBAR_STORAGE_KEY);
+  const legacySidebar = localStorage.getItem(C_LEGACY_SIDEBAR_STORAGE_KEY);
+  sidebarCollapsed = (savedSidebar ?? legacySidebar) === "true";
+  if (savedSidebar === null && legacySidebar !== null) {
+    localStorage.setItem(C_SIDEBAR_STORAGE_KEY, legacySidebar);
+    localStorage.removeItem(C_LEGACY_SIDEBAR_STORAGE_KEY);
+  }
+}
 catch { /* Navigation still works when browser storage is unavailable. */ }
 
 function updateSidebar() {
@@ -434,7 +444,7 @@ function updateSidebar() {
 sidebarToggle.addEventListener("click", () => {
   sidebarCollapsed = !sidebarCollapsed;
   updateSidebar();
-  try { localStorage.setItem("applykit.sidebarCollapsed", String(sidebarCollapsed)); }
+  try { localStorage.setItem(C_SIDEBAR_STORAGE_KEY, String(sidebarCollapsed)); }
   catch { /* Keep the current session's choice without persistent storage. */ }
 });
 mobileLayout.addEventListener("change", () => { closeMenu(); updateSidebar(); });

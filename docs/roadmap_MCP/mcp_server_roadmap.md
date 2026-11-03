@@ -4,7 +4,7 @@ Status: planned. This document and its tickets define future implementation work
 
 ## Goal and first milestone
 
-Give a local MCP client read-only access to CV Builder (ApplyKit): review application
+Give a local MCP client read-only access to CV Builder: review application
 progress, find saved applications, inspect an application, and browse already fetched
 jobs. Use the official Python MCP SDK and stdio for the client connection.
 
@@ -30,7 +30,7 @@ contract. Defer that to a separate increment; no Windows service installation is
 required for this local stdio milestone. The transport distinction follows the
 [official SDK transport guide](https://py.sdk.modelcontextprotocol.io/run/).
 
-MCP host -> stdio -> ApplyKit MCP server -> local HTTP GET -> CV Builder API -> SQLite.
+MCP host -> stdio -> CV Builder MCP server -> local HTTP GET -> CV Builder API -> SQLite.
 
 Reuse the existing HTTP API through an injected HTTP client. Do not import
 `app.main` into the production MCP process, copy SQL, access SQLite directly, or
@@ -39,7 +39,7 @@ It must be running before a tool can retrieve data; MCP initialization itself
 does not require it to be available.
 
 Planned package location: `mcp_server/` under the CV Builder project root,
-with importable code in `src/applykit_mcp/`, isolated dependency declarations,
+with importable code in `src/cv_builder_mcp/`, isolated dependency declarations,
 tests, and a README. Installing it must not change the application's dependencies.
 
 | MCP tool | Existing API | Purpose |
@@ -101,14 +101,14 @@ live in [app/models.py](../../app/models.py).
 ## Configuration and implementation conventions
 
 Default API URL: `http://127.0.0.1:8000`. Configure it with
-`APPLYKIT_MCP_API_URL`, and use `APPLYKIT_MCP_REQUEST_TIMEOUT_SECONDS`
+`CV_BUILDER_MCP_API_URL`, and use `CV_BUILDER_MCP_REQUEST_TIMEOUT_SECONDS`
 with a positive default of 10 seconds. Validate configuration at startup and
 limit this milestone to loopback HTTP endpoints. Allow only the four mapped GET
 routes; tools cannot supply arbitrary URLs. Disable redirects and environment
 proxy use in the HTTP client.
 
-Use `ApplyKitMcpConfiguration`, `BaseApplyKitClient`,
-`HttpApplyKitClient`, and `ApplyKitMcpServer` classes. Inject the client
+Use `CvBuilderMcpConfiguration`, `BaseCvBuilderClient`,
+`HttpCvBuilderClient`, and `CvBuilderMcpServer` classes. Inject the client
 so tests can use fixtures and mocked HTTP. Close it on shutdown. Log diagnostics
 to stderr, keeping stdout for MCP traffic. Do not log personal document content,
 notes, descriptions, full API payloads, or search terms.
@@ -116,7 +116,7 @@ notes, descriptions, full API payloads, or search terms.
 Follow [the repository guidance](../../AGENTS.md): explicit Python, descriptive
 names, PascalCase classes, docstrings for every class/function, and comments for
 important logic. Put fixed values in `C_<NAME>` constants, using
-`C_APPLYKIT_<NAME>` for application-specific values; logging messages may
+`C_CV_BUILDER_<NAME>` for application-specific values; logging messages may
 remain inline. Use base classes where the implementation needs an interface.
 No new SQL, database tables, or table models are needed for this HTTP adapter.
 Future database changes must reuse the existing models and migration workflow.

@@ -1,4 +1,4 @@
-# ApplyKit Software Requirements Specification
+# CV Builder Software Requirements Specification
 
 **Document version:** 1.0  
 **Application version:** 0.1.0  
@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-ApplyKit is a local, private workspace for preparing and tracking tailored job applications. It stores reusable source documents, job details, application status, notes, and tailored documents in a local SQLite database. It can import public job pages and use an LM Studio model to draft a tailored CV or cover letter.
+CV Builder is a local, private workspace for preparing and tracking tailored job applications. It stores reusable source documents, job details, application status, notes, and tailored documents in a local SQLite database. It can import public job pages and use an LM Studio model to draft a tailored CV or cover letter.
 
 This document defines the requirements represented by the current application. It is intended to guide development, testing, maintenance, and future changes.
 
@@ -108,7 +108,7 @@ The primary user is a job applicant who wants to organize job opportunities and 
 - **FR-051:** When both URL and HTML are absent, the service shall return HTTP 400.
 - **FR-052:** URL import shall accept only HTTP and HTTPS URLs with a hostname and without embedded credentials.
 - **FR-053:** URL import shall reject hosts resolving to private, loopback, link-local, reserved, or otherwise non-global IP addresses.
-- **FR-054:** URL downloads shall follow redirects, use a 15-second timeout, and identify the client with an ApplyKit user agent.
+- **FR-054:** URL downloads shall follow redirects, use a 15-second timeout, and identify the client with an CV Builder user agent.
 - **FR-055:** A downloaded resource shall be HTML and shall not exceed 5 MB.
 - **FR-056:** The parser shall attempt to extract the job title from Open Graph metadata, Twitter metadata, or the HTML title.
 - **FR-057:** The parser shall attempt to extract the company from `og:site_name` metadata.
@@ -269,7 +269,7 @@ FastAPI's default validation response (`422`) applies when a request body or par
 ### AC-01: First startup
 
 **Given** no database exists,  
-**when** ApplyKit starts,  
+**when** CV Builder starts,
 **then** it creates the database, initializes both document-template records and default LM Studio settings, and serves the Overview page.
 
 ### AC-02: Base-document upload

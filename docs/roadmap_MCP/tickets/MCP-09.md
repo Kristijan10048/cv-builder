@@ -8,7 +8,7 @@
 ## Implementation steps
 
 1. Start a disposable CV Builder instance from the integration-test fixtures
-   on a loopback port and point APPLYKIT_MCP_API_URL at that instance.
+   on a loopback port and point CV_BUILDER_MCP_API_URL at that instance.
 2. Select and record an exact MCP Inspector version and its required Node version.
    Add a repeatable PowerShell smoke script using Inspector's CLI mode; pass the
    installed package's absolute Python path and module launch arguments.

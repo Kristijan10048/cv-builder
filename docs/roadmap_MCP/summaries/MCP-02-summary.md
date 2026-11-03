@@ -4,7 +4,7 @@ Create the independently installable Python package, pinned development dependen
 
 **Owner:** Coding agent. **Status:** Pending.
 
-**Result:** `mcp_server/pyproject.toml`; `mcp_server/.gitignore`; `mcp_server/src/applykit_mcp/__init__.py`; `mcp_server/src/applykit_mcp/__main__.py`; `mcp_server/tests/test_imports.py`.
+**Result:** `mcp_server/pyproject.toml`; `mcp_server/.gitignore`; `mcp_server/src/cv_builder_mcp/__init__.py`; `mcp_server/src/cv_builder_mcp/__main__.py`; `mcp_server/tests/test_imports.py`.
 
 **Verify:** Use the guide's bootstrap commands. Assert imports do not launch a server or access the API/database. Add package-local ignore rules for both environments, caches, metadata, node_modules, and generated results.
 Run the focused command in the full ticket.

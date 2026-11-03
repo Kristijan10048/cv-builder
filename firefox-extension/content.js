@@ -166,7 +166,7 @@
 
     element.dispatchEvent(new Event("input", { bubbles: true }));
     element.dispatchEvent(new Event("change", { bubbles: true }));
-    element.dataset.applykitFilled = "true";
+    element.dataset.cvBuilderFilled = "true";
     return true;
   }
 
@@ -236,7 +236,7 @@
 
   async function fillPage() {
     const profile = await browser.runtime.sendMessage({
-      type: "applykit:get-profile",
+      type: "cv_builder:get-profile",
     });
     profile.full_name = [profile.first_name, profile.last_name]
       .filter(Boolean)
@@ -258,17 +258,17 @@
     return { count };
   }
 
-  if (globalThis.__applyKitAutofillListener) {
+  if (globalThis.__cvBuilderAutofillListener) {
     try {
-      browser.runtime.onMessage.removeListener(globalThis.__applyKitAutofillListener);
+      browser.runtime.onMessage.removeListener(globalThis.__cvBuilderAutofillListener);
     } catch (_) {}
   }
-  globalThis.__applyKitAutofillListener = (message) => {
-    if (message?.type === "applykit:fill") return fillPage();
-    if (message?.type === "applykit:application-details") return applicationDetails();
+  globalThis.__cvBuilderAutofillListener = (message) => {
+    if (message?.type === "cv_builder:fill") return fillPage();
+    if (message?.type === "cv_builder:application-details") return applicationDetails();
     return undefined;
   };
-  browser.runtime.onMessage.addListener(globalThis.__applyKitAutofillListener);
+  browser.runtime.onMessage.addListener(globalThis.__cvBuilderAutofillListener);
 
   browser.storage.local.get("autoFillEnabled").then(({ autoFillEnabled }) => {
     if (autoFillEnabled) fillPage().catch(() => {});

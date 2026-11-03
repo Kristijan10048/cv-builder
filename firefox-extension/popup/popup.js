@@ -11,13 +11,13 @@ function showResult(message, error = false) {
 
 async function checkConnection() {
   try {
-    await browser.runtime.sendMessage({ type: "applykit:ping" });
-    connection.textContent = "ApplyKit is connected";
+    await browser.runtime.sendMessage({ type: "cv_builder:ping" });
+    connection.textContent = "CV Builder is connected";
     connection.className = "state connected";
     fillButton.disabled = false;
     saveButton.disabled = false;
   } catch (_) {
-    connection.textContent = "Start ApplyKit at 127.0.0.1:8000";
+    connection.textContent = "Start CV Builder at 127.0.0.1:8000";
     connection.className = "state error";
     fillButton.disabled = true;
     saveButton.disabled = true;
@@ -40,7 +40,7 @@ fillButton.addEventListener("click", async () => {
       files: ["/content.js"],
     });
     const response = await browser.tabs.sendMessage(tab.id, {
-      type: "applykit:fill",
+      type: "cv_builder:fill",
     });
     const count = response?.count || 0;
     showResult(count ? `Filled ${count} field${count === 1 ? "" : "s"}.` : "No matching empty fields found.");
@@ -62,10 +62,10 @@ saveButton.addEventListener("click", async () => {
       files: ["/content.js"],
     });
     const application = await browser.tabs.sendMessage(tab.id, {
-      type: "applykit:application-details",
+      type: "cv_builder:application-details",
     });
     const saved = await browser.runtime.sendMessage({
-      type: "applykit:save-application",
+      type: "cv_builder:save-application",
       application,
     });
     const savedAt = new Date(`${saved.created_at.replace(" ", "T")}Z`)
@@ -90,7 +90,7 @@ autoFill.addEventListener("change", async () => {
 
   await browser.storage.local.set({ autoFillEnabled: autoFill.checked });
   const response = await browser.runtime.sendMessage({
-    type: "applykit:configure-auto-fill",
+    type: "cv_builder:configure-auto-fill",
   });
   autoFill.checked = Boolean(response.enabled);
 

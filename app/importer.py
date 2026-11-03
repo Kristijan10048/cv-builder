@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import httpx
 from bs4 import BeautifulSoup
 
+C_USER_AGENT = "CV-Builder/0.1 job application organizer"
 INITIAL_DATA_PATTERN = re.compile(r"window\._initialData\s*=\s*(\{.*?\})\s*;", re.DOTALL)
 
 
@@ -33,7 +34,7 @@ def download_page(url: str) -> str:
     with httpx.Client(
         timeout=15,
         follow_redirects=True,
-        headers={"User-Agent": "ApplyKit/0.1 job application organizer"},
+        headers={"User-Agent": C_USER_AGENT},
     ) as client:
         response = client.get(checked_url)
         response.raise_for_status()
