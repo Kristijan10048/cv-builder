@@ -110,18 +110,18 @@ def test_all_four_boards_run_concurrently_with_saved_filters(client, monkeypatch
 def test_installed_jobspy_adapter_and_schema(client, monkeypatch):
     # Exercise the real pinned library, replacing only its HTTP scraper.
     import jobspy
-    from jobspy.model import Country, JobPost, JobResponse, Location
+    from jobspy.model import Country, JobPost, Location
 
     def scrape(scraper, inputs):
-        assert inputs.country == Country.GERMANY
+        assert inputs.country_indeed == Country.GERMANY
         assert inputs.fetch_description is True
         assert inputs.distance == 16
-        return JobResponse(jobs=[JobPost(
-            title="Backend Developer", company_name="Actual schema",
+        return [JobPost(
+            title="Backend Developer", company="Actual schema",
             job_url="https://example.test/real-schema",
             location=Location(city="Berlin", country=Country.GERMANY),
             description="Python services", date_posted=date(2026, 10, 7),
-        )])
+        )]
 
     monkeypatch.setattr(jobspy.Indeed, "scrape", scrape)
     saved = preference(client, country="Germany", city="Berlin", radius_km=25)

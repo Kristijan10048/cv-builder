@@ -45,7 +45,7 @@ C_ZERO = 0
 C_ONE = 1
 C_LOCK_BUSY_EXIT_CODE = 23
 C_LOCK_FLAGS = portalocker.LOCK_EX | portalocker.LOCK_NB
-C_REQUIRED_VERSIONS = {"APScheduler": "3.11.3", "portalocker": "3.2.0"}
+C_REQUIRED_VERSIONS = {"APScheduler": "3.11.3", "portalocker": "4.4.2"}
 C_INVALID_INTEGERS = ["", "true", "0", "-1", "1.5", "2.0", " 2", "+2", "NaN", True]
 C_IDENTITY_PROBE = '''
 import json

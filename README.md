@@ -9,7 +9,7 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 From the repository root, create the local environment once:
 
 ~~~powershell
-py -m venv .venv
+py -3.14 -m venv .venv
 ~~~
 
 ```powershell
@@ -172,9 +172,10 @@ hours** in Job Search Preferences, then choose **1,000** in Available Jobs. This
 passes `hours_old=24` and `results_wanted=1000` to JobSpy without changing other
 saved criteria. Description keywords filter that source batch afterward.
 
-Larger requests can take longer and do not prove full coverage. The installed
-JobSpy 1.2.0 Glassdoor scraper clamps requests to 900 postings; its LinkedIn
-scraper stops at a source start offset of 1000. Board blocking, inaccessible
+Larger requests can take longer and do not prove full coverage. JobSpy 1.4.1
+follows Glassdoor's pagination cursors until the requested count is reached,
+cursors end, or a page yields no new IDs. Its LinkedIn scraper stops at a source
+start offset of 1000. Board blocking, inaccessible
 details, filter precision, and additional postings beyond the requested limit can
 still leave matches unfetched. Stored result pages continue to support 1–100 jobs.
 Migration 4 adds `available_jobs` and `job_search_results` and preserves existing

@@ -10,9 +10,22 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app import database
 from app.job_search_adapter import JobSearchAdapter
+from app.database_models import JobSearchPreferenceModel
 
 C_LOCATION_ENDPOINT = "/api/job-search-locations"
 C_PREFERENCE_ENDPOINT = "/api/job-search-preferences"
+C_UNSUPPORTED_COUNTRY = "Slovenia"
+C_RESTRICTED_BOARDS = ("indeed", "glassdoor")
+C_OTHER_COUNTRY_RESTRICTED_BOARDS = ("zip_recruiter", "naukri", "bdjobs")
+C_COUNTRY_WARNING = "supported country"
+C_LINKEDIN = "linkedin"
+C_LOCATION_FIELD = "location"
+C_EXPECTED_LOCATION = "Ljubljana, Slovenia"
+C_RESULT_COUNT = 10
+C_UNSUPPORTED_PREFERENCE = {
+    "id": 1, "job_title": "Developer", "country": C_UNSUPPORTED_COUNTRY,
+    "city": "Ljubljana", "radius_km": 25, "keywords": [], "posted_within_days": None,
+}
 
 
 class JobSearchLocationTests(unittest.TestCase):
@@ -58,7 +71,7 @@ class JobSearchLocationTests(unittest.TestCase):
         """Keep common supported countries usable after selecting their display name."""
         countries = self.client.get(f"{C_LOCATION_ENDPOINT}/countries").json()
         for country in countries:
-            if country["code"] in {"DE", "GB", "US", "NL", "SI", "CZ"}:
+            if country["code"] in {"DE", "GB", "US", "NL", "CZ"}:
                 with self.subTest(country=country["name"]):
                     self.assertIsNotNone(JobSearchAdapter.resolve_country(country["name"]))
 
@@ -78,3 +91,19 @@ class JobSearchLocationTests(unittest.TestCase):
                 self.client.get(f"{C_LOCATION_ENDPOINT}/countries/DE/cities")
                 response = self.client.get(f"{C_PREFERENCE_ENDPOINT}/{saved_preference['id']}")
                 self.assertEqual(response.json(), saved_preference)
+
+    def test_removed_jobspy_country_keeps_location_and_reports_board_limit(self) -> None:
+        """Retain saved locations while rejecting countries removed from restricted boards."""
+        self.assertIsNone(JobSearchAdapter.resolve_country(C_UNSUPPORTED_COUNTRY))
+        saved_preference = JobSearchPreferenceModel(**C_UNSUPPORTED_PREFERENCE)
+        adapter = JobSearchAdapter(None)
+        for board in C_RESTRICTED_BOARDS:
+            with self.subTest(board=board):
+                with self.assertRaisesRegex(ValueError, C_COUNTRY_WARNING):
+                    adapter.build_arguments(saved_preference, board, C_RESULT_COUNT)
+        for board in C_OTHER_COUNTRY_RESTRICTED_BOARDS:
+            with self.subTest(board=board):
+                with self.assertRaises(ValueError):
+                    adapter.build_arguments(saved_preference, board, C_RESULT_COUNT)
+        arguments = adapter.build_arguments(saved_preference, C_LINKEDIN, C_RESULT_COUNT)
+        self.assertEqual(arguments[C_LOCATION_FIELD], C_EXPECTED_LOCATION)

@@ -1,19 +1,41 @@
 """Verify Glassdoor location formatting against the pinned JobSpy parser."""
 
+import logging
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi.testclient import TestClient
 import jobspy.glassdoor
-from jobspy.model import Country, JobPost, JobResponse, Location
+from jobspy.model import Country, JobPost, Location
 import pytest
 
 from app import job_search_adapter
 from app.database_models import JobSearchPreferenceModel
 from app.job_search_adapter import JobSearchAdapter
-from app.job_search_glassdoor import GlassdoorSearchGuard
+from app.job_search_glassdoor import C_GLASSDOOR_LOGGER_NAME, GlassdoorSearchGuard
 from app.main import app
 
 C_GLASSDOOR_CITY_ID = 2727242
+C_HTTP_OK = 200
+C_LOCATION_ID_FIELD = "locationId"
+C_LOCATION_TYPE_FIELD = "locationType"
+C_CITY_LOCATION_TYPE = "CITY"
+C_SEARCH_OPERATION = "JobSearchResultsQuery"
+C_DETAILS_OPERATION = "JobDetails"
+C_SEARCH_RESPONSE = [{"data": {"jobListings": {
+    "jobListings": [{"jobview": {
+        "job": {"jobTitleText": "Backend Developer", "listingId": 123},
+        "map": {"country": "Germany"},
+        "overview": {},
+        "header": {
+            "locationName": "Düsseldorf", "locationType": "C",
+            "payCurrency": None, "payPeriod": None, "payPeriodAdjustedPay": None,
+            "adOrderSponsorshipLevel": "ORGANIC", "ageInDays": 0,
+            "employer": {"id": 456}, "employerNameFromSearch": "Example Company",
+        },
+    }}],
+    "paginationCursors": [],
+}}}]
+C_DETAILS_RESPONSE = [{"data": {"j123": {"job": {"description": "Build Python services"}}}}]
 
 
 @pytest.fixture
@@ -97,26 +119,34 @@ class TestGlassdoorLocation:
                 autocomplete_terms.append(location_term)
                 return AutocompleteResponse(location_term)
 
-        def create_session(**arguments) -> AutocompleteSession:
+        def create_session(*positional_arguments, **arguments) -> AutocompleteSession:
             """Create a new fake HTTP session for the real Glassdoor scraper."""
             return AutocompleteSession()
 
-        def fetch_jobs_page(
-            scraper, location_id: int, location_type: str, page_number: int,
-            cursor: str | None,
-        ) -> tuple[list[JobPost], None]:
-            """Return one posting after verifying autocomplete resolved the city."""
-            assert location_id == C_GLASSDOOR_CITY_ID
-            assert location_type == "CITY"
-            return [JobPost(
-                title="Backend Developer", company_name="Example Company",
-                job_url="https://www.glassdoor.de/job-listing/j?jl=123",
-                location=Location(city="Düsseldorf", country=Country.GERMANY),
-                description="Build Python services",
-            )], None
+        class GraphResponse:
+            """Supply search and detail responses to the actual result parsers."""
+
+            status_code = C_HTTP_OK
+
+            def __init__(self, payload: list[dict]) -> None:
+                """Keep the selected response fixture separate from transport."""
+                self.payload = payload
+
+            def json(self) -> list[dict]:
+                """Return the GraphQL response expected by the installed scraper."""
+                return self.payload
+
+        def fetch_graph(scraper, operation: str, query: str, variables: dict) -> GraphResponse:
+            """Verify autocomplete output and exercise search and detail parsing."""
+            if operation == C_SEARCH_OPERATION:
+                assert variables[C_LOCATION_ID_FIELD] == C_GLASSDOOR_CITY_ID
+                assert variables[C_LOCATION_TYPE_FIELD] == C_CITY_LOCATION_TYPE
+                return GraphResponse(C_SEARCH_RESPONSE)
+            assert operation == C_DETAILS_OPERATION
+            return GraphResponse(C_DETAILS_RESPONSE)
 
         monkeypatch.setattr(jobspy.glassdoor, "create_session", create_session)
-        monkeypatch.setattr(jobspy.glassdoor.Glassdoor, "_fetch_jobs_page", fetch_jobs_page)
+        monkeypatch.setattr(jobspy.glassdoor.Glassdoor, "_graph", fetch_graph)
         with TestClient(app) as client:
             saved_response = client.post("/api/job-search-preferences", json={
                 "job_title": "Developer", "country": "Germany", "city": "Düsseldorf",
@@ -144,7 +174,7 @@ class TestGlassdoorRateLimiting:
     ) -> None:
         """Exercise actual JobSpy HTTP-status handling and reject retries locally."""
         http_requests = []
-        original_handlers = list(jobspy.glassdoor.log.handlers)
+        original_handlers = list(logging.getLogger(C_GLASSDOOR_LOGGER_NAME).handlers)
 
         class StatusResponse:
             """Provide fake transport responses for real Glassdoor parsing."""
@@ -175,7 +205,7 @@ class TestGlassdoorRateLimiting:
                 http_requests.append(request_url)
                 return StatusResponse(429)
 
-        def create_session(**arguments) -> RateLimitedSession:
+        def create_session(*positional_arguments, **arguments) -> RateLimitedSession:
             """Replace only the HTTP transport used by the installed scraper."""
             return RateLimitedSession()
 
@@ -197,36 +227,36 @@ class TestGlassdoorRateLimiting:
             assert retry_response.status_code == 502
             assert "paused after HTTP 429" in retry_response.text
             assert len(http_requests) == request_count
-            assert jobspy.glassdoor.log.handlers == original_handlers
+            assert logging.getLogger(C_GLASSDOOR_LOGGER_NAME).handlers == original_handlers
 
             # Advance the app clock, without waiting or claiming Glassdoor has reset.
             cooldown_end = glassdoor_guard.retry_after + 1
             monkeypatch.setattr(glassdoor_guard, "clock", lambda: cooldown_end)
             client.post("/api/job-search", json=payload)
             assert len(http_requests) == request_count * 2
-            assert jobspy.glassdoor.log.handlers == original_handlers
+            assert logging.getLogger(C_GLASSDOOR_LOGGER_NAME).handlers == original_handlers
 
     @pytest.mark.parametrize("partial_jobs", [False, True])
     def test_rate_limit_keeps_other_boards_and_previously_fetched_jobs(
         self, monkeypatch, glassdoor_guard: GlassdoorSearchGuard, partial_jobs: bool,
     ) -> None:
         """Keep old data and successful results when Glassdoor stops during a search."""
-        def scrape_indeed(scraper, scraper_input) -> JobResponse:
+        def scrape_indeed(scraper, scraper_input) -> list[JobPost]:
             """Return one successfully fetched job from an independent board."""
-            return JobResponse(jobs=[JobPost(
-                title="Indeed Developer", company_name="Example Company",
+            return [JobPost(
+                title="Indeed Developer", company="Example Company",
                 job_url="https://example.test/indeed", location=None,
                 description="Python services",
-            )])
+            )]
 
-        def scrape_glassdoor(scraper, scraper_input) -> JobResponse:
+        def scrape_glassdoor(scraper, scraper_input) -> list[JobPost]:
             """Reproduce a logged HTTP 429 with optional earlier page results."""
-            jobspy.glassdoor.log.error("Glassdoor response status code 429")
-            return JobResponse(jobs=[JobPost(
-                title="Glassdoor Developer", company_name="Example Company",
+            logging.getLogger(C_GLASSDOOR_LOGGER_NAME).error("Glassdoor response status code 429")
+            return [JobPost(
+                title="Glassdoor Developer", company="Example Company",
                 job_url="https://example.test/glassdoor", location=None,
                 description="Python services",
-            )] if partial_jobs else [])
+            )] if partial_jobs else []
 
         monkeypatch.setattr(jobspy.Indeed, "scrape", scrape_indeed)
         monkeypatch.setattr(jobspy.glassdoor.Glassdoor, "scrape", scrape_glassdoor)
@@ -260,9 +290,9 @@ class TestGlassdoorRateLimiting:
         self, monkeypatch, glassdoor_guard: GlassdoorSearchGuard,
     ) -> None:
         """Distinguish a successful empty result from an observed rate-limit failure."""
-        def scrape_glassdoor(scraper, scraper_input) -> JobResponse:
+        def scrape_glassdoor(scraper, scraper_input) -> list[JobPost]:
             """Return no postings without logging a transport failure."""
-            return JobResponse(jobs=[])
+            return []
 
         monkeypatch.setattr(jobspy.glassdoor.Glassdoor, "scrape", scrape_glassdoor)
         with TestClient(app) as client:

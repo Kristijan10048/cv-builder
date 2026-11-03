@@ -8,7 +8,7 @@ from typing import Callable
 
 C_GLASSDOOR_COOLDOWN_SECONDS = 300
 C_GLASSDOOR_SITE = "glassdoor"
-C_GLASSDOOR_LOGGER_NAME = "JobSpy:Glassdoor"
+C_GLASSDOOR_LOGGER_NAME = "jobspy.glassdoor"
 C_RATE_LIMIT_LOG_MESSAGE = "response status code 429"
 C_INITIAL_RETRY_AFTER = 0.0
 C_MINIMUM_REMAINING_SECONDS = 0

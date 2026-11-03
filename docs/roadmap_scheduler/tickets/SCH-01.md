@@ -81,7 +81,7 @@ Changed paths:
 
 - `app/scheduler/__init__.py`, `contracts.py`, `constants.py`, `configuration.py`,
   `errors.py`.
-- `requirements.txt`: APScheduler 3.11.3 and portalocker 3.2.0 pins.
+- `requirements.txt`: APScheduler 3.11.3 and portalocker 4.4.2 pins.
 - `tests/test_scheduler_contracts.py`, `tests/test_scheduler_configuration.py`.
 - `docs/roadmap_scheduler/contracts.md`, `contract_examples.json`, this ticket,
   and the roadmap's status/completion notes.
@@ -90,7 +90,7 @@ Checks actually run from the project root:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_job_search.py tests/test_job_search_repository.py tests/test_job_search_preferences.py tests/test_job_search_locations.py -q
-.\.venv\Scripts\python.exe -m pip install APScheduler==3.11.3 portalocker==3.2.0
+.\.venv\Scripts\python.exe -m pip install APScheduler==3.11.3 portalocker==4.4.2
 .\.venv\Scripts\python.exe -m pip check
 .\.venv\Scripts\python.exe -m pip install --dry-run -r requirements.txt
 .\.venv\Scripts\python.exe -m pytest tests/test_scheduler_contracts.py tests/test_scheduler_configuration.py tests/test_job_search.py tests/test_job_search_repository.py tests/test_job_search_preferences.py tests/test_job_search_locations.py -q

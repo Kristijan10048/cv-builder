@@ -17,6 +17,11 @@ C_ZIP_RECRUITER_COUNTRIES = frozenset({"USA", "CANADA"})
 C_GLASSDOOR_GUARD = GlassdoorSearchGuard()
 C_SITE_NAME_ARGUMENT = "site_name"
 C_FIRST_SITE_INDEX = 0
+C_COUNTRY_CODE_FIELD = "code"
+C_COUNTRY_ISO3_FIELD = "iso3"
+C_COUNTRY_NAME_FIELD = "name"
+C_EMPTY_COUNTRY = ""
+C_BANGLADESH_ALIASES = frozenset({"bangladesh", "bd", "bgd"})
 
 
 class BaseJobBoardCoordinator(ABC):
@@ -77,17 +82,28 @@ class JobSearchAdapter:
         if not value:
             return None
         try:
-            return Country.from_string(value)
+            return Country(value)
         except ValueError:
-            for country in Country:
-                if value.lower() in country.value[1].split(":"):
-                    return country
+            # JobSpy 1.4 no longer stores ISO aliases on its country enum.
+            from .job_search_locations import get_location_catalog
+
+            normalized_value = value.strip().casefold()
+            for country_record in get_location_catalog().list_countries():
+                aliases = (
+                    country_record[C_COUNTRY_CODE_FIELD].casefold(),
+                    country_record[C_COUNTRY_ISO3_FIELD].casefold(),
+                )
+                if normalized_value in aliases:
+                    try:
+                        return Country(country_record[C_COUNTRY_NAME_FIELD])
+                    except ValueError:
+                        return None
         return None
 
     def build_arguments(self, preference: JobSearchPreferenceModel, site: str, results_wanted: int) -> dict:
         """Validate board coverage and translate saved filters into JobSpy arguments."""
         country = self.resolve_country(preference.country)
-        self.validate_country(site, country)
+        self.validate_country(site, country, preference.country)
         posted_within_days = preference.posted_within_days
         location_parts = [preference.city, preference.country]
         if site == C_GLASSDOOR_SITE and preference.city:
@@ -105,24 +121,28 @@ class JobSearchAdapter:
             "verbose": 0,
         }
         if country:
-            arguments["country_indeed"] = country.value[0].split(",")[0]
+            arguments["country_indeed"] = country.value
         return arguments
 
     @staticmethod
-    def validate_country(site: str, country) -> None:
+    def validate_country(site: str, country, selected_country: str = C_EMPTY_COUNTRY) -> None:
         """Raise the existing user-facing warning for unsupported board countries."""
         if site in C_COUNTRY_REQUIRED_BOARDS and (country is None or country.name == "WORLDWIDE"):
             raise ValueError("Set a supported country in this saved search for Indeed and Glassdoor.")
         if site == "glassdoor":
-            try:
-                country.glassdoor_domain_value
-            except Exception as exception:
-                raise ValueError("Glassdoor does not support this search's country.") from exception
-        if site == "zip_recruiter" and country and country.name not in C_ZIP_RECRUITER_COUNTRIES:
+            from jobspy.glassdoor.constant import domains
+
+            if country not in domains:
+                raise ValueError("Glassdoor does not support this search's country.")
+        # A selected country removed from JobSpy must not silently become its US default.
+        if (site == "zip_recruiter" and (country is not None or selected_country)
+                and (country is None or country.name not in C_ZIP_RECRUITER_COUNTRIES)):
             raise ValueError("ZipRecruiter supports searches in the US and Canada.")
-        if site == "naukri" and country and country.name != "INDIA":
+        if (site == "naukri" and (country is not None or selected_country)
+                and (country is None or country.name != "INDIA")):
             raise ValueError("Naukri supports searches in India.")
-        if site == "bdjobs" and country and country.name != "BANGLADESH":
+        if (site == "bdjobs" and selected_country
+                and selected_country.strip().casefold() not in C_BANGLADESH_ALIASES):
             raise ValueError("BDJobs supports searches in Bangladesh.")
 
     @staticmethod
