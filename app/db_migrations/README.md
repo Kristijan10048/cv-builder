@@ -9,6 +9,11 @@ rollbackable transaction; migrations 1–4 are unchanged. Back up with both proc
 stopped before upgrading. See [scheduler operations](../../docs/scheduler_operations.md)
 for disposable-copy rehearsal and matching-code/database rollback.
 
+Migration 6 (`scheduler_worker_table_name`) repairs databases initialized during
+scheduler development with `scheduler_worker_state`, renaming that table to
+`scheduler_workers` while preserving its rows. Databases already using the final
+name require no schema change. The repair and version marker commit together.
+
 ## Add a schema change
 
 1. Create the next module, for example `v003_gmail_candidates.py`.
