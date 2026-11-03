@@ -6,6 +6,12 @@ can ask a locally running LM Studio model to tailor a CV or cover letter.
 
 ## Run
 
+From the repository root, create the local environment once:
+
+~~~powershell
+py -m venv .venv
+~~~
+
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
@@ -200,7 +206,7 @@ require the project `.venv` and Node.js. From the Git repository root, enable
 them once per checkout:
 
 ```powershell
-git config --local core.hooksPath 'Documents/CV Builder/.githooks'
+git config --local core.hooksPath '.githooks'
 ```
 
 In SmartGit, choose **Create Merge-Commit** when merging into `master`.

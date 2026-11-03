@@ -1,7 +1,7 @@
 #!/bin/sh
 # A conflicted merge or squash merge is finished with a regular commit.
 if test -f "$(git rev-parse --git-path MERGE_HEAD)" || test -f "$(git rev-parse --git-path SQUASH_MSG)"; then
-    exec powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "Documents/CV Builder/.githooks/Invoke-MergeChecks.ps1"
+    exec powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ".githooks/Invoke-MergeChecks.ps1"
 fi
 
 exit 0

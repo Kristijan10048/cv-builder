@@ -3,7 +3,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$C_ProjectRelativePath = 'Documents/CV Builder'
+$C_ProjectRelativePath = '.'
 $C_JavaScriptDirectories = @('static', 'firefox-extension')
 
 try {

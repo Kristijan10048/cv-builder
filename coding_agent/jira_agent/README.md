@@ -24,8 +24,9 @@ $env:JIRA_STATUS = 'Waiting for AI Developer'
 ```
 
 Replace the example values with your Jira configuration. For dev/testing, you
-can instead copy [`.env.example`](.env.example) to `.env` in this folder and fill
-in your values. Both entry points automatically use this file for settings absent
+can instead create a local `.env` file in this folder with the same variable names
+and your values, using NAME=value lines (without the PowerShell prefix).
+Both entry points automatically use this file for settings absent
 from the process environment. The file is found relative to `jira_agent.py`,
 regardless of the working directory. `.env` is ignored by Git.
 
@@ -92,8 +93,8 @@ Required environment variables are `JIRA_URL`, `JIRA_EMAIL`, and `JIRA_API_TOKEN
 `JIRA_PROJECT` is also required for scheduling and for `--tickets` without an
 explicit project argument. It is optional for `--projects`.
 
-See [`.env.example`](.env.example) for all supported configuration variables,
-with placeholders and optional defaults. Process settings take precedence over
+The required settings above and optional settings below describe the supported
+configuration. Process settings take precedence over
 `.env` values, followed by the defaults below. A missing `.env` file is fine;
 required settings are still validated. File values are used for configuration
 without being added to the process environment.

@@ -11,3 +11,14 @@ data/*.db-wal
 /jira_agent_tickets.csv
 /.jira_agent.lock
 /coding_agent/jira_agent/logs/
+
+# Local environment files and credentials
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
