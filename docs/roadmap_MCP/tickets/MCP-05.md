@@ -7,7 +7,7 @@
 
 ## Implementation steps
 
-1. Implement ApplyKitMcpServer with injected configuration and BaseApplyKitClient.
+1. Implement CvBuilderMcpServer with injected configuration and BaseCvBuilderClient.
    Keep HTTP and application-specific logic out of protocol assembly.
 2. Add a server factory and a module entry point that starts the SDK's stdio
    runner only under the main guard.
@@ -31,8 +31,8 @@ File paths below are planned outputs relative to the CV Builder project root.
 
 **File targets:**
 
-- `mcp_server/src/applykit_mcp/server.py`
-- `mcp_server/src/applykit_mcp/__main__.py`
+- `mcp_server/src/cv_builder_mcp/server.py`
+- `mcp_server/src/cv_builder_mcp/__main__.py`
 - `mcp_server/tests/test_server_lifecycle.py`
 
 **Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):

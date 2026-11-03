@@ -7,7 +7,7 @@
 
 ## Implementation steps
 
-1. Define BaseApplyKitClient and HttpApplyKitClient with explicit methods for
+1. Define BaseCvBuilderClient and HttpCvBuilderClient with explicit methods for
    overview, application listing, application detail, and stored-job listing.
    Inject the HTTP transport so unit tests use mocked responses.
 2. Restrict requests to the four mapped GET routes. Encode filters as query
@@ -39,9 +39,9 @@ File paths below are planned outputs relative to the CV Builder project root.
 
 **File targets:**
 
-- `mcp_server/src/applykit_mcp/client.py`
-- `mcp_server/src/applykit_mcp/models.py`
-- `mcp_server/src/applykit_mcp/errors.py`
+- `mcp_server/src/cv_builder_mcp/client.py`
+- `mcp_server/src/cv_builder_mcp/models.py`
+- `mcp_server/src/cv_builder_mcp/errors.py`
 - `mcp_server/tests/test_api_client.py`
 
 **Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):

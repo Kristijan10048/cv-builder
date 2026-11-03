@@ -1,1 +1,1 @@
-"""ApplyKit test suite."""
+"""CV Builder test suite."""

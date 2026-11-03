@@ -4,7 +4,7 @@ Validate local API settings and send content-free diagnostics to stderr.
 
 **Owner:** Coding agent. **Status:** Pending.
 
-**Result:** `mcp_server/src/applykit_mcp/constants.py`; `mcp_server/src/applykit_mcp/configuration.py`; `mcp_server/src/applykit_mcp/diagnostic_logging.py`; `mcp_server/tests/test_configuration.py`; `mcp_server/tests/test_diagnostic_logging.py`.
+**Result:** `mcp_server/src/cv_builder_mcp/constants.py`; `mcp_server/src/cv_builder_mcp/configuration.py`; `mcp_server/src/cv_builder_mcp/diagnostic_logging.py`; `mcp_server/tests/test_configuration.py`; `mcp_server/tests/test_diagnostic_logging.py`.
 
 **Verify:** Use table-driven cases for valid/invalid URLs and timeouts. Assert stderr output and empty stdout; avoid any actual API connection while loading settings.
 Run the focused command in the full ticket.

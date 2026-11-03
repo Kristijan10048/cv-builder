@@ -7,12 +7,12 @@
 
 ## Implementation steps
 
-1. Create the proposed mcp_server/ project folder with src/applykit_mcp/,
+1. Create the proposed mcp_server/ project folder with src/cv_builder_mcp/,
    package metadata, tests/, and a README placeholder.
 2. Select the official Python MCP SDK and a compatible Python version. Pin the
    tested SDK, HTTP client, schema-modeling, and development dependencies, recording
    the exact environment used. Check compatibility with the SDK's matching docs.
-3. Add a module entry point for python -m applykit_mcp, with a main guard and
+3. Add a module entry point for python -m cv_builder_mcp, with a main guard and
    no network, database, or server-start side effects during imports.
 4. Configure focused tests with no dependency on real job boards or LM Studio.
 
@@ -32,8 +32,8 @@ File paths below are planned outputs relative to the CV Builder project root.
 
 - `mcp_server/pyproject.toml`
 - `mcp_server/.gitignore`
-- `mcp_server/src/applykit_mcp/__init__.py`
-- `mcp_server/src/applykit_mcp/__main__.py`
+- `mcp_server/src/cv_builder_mcp/__init__.py`
+- `mcp_server/src/cv_builder_mcp/__main__.py`
 - `mcp_server/tests/test_imports.py`
 
 **Focused validation** (PowerShell, from the CV Builder root, after prerequisite setup):

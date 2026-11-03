@@ -227,12 +227,12 @@ directories and report permissions/open failures before becoming healthy.
 
 | Variable | Default | Validation |
 | --- | --- | --- |
-| APPLYKIT_DATABASE_PATH | data/cv_builder.db | local file path |
-| APPLYKIT_LOCK_DIR | data/locks | local directory path |
-| APPLYKIT_SCHEDULER_LOG_DIR | logs | local directory path |
-| APPLYKIT_SCHEDULER_MAX_WORKERS | 2 | decimal integer 1–32 |
-| APPLYKIT_SCHEDULER_POLL_SECONDS | 5 | decimal integer 1–10 |
-| APPLYKIT_SCHEDULER_RETENTION_DAYS | 90 | decimal integer 1–3650 |
+| CV_BUILDER_DATABASE_PATH | data/cv_builder.db | local file path |
+| CV_BUILDER_LOCK_DIR | data/locks | local directory path |
+| CV_BUILDER_SCHEDULER_LOG_DIR | logs | local directory path |
+| CV_BUILDER_SCHEDULER_MAX_WORKERS | 2 | decimal integer 1–32 |
+| CV_BUILDER_SCHEDULER_POLL_SECONDS | 5 | decimal integer 1–10 |
+| CV_BUILDER_SCHEDULER_RETENTION_DAYS | 90 | decimal integer 1–3650 |
 
 Worker freshness=30s, SQLite busy wait=5s, migration lock wait=30s, history
 batch=100, manual expiry/lateness=300s. Log file scheduler.log, INFO,

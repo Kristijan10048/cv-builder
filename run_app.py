@@ -1,4 +1,4 @@
-"""Run the ApplyKit development server from an IDE or the command line."""
+"""Run the CV Builder development server from an IDE or the command line."""
 
 import uvicorn
 

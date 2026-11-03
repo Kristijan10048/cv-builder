@@ -1,4 +1,4 @@
-"""Create the original ApplyKit schema and upgrade legacy databases."""
+"""Create the original CV Builder schema and upgrade legacy databases."""
 
 import sqlite3
 

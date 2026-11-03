@@ -196,10 +196,10 @@ def test_extension_supports_profile_fields_and_application_saving():
         assert profile_key in content_source
 
     assert 'id="saveButton"' in popup_html
-    assert "applykit:application-details" in popup_source
-    assert "applykit:application-details" in content_source
-    assert "applykit:save-application" in popup_source
-    assert "applykit:save-application" in background_source
+    assert "cv_builder:application-details" in popup_source
+    assert "cv_builder:application-details" in content_source
+    assert "cv_builder:save-application" in popup_source
+    assert "cv_builder:save-application" in background_source
     assert 'status: "Applied"' in background_source
 
 
@@ -212,4 +212,4 @@ if __name__ == "__main__":
     test_personal_details_are_presented_in_the_profile_view()
     test_applications_page_has_application_history_table()
     test_extension_supports_profile_fields_and_application_saving()
-    print("ApplyKit verification passed.")
+    print("CV Builder verification passed.")

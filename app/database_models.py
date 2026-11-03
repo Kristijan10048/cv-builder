@@ -1,4 +1,4 @@
-"""SQLAlchemy models for the tables maintained by ApplyKit's SQLite migrations."""
+"""SQLAlchemy models for the tables maintained by CV Builder's SQLite migrations."""
 
 import json
 from typing import Mapping

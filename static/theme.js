@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const C_STORAGE_KEY = "applykit.theme";
+  const C_STORAGE_KEY = "cv_builder.theme";
+  const C_LEGACY_STORAGE_KEY = "applykit.theme";
   const C_DARK = "dark";
   const C_LIGHT = "light";
   const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
@@ -10,7 +11,17 @@
   /** Read only supported preferences; storage may be disabled by the browser. */
   function readPreference() {
     try {
-      const storedTheme = window.localStorage.getItem(C_STORAGE_KEY);
+      let storedTheme = window.localStorage.getItem(C_STORAGE_KEY);
+      if (storedTheme === null) {
+        storedTheme = window.localStorage.getItem(C_LEGACY_STORAGE_KEY);
+        if ([C_DARK, C_LIGHT].includes(storedTheme)) {
+          // Preserve the old choice even if storage cannot be updated.
+          try {
+            window.localStorage.setItem(C_STORAGE_KEY, storedTheme);
+            window.localStorage.removeItem(C_LEGACY_STORAGE_KEY);
+          } catch { /* Reading preferences can work while writes are blocked. */ }
+        }
+      }
       return [C_DARK, C_LIGHT].includes(storedTheme) ? storedTheme : null;
     } catch {
       return null;

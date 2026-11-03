@@ -1,4 +1,4 @@
-# ApplyKit task scheduler roadmap
+# CV Builder task scheduler roadmap
 
 Status: SCH-01 implemented; SCH-02 extraction validated, with final acceptance
 gated on a missing SCH-01 board-interface amendment; remaining tickets pending. Updated
@@ -10,7 +10,7 @@ See the [frozen contract](contracts.md), [SCH-01 handoff](tickets/SCH-01.md), an
 ## Outcome and first release
 
 Run scheduled tasks in a dedicated process that keeps working when the browser
-and FastAPI application are closed. Users manage schedules through ApplyKit and
+and FastAPI application are closed. Users manage schedules through CV Builder and
 see their next run, last result, and execution history. The first task type fetches
 jobs using an existing saved search and selected boards. Future task types plug
 into a typed handler registry without rewriting the scheduling service.
@@ -246,7 +246,7 @@ work outside database transactions. Test concurrent startup on Windows.
 
 Worker logs go to `scheduler.log`, with identifiers and durations at INFO; avoid
 full job payloads, descriptions, and personal data. Separate rotating files avoid
-two processes rotating `applykit.log`. Record dispatch failure separately from
+two processes rotating `cv_builder.log`. Record dispatch failure separately from
 task failure. Heartbeat must stop being fresh when the dispatch loop stops.
 
 On shutdown stop claims, drain running work, close resources, then release the

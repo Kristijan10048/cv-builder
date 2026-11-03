@@ -1,1 +1,1 @@
-"""ApplyKit application package."""
+"""CV Builder application package."""

@@ -23,7 +23,7 @@ resuming existing work or using an isolated worktree.
 ## Outcome
 
 Users can configure schedules and understand worker status, upcoming runs, and
-past outcomes through the existing ApplyKit interface.
+past outcomes through the existing CV Builder interface.
 
 ## Work and file ownership
 

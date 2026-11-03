@@ -51,7 +51,7 @@ C_IDENTITY_PROBE = '''
 import json
 import os
 from app.scheduler.configuration import SchedulerConfiguration
-C_REQUIRED = ("APPLYKIT_DATABASE_PATH", "APPLYKIT_LOCK_DIR", "APPLYKIT_SCHEDULER_LOG_DIR")
+C_REQUIRED = ("CV_BUILDER_DATABASE_PATH", "CV_BUILDER_LOCK_DIR", "CV_BUILDER_SCHEDULER_LOG_DIR")
 assert all(os.environ.get(name) for name in C_REQUIRED)
 configuration = SchedulerConfiguration.from_environment()
 print(json.dumps([str(configuration.database_path), configuration.database_identity,
@@ -61,7 +61,7 @@ C_LOCK_PROBE = '''
 import os
 import sys
 import portalocker
-C_REQUIRED = ("APPLYKIT_DATABASE_PATH", "APPLYKIT_LOCK_DIR", "APPLYKIT_SCHEDULER_LOG_DIR", "SCH01_TEST_LOCK_PATH")
+C_REQUIRED = ("CV_BUILDER_DATABASE_PATH", "CV_BUILDER_LOCK_DIR", "CV_BUILDER_SCHEDULER_LOG_DIR", "SCH01_TEST_LOCK_PATH")
 C_BUSY = 23
 assert all(os.environ.get(name) for name in C_REQUIRED)
 try:
@@ -74,7 +74,7 @@ except portalocker.exceptions.LockException:
 C_IMPORT_PROBE = '''
 import os
 import sys
-C_REQUIRED = ("APPLYKIT_DATABASE_PATH", "APPLYKIT_LOCK_DIR", "APPLYKIT_SCHEDULER_LOG_DIR")
+C_REQUIRED = ("CV_BUILDER_DATABASE_PATH", "CV_BUILDER_LOCK_DIR", "CV_BUILDER_SCHEDULER_LOG_DIR")
 assert all(os.environ.get(name) for name in C_REQUIRED)
 class ImportGuard:
     """Reject database, network, process, and filesystem mutations during import."""
@@ -104,7 +104,7 @@ assert "app.database" not in sys.modules
 C_CRASH_LOCK_PROBE = '''
 import os
 import portalocker
-C_REQUIRED = ("APPLYKIT_DATABASE_PATH", "APPLYKIT_LOCK_DIR", "APPLYKIT_SCHEDULER_LOG_DIR", "SCH01_TEST_LOCK_PATH")
+C_REQUIRED = ("CV_BUILDER_DATABASE_PATH", "CV_BUILDER_LOCK_DIR", "CV_BUILDER_SCHEDULER_LOG_DIR", "SCH01_TEST_LOCK_PATH")
 assert all(os.environ.get(name) for name in C_REQUIRED)
 with portalocker.Lock(os.environ["SCH01_TEST_LOCK_PATH"], mode="a", timeout=0,
                      flags=portalocker.LOCK_EX | portalocker.LOCK_NB):

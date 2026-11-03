@@ -37,7 +37,11 @@ class SchedulerConfiguration:
         cls, environment: Mapping[str, str] | None = None, project_root: Path | None = None,
     ) -> "SchedulerConfiguration":
         """Resolve relative paths against the source root, independently of cwd."""
-        settings = os.environ if environment is None else environment
+        settings = dict(os.environ if environment is None else environment)
+        # Canonical settings win, including invalid values that must be rejected.
+        for setting_name, legacy_name in scheduler_constants.C_LEGACY_ENVIRONMENT_NAMES.items():
+            if setting_name not in settings and legacy_name in settings:
+                settings[setting_name] = settings[legacy_name]
         root = project_root or Path(__file__).resolve().parents[scheduler_constants.C_PROJECT_PARENT_INDEX]
         if not root.is_absolute():
             raise SchedulerConfigurationError(scheduler_constants.C_CONFIGURATION_ERROR.format(name=__name__))

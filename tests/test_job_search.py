@@ -47,7 +47,7 @@ def fetch(client, preference_id, sites=None):
 
 @pytest.mark.parametrize("level", ["INFO", "DEBUG", "TRACE"])
 def test_search_logging_and_result_level(level, tmp_path, monkeypatch):
-    monkeypatch.setenv("APPLYKIT_LOG_LEVEL", level)
+    monkeypatch.setenv("CV_BUILDER_LOG_LEVEL", level)
     monkeypatch.setattr(job_search, "scrape_jobs", lambda **kwargs: frame(2, company="Trace Company"))
     with TestClient(app) as client:
         saved = preference(client, city="Boston", radius_km=50, posted_within_days=7, keywords=["python"])
@@ -55,7 +55,7 @@ def test_search_logging_and_result_level(level, tmp_path, monkeypatch):
         assert response.status_code == 200
         assert response.json()["fetched"] == 2
 
-    content = (tmp_path / "logs" / "applykit.log").read_text(encoding="utf-8")
+    content = (tmp_path / "logs" / "cv_builder.log").read_text(encoding="utf-8")
     assert f"job_search_started preference_id={saved}" in content
     assert 'sites=["indeed"] results_wanted=50' in content
     assert '"job_title": "Developer"' in content

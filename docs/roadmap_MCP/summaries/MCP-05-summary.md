@@ -4,7 +4,7 @@ Launch an independent stdio MCP process and manage the injected API client's lif
 
 **Owner:** Coding agent. **Status:** Pending.
 
-**Result:** `mcp_server/src/applykit_mcp/server.py`; `mcp_server/src/applykit_mcp/__main__.py`; `mcp_server/tests/test_server_lifecycle.py`.
+**Result:** `mcp_server/src/cv_builder_mcp/server.py`; `mcp_server/src/cv_builder_mcp/__main__.py`; `mcp_server/tests/test_server_lifecycle.py`.
 
 **Verify:** Verify startup without CV Builder, handshake, EOF/shutdown cleanup, and failed startup cleanup. Do not install a Windows service or add an MCP HTTP listener.
 Run the focused command in the full ticket.

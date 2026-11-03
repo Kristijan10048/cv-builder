@@ -1,36 +1,43 @@
-# ApplyKit Autofill for Firefox
+# CV Builder Autofill for Firefox
 
-This is a development mockup of a Firefox Manifest V3 extension. It retrieves personal details from ApplyKit running at `http://127.0.0.1:8000` and fills matching empty fields on job-application pages.
+This is a development mockup of a Firefox Manifest V3 extension. It retrieves personal details from CV Builder running at `http://127.0.0.1:8000` and fills matching empty fields on job-application pages.
 
 It never submits a form and never overwrites a nonempty field.
 
+
+The extension keeps its original internal Firefox add-on ID so existing
+installations retain their settings and permissions. After updating, reload the
+extension and refresh open job pages to load the renamed message handlers.
+
 ## Try the extension locally
 
-1. Start ApplyKit:
+1. Start CV Builder:
 
    ```powershell
    .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
    ```
 
-2. Open ApplyKit at `http://127.0.0.1:8000`.
+2. Open CV Builder at `http://127.0.0.1:8000`.
 3. Open **Profile**, complete your personal details, and save the form.
 4. In Firefox, open `about:debugging#/runtime/this-firefox`.
 5. Select **Load Temporary Add-on**.
 6. Select `firefox-extension/manifest.json` from this project.
 7. Open a job-application form.
-8. Select the ApplyKit toolbar button and choose **Fill empty fields**.
+8. Select the CV Builder toolbar button and choose **Fill empty fields**.
 
-Choose **Save application** to add the active page to ApplyKit with its detected
+Choose **Save application** to add the active page to CV Builder with its detected
 company name, job title, URL, and the current application date/time. Saved pages
 are recorded with the **Applied** status.
 
 You can also use `Alt+Shift+A` on a page after interacting with the extension.
+
 
 ## Optional automatic filling
 
 The popup contains **Fill automatically on websites**. Enabling it requests access to HTTP and HTTPS pages because Firefox must inject the content script when a page loads. This access is optional; manual filling uses the narrower `activeTab` permission.
 
 Automatic filling can be turned off at any time. The extension still never submits a form or replaces existing values.
+
 
 ## Supported fields
 
@@ -50,10 +57,11 @@ Automatic filling can be turned off at any time. The extension still never submi
 
 Matching uses standard HTML `autocomplete` values first, followed by English and German field-name and label patterns. Websites with custom widgets, closed shadow DOM, cross-origin embedded forms, or nonstandard controls may require site-specific adapters.
 
+
 ## Development notes
 
 - Personal details are read from `GET /api/personal-details`.
-- Saved applications are written to `POST /api/applications` and timestamped by ApplyKit.
+- Saved applications are written to `POST /api/applications` and timestamped by CV Builder.
 - The background script performs localhost requests because Manifest V3 content scripts do not receive extension cross-origin privileges.
 - The localhost origin is declared explicitly in `host_permissions` and the extension content security policy.
 - Persistent site-wide access is requested only when automatic filling is enabled.

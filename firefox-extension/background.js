@@ -1,5 +1,6 @@
 const API_BASE = "http://127.0.0.1:8000";
-const AUTO_SCRIPT_ID = "applykit-auto-fill";
+const AUTO_SCRIPT_ID = "cv_builder-auto-fill";
+const C_LEGACY_AUTO_SCRIPT_ID = "applykit-auto-fill";
 
 async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -11,7 +12,7 @@ async function api(path, options = {}) {
     },
   });
   if (!response.ok) {
-    let message = `ApplyKit returned HTTP ${response.status}.`;
+    let message = `CV Builder returned HTTP ${response.status}.`;
     try {
       const body = await response.json();
       message = body.detail || message;
@@ -23,10 +24,11 @@ async function api(path, options = {}) {
 
 async function removeAutoScript() {
   const scripts = await browser.scripting.getRegisteredContentScripts({
-    ids: [AUTO_SCRIPT_ID],
+    ids: [AUTO_SCRIPT_ID, C_LEGACY_AUTO_SCRIPT_ID],
   });
   if (scripts.length) {
-    await browser.scripting.unregisterContentScripts({ ids: [AUTO_SCRIPT_ID] });
+    // Remove persisted registrations from either version before configuring autofill.
+    await browser.scripting.unregisterContentScripts({ ids: scripts.map(script => script.id) });
   }
 }
 
@@ -64,20 +66,20 @@ async function fillTab(tabId) {
     target: { tabId },
     files: ["/content.js"],
   });
-  return browser.tabs.sendMessage(tabId, { type: "applykit:fill" });
+  return browser.tabs.sendMessage(tabId, { type: "cv_builder:fill" });
 }
 
 browser.runtime.onMessage.addListener((message) => {
-  if (message?.type === "applykit:get-profile") {
+  if (message?.type === "cv_builder:get-profile") {
     return api("/api/personal-details");
   }
-  if (message?.type === "applykit:ping") {
+  if (message?.type === "cv_builder:ping") {
     return api("/api/personal-details").then(() => ({ ok: true }));
   }
-  if (message?.type === "applykit:configure-auto-fill") {
+  if (message?.type === "cv_builder:configure-auto-fill") {
     return configureAutoFill().then((enabled) => ({ enabled }));
   }
-  if (message?.type === "applykit:save-application") {
+  if (message?.type === "cv_builder:save-application") {
     const application = message.application || {};
     return api("/api/applications", {
       method: "POST",

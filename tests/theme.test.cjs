@@ -8,7 +8,7 @@ const { runInNewContext } = require("node:vm");
 const themeSource = readFileSync(join(__dirname, "../static/theme.js"), "utf8");
 
 /** Emulate the browser APIs used before and after the Settings markup exists. */
-function createBrowser({ preference = null, darkSystem = false, storageBlocked = false } = {}) {
+function createBrowser({ preference = null, legacyPreference = null, darkSystem = false, storageBlocked = false, writesBlocked = false } = {}) {
   const documentEvents = {};
   const windowEvents = {};
   const toggleEvents = {};
@@ -22,7 +22,8 @@ function createBrowser({ preference = null, darkSystem = false, storageBlocked =
     addEventListener: (eventName, callback) => { toggleEvents[eventName] = callback; },
   };
   const themeStatus = { textContent: "" };
-  const storedValues = new Map(preference === null ? [] : [["applykit.theme", preference]]);
+  const storedValues = new Map(preference === null ? [] : [["cv_builder.theme", preference]]);
+  if (legacyPreference !== null) storedValues.set("applykit.theme", legacyPreference);
   let markupReady = false;
   const document = {
     documentElement: { dataset: {} },
@@ -37,8 +38,9 @@ function createBrowser({ preference = null, darkSystem = false, storageBlocked =
         if (storageBlocked) throw new Error("Storage unavailable");
         return storedValues.get(key) ?? null;
       },
+      removeItem: key => { storedValues.delete(key); },
       setItem: (key, value) => {
-        if (storageBlocked) throw new Error("Storage unavailable");
+        if (storageBlocked || writesBlocked) throw new Error("Storage unavailable");
         storedValues.set(key, value);
       },
     },
@@ -50,7 +52,7 @@ function createBrowser({ preference = null, darkSystem = false, storageBlocked =
     mount() { markupReady = true; documentEvents.DOMContentLoaded(); },
     toggle() { toggleEvents.click(); },
     systemChange(isDark) { systemTheme.matches = isDark; systemTheme.onChange(); },
-    storageChange(key = "applykit.theme") { windowEvents.storage({ key }); },
+    storageChange(key = "cv_builder.theme") { windowEvents.storage({ key }); },
   };
 }
 
@@ -85,14 +87,14 @@ test("switch updates accessibility state, persists both choices and restores aft
   assert.equal(browser.document.documentElement.dataset.theme, "dark");
   assert.equal(browser.attributes["aria-checked"], "true");
   assert.equal(browser.themeStatus.textContent, "Dark mode on");
-  assert.equal(browser.storedValues.get("applykit.theme"), "dark");
-  const reloadedBrowser = createBrowser({ preference: browser.storedValues.get("applykit.theme") });
+  assert.equal(browser.storedValues.get("cv_builder.theme"), "dark");
+  const reloadedBrowser = createBrowser({ preference: browser.storedValues.get("cv_builder.theme") });
   reloadedBrowser.mount();
   assert.equal(reloadedBrowser.attributes["aria-checked"], "true");
   browser.toggle();
   assert.equal(browser.attributes["aria-checked"], "false");
   assert.equal(browser.themeStatus.textContent, "Light mode on");
-  assert.equal(browser.storedValues.get("applykit.theme"), "light");
+  assert.equal(browser.storedValues.get("cv_builder.theme"), "light");
   browser.systemChange(true);
   assert.equal(browser.document.documentElement.dataset.theme, "light");
 });
@@ -103,7 +105,7 @@ test("invalid preferences fall back to system without writing storage", () => {
   assert.equal(browser.attributes["aria-checked"], "true");
   browser.systemChange(false);
   assert.equal(browser.attributes["aria-checked"], "false");
-  assert.equal(browser.storedValues.get("applykit.theme"), "invalid");
+  assert.equal(browser.storedValues.get("cv_builder.theme"), "invalid");
 });
 
 test("blocked storage still permits switching and preserves the session choice", () => {
@@ -121,14 +123,34 @@ test("blocked storage still permits switching and preserves the session choice",
 test("other tabs synchronize theme preferences and resume system theme after clearing storage", () => {
   const browser = createBrowser();
   browser.mount();
-  browser.storedValues.set("applykit.theme", "dark");
+  browser.storedValues.set("cv_builder.theme", "dark");
   browser.storageChange("unrelated");
   assert.equal(browser.attributes["aria-checked"], "false");
   browser.storageChange();
   assert.equal(browser.attributes["aria-checked"], "true");
-  browser.storedValues.delete("applykit.theme");
+  browser.storedValues.delete("cv_builder.theme");
   browser.storageChange(null);
   assert.equal(browser.attributes["aria-checked"], "false");
   browser.systemChange(true);
   assert.equal(browser.attributes["aria-checked"], "true");
+});
+
+test("existing theme preference migrates without resetting the choice", () => {
+  const browser = createBrowser({ legacyPreference: "dark" });
+  assert.equal(browser.document.documentElement.dataset.theme, "dark");
+  assert.equal(browser.storedValues.get("cv_builder.theme"), "dark");
+  assert.equal(browser.storedValues.has("applykit.theme"), false);
+  browser.storedValues.delete("cv_builder.theme");
+  browser.storageChange(null);
+  assert.equal(browser.document.documentElement.dataset.theme, "light");
+});
+
+test("canonical theme preference takes precedence over the old setting", () => {
+  const browser = createBrowser({ preference: "light", legacyPreference: "dark" });
+  assert.equal(browser.document.documentElement.dataset.theme, "light");
+});
+
+test("existing theme remains usable when storage writes are blocked", () => {
+  const browser = createBrowser({ legacyPreference: "dark", writesBlocked: true });
+  assert.equal(browser.document.documentElement.dataset.theme, "dark");
 });

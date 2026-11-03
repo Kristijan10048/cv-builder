@@ -7,14 +7,14 @@
 
 ## Implementation steps
 
-1. Implement ApplyKitMcpConfiguration with server identity, stdio transport,
+1. Implement CvBuilderMcpConfiguration with server identity, stdio transport,
    API URL, and request timeout.
-2. Read APPLYKIT_MCP_API_URL (default http://127.0.0.1:8000) and
-   APPLYKIT_MCP_REQUEST_TIMEOUT_SECONDS (default 10 seconds). Reject missing host,
+2. Read CV_BUILDER_MCP_API_URL (default http://127.0.0.1:8000) and
+   CV_BUILDER_MCP_REQUEST_TIMEOUT_SECONDS (default 10 seconds). Reject missing host,
    non-loopback host, non-HTTP scheme, credentials, query/fragment, an unexpected
    base path, and nonpositive or nonfinite timeout values. Accept localhost,
    127.0.0.1, and IPv6 loopback with an optional valid port and root slash.
-3. Centralize fixed values in C_ constants, with C_APPLYKIT_ names for
+3. Centralize fixed values in C_ constants, with C_CV_BUILDER_ names for
    application-specific routes, environment names, and limits.
 4. Configure stderr logging with method, route template, elapsed time, and
    error category. Exclude search terms, record contents, full URLs with queries,
@@ -33,9 +33,9 @@ File paths below are planned outputs relative to the CV Builder project root.
 
 **File targets:**
 
-- `mcp_server/src/applykit_mcp/constants.py`
-- `mcp_server/src/applykit_mcp/configuration.py`
-- `mcp_server/src/applykit_mcp/diagnostic_logging.py`
+- `mcp_server/src/cv_builder_mcp/constants.py`
+- `mcp_server/src/cv_builder_mcp/configuration.py`
+- `mcp_server/src/cv_builder_mcp/diagnostic_logging.py`
 - `mcp_server/tests/test_configuration.py`
 - `mcp_server/tests/test_diagnostic_logging.py`
 

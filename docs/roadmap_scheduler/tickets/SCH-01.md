@@ -38,9 +38,9 @@ implementations can proceed independently without guessing at interfaces.
   semantics from the roadmap. Define strict validation and UTC serialization.
 - Specify shared database/lock configuration and worker-only concurrency,
   polling, freshness, retention, and log settings. Proposed variables:
-  `APPLYKIT_DATABASE_PATH`, `APPLYKIT_LOCK_DIR`, `APPLYKIT_SCHEDULER_LOG_DIR`,
-  `APPLYKIT_SCHEDULER_MAX_WORKERS`, `APPLYKIT_SCHEDULER_POLL_SECONDS`,
-  `APPLYKIT_SCHEDULER_RETENTION_DAYS`. Resolve relative paths against the project
+  `CV_BUILDER_DATABASE_PATH`, `CV_BUILDER_LOCK_DIR`, `CV_BUILDER_SCHEDULER_LOG_DIR`,
+  `CV_BUILDER_SCHEDULER_MAX_WORKERS`, `CV_BUILDER_SCHEDULER_POLL_SECONDS`,
+  `CV_BUILDER_SCHEDULER_RETENTION_DAYS`. Resolve relative paths against the project
   root, not the process working directory; reject invalid settings at startup.
 - Own `requirements.txt` dependency changes: verify APScheduler 3.11.3 with the
   application environment and pin a tested Windows-compatible OS-lock library.

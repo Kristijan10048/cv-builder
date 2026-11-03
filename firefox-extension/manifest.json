@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ApplyKit Autofill",
+  "name": "CV Builder Autofill",
   "version": "0.2.0",
-  "description": "Fill job application fields and save applications to local ApplyKit.",
+  "description": "Fill job application fields and save applications to local CV Builder.",
   "browser_specific_settings": {
     "gecko": {
       "id": "applykit-autofill@applykit.local",
@@ -24,13 +24,13 @@
     "scripts": ["background.js"]
   },
   "action": {
-    "default_title": "ApplyKit Autofill",
+    "default_title": "CV Builder Autofill",
     "default_popup": "popup/popup.html",
-    "default_icon": "icons/applykit.svg"
+    "default_icon": "icons/cv-builder.svg"
   },
   "icons": {
-    "48": "icons/applykit.svg",
-    "96": "icons/applykit.svg"
+    "48": "icons/cv-builder.svg",
+    "96": "icons/cv-builder.svg"
   },
   "commands": {
     "fill-current-page": {
