@@ -19,6 +19,23 @@ py -3.14 -m venv .venv
 
 Open `http://127.0.0.1:8000`.
 
+## Scheduled job searches
+
+Use **Scheduled Tasks** to create interval or one-time searches, pause/resume them,
+request a run now, and inspect history and worker health. Run the independent worker
+in a separate foreground process:
+
+```powershell
+.\scripts\Start-Scheduler.ps1
+# Equivalent: .\.venv\Scripts\python.exe -m app.scheduler
+```
+
+The worker keeps running when the browser and web server are closed. Both processes
+must use the same database and lock settings. Startup applies additive migration 5;
+stop both processes and back up your database before upgrading. See the
+[scheduler operations guide](docs/scheduler_operations.md) for configuration,
+Windows logon startup, graceful/forced stopping, recovery, maintenance and rollback.
+
 ## Scheduled Jira implementation
 
 Jira development automation lives in [`coding_agent/jira_agent`](coding_agent/jira_agent/README.md),
@@ -137,7 +154,7 @@ country; ZipRecruiter covers US/Canada, BDJobs Bangladesh, and Naukri India.
 Unsupported boards and failed requests show warnings while successful board
 results are retained. JobSpy may return empty results when a board blocks it.
 Glassdoor HTTP 429 responses show a rate-limit warning and pause new Glassdoor
-searches for five minutes in the current app process. Other boards continue,
+searches for five minutes across web and scheduler processes, including restarts. Other boards continue,
 and jobs received before the limit are kept with a partial status. This cooldown
 does not guarantee that Glassdoor will allow requests when it ends.
 

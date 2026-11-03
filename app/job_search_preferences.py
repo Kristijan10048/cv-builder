@@ -8,6 +8,13 @@ from fastapi import APIRouter, HTTPException
 
 from .database import connect
 from .models import JobSearchPreferenceInput
+from .job_search_repository import JobSearchRepository
+from .services.job_search_errors import PreferenceNotFoundError
+from .scheduler.repository import SchedulePreferenceDeletionGuard
+from .scheduler.errors import SchedulerError
+from .scheduler.api import error_response
+
+C_PREFERENCE_NOT_FOUND_STATUS = 404
 
 router = APIRouter(prefix="/api/job-search-preferences", tags=["Job search preferences"])
 MAX_PREFERENCES = 10
@@ -84,7 +91,13 @@ def update_preference(preference_id: int, payload: JobSearchPreferenceInput):
 
 @router.delete("/{preference_id}", status_code=204)
 def delete_preference(preference_id: int):
-    with closing(connect()) as db, db:
-        cursor = db.execute("DELETE FROM job_search_preferences WHERE id = ?", (preference_id,))
-        if not cursor.rowcount:
-            raise HTTPException(404, "Job search preference not found.")
+    """Delete only when no live schedule references this preference, in one transaction."""
+    repository = JobSearchRepository()
+    try:
+        repository.delete_preference(preference_id, SchedulePreferenceDeletionGuard())
+    except SchedulerError as exception:
+        return error_response(exception)
+    except PreferenceNotFoundError as exception:
+        raise HTTPException(C_PREFERENCE_NOT_FOUND_STATUS, str(exception)) from exception
+    finally:
+        repository.close()

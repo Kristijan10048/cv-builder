@@ -15,7 +15,9 @@
 
 ## Planning deliverables
 
-Scope clarified on 2026-10-31: planning only.
+Original scope on 2026-10-31 was planning only. On 2026-11-03 the user authorized
+implementation in a single pass. The scheduler is now implemented and verified;
+see [verification.md](verification.md) and [operations](../scheduler_operations.md).
 
 - [Scheduler development roadmap](scheduler_roadmap.md)
 - [Coding-agent execution guide](coding_agent_execution.md)

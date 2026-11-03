@@ -11,6 +11,15 @@ class JobSearchError(Exception):
     """Base failure for job-search business rules without transport status codes."""
 
 
+class BoardUnavailableError(ValueError):
+    """Typed board coordination failure; status is busy or cooldown, never parsed text."""
+
+    def __init__(self, status: str, message: str) -> None:
+        """Carry safe diagnostics across the shared adapter boundary."""
+        super().__init__(message)
+        self.status = status
+
+
 class PreferenceNotFoundError(JobSearchError):
     """Indicate that a requested saved search does not exist."""
 

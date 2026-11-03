@@ -8,10 +8,10 @@ import logging
 from typing import Callable
 
 from ..database_models import AvailableJobModel, JobSearchPreferenceModel
-from ..job_search_adapter import JobBoardSearchError, JobSearchAdapter
+from ..job_search_adapter import JobBoardSearchError, JobBoardValidationError, JobSearchAdapter
 from ..job_search_repository import BasePreferenceDeletionGuard, JobSearchRepository
 from ..models import JobSearchInput
-from .job_search_errors import AllBoardsFailedError
+from .job_search_errors import AllBoardsFailedError, BoardUnavailableError
 
 # Preserve the existing logging category used by manual-fetch diagnostics.
 C_LOGGER_NAME = "app.job_search"
@@ -21,6 +21,7 @@ C_BOARD_STATUS_KEY = "status"
 C_PARTIAL_BOARD_STATUS = "partial"
 C_COMPLETED_BOARD_STATUS = "completed"
 C_FAILED_BOARD_STATUS = "failed"
+C_UNAVAILABLE_BOARD_STATUSES = frozenset({C_FAILED_BOARD_STATUS, "busy", "cooldown"})
 C_COUNT_KEY = "count"
 C_PREFERENCE_ID_KEY = "preference_id"
 C_FETCHED_KEY = "fetched"
@@ -88,7 +89,7 @@ class JobSearchOutcome:
 
     def ensure_success(self) -> None:
         """Raise a domain failure if every board failed before persistence."""
-        if all(board[C_BOARD_STATUS_KEY] == C_FAILED_BOARD_STATUS for board in self.boards.values()):
+        if all(board[C_BOARD_STATUS_KEY] in C_UNAVAILABLE_BOARD_STATUSES for board in self.boards.values()):
             C_LOGGER.error(
                 "job_search_failed preference_id=%s reason=all_boards_failed",
                 self.preference_id,
@@ -161,7 +162,10 @@ class JobSearchService:
                     outcome.complete_board(site, found_jobs, skipped_count)
                 except JobBoardSearchError as exception:
                     outcome.interrupt_board(site, exception)
-                except ValueError as exception:
+                except BoardUnavailableError as exception:
+                    outcome.fail_board(site, str(exception))
+                    outcome.boards[site][C_BOARD_STATUS_KEY] = exception.status
+                except JobBoardValidationError as exception:
                     C_LOGGER.warning(
                         "job_search_board_failed preference_id=%s site=%s error=%s",
                         payload.preference_id,
@@ -195,7 +199,7 @@ class JobSearchPreferenceService:
         preference = self.get_preference(payload.preference_id)
         country = JobSearchAdapter.resolve_country(preference.country)
         for site in payload.sites:
-            JobSearchAdapter.validate_country(site, country)
+            JobSearchAdapter.validate_country(site, country, preference.country)
         return preference
 
     def delete_preference(

@@ -1,7 +1,11 @@
 # Scheduler coding-agent execution guide
 
-This guide is for future implementation. The current deliverable is documentation
-only. Each [roadmap](scheduler_roadmap.md) ticket is one reviewable assignment.
+The original guide below describes the planned multi-branch implementation.
+On 2026-11-03 the user requested a single implementation pass; all tickets were
+completed sequentially on the existing `Implement_scheduler` branch without
+creating agents, branches, commits or merges. See [verification.md](verification.md)
+for the delivered code, commands and evidence. The instructions below are retained
+as historical planning guidance rather than a request to redo completed work.
 
 ## Preparation
 
@@ -108,8 +112,8 @@ when concurrency is limited.
 Each handoff includes the branch/change reference, prerequisite versions,
 changed paths, interface changes, migration version if applicable, test commands
 and outcomes, unresolved criteria, and fixtures downstream tasks can reuse.
-Mark a task complete only after its acceptance checks pass. Keep ticket status
-and the roadmap synchronized during implementation; all tickets are pending now.
+Mark a task complete only after its acceptance checks pass. All scheduler tickets
+are now complete; their integrated acceptance is recorded in verification.md.
 
 Integrate in dependency order. Run focused tests after each merge; run the full
 suite at SCH-12. Shared-file conflicts require a semantic review of both changes,

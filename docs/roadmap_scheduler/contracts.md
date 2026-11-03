@@ -2,8 +2,9 @@
 
 The executable source of truth is `app/scheduler/contracts.py`, with limits in
 `constants.py`, startup settings in `configuration.py`, and transport-independent
-errors in `errors.py`. This ticket adds no database tables, routes, worker entry
-point, or scraper calls. Importing any of these modules does not initialize them.
+errors in `errors.py`. The complete implementation was integrated on 2026-11-03;
+see [verification.md](verification.md). Importing contract modules does not start
+workers, initialize databases, or call scrapers.
 The JSON examples use a frozen clock of **2030-01-01T00:00:00Z**; consumers must
 inject that instant when validating examples rather than depend on wall time.
 
@@ -269,6 +270,21 @@ max_instances=1; business work has its own bounded executor. Compatibility tests
 configure this object without starting any scheduler.
 
 ## Ownership and downstream handoff
+
+### Integrated board-interface amendment — 2026-11-03
+
+The SCH-02 proposal is now frozen as `BaseJobBoardCoordinator` in
+`app/job_search_adapter.py`: `search(scraper, arguments) -> (frame, warning)`.
+An unavailable board raises `BoardUnavailableError` from
+`app/services/job_search_errors.py`, carrying a safe `status` of `busy` or
+`cooldown`. The shared service handles this type explicitly; no warning-text
+parsing is used. A returned frame plus warning preserves partial accepted postings.
+The production factory injects `SharedJobBoardCoordinator` for both manual and
+scheduled fetching. `LocalJobBoardCoordinator` remains available only for direct
+adapter compatibility/tests. The shared coordinator holds the OS board lock through
+scraping and 429 capture and persists cooldown even if the scraper then raises.
+This closes the original SCH-01/SCH-02 integration gate. All handoffs below were
+implemented; their original assignment descriptions remain for design context.
 
 No roadmap-default deviations. Added precision: integer config bounds, key format,
 idempotency revision fingerprint, snapshot shapes, terminal-summary precedence,

@@ -1,9 +1,16 @@
 # SCH-10: Verify the complete system and concurrent behavior
 
-**Status:** Pending. **Depends on:** [SCH-06](SCH-06.md), [SCH-08](SCH-08.md),
+**Status:** Complete (2026-11-03). **Depends on:** [SCH-06](SCH-06.md), [SCH-08](SCH-08.md),
 [SCH-09](SCH-09.md). **Estimate:** 1.5–2.5 days.
 
 [Roadmap](../scheduler_roadmap.md) | [Agent guide](../coding_agent_execution.md)
+
+**Integrated handoff:** Delivered on the existing `Implement_scheduler` branch
+in the single implementation pass requested by the user. See
+[verification and release evidence](../verification.md) for changed areas,
+grouped test locations, commands, results, migration 5, browser checks and
+operating limits. This handoff supersedes historical pending gates and branch
+instructions below; no automatic commits or merges were performed.
 
 ## Implementation branch
 

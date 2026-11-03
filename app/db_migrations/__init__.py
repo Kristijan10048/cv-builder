@@ -8,6 +8,10 @@ from .v001_initial_schema import apply as apply_v001
 from .v002_personal_details import apply as apply_v002
 from .v003_job_search_preferences import apply as apply_v003
 from .v004_available_jobs import apply as apply_v004
+from .v005_scheduler import apply as apply_v005
+
+C_SCHEDULER_VERSION = 5
+C_SCHEDULER_MIGRATION_NAME = "task_scheduler"
 
 
 @dataclass(frozen=True)
@@ -22,6 +26,7 @@ MIGRATIONS = (
     Migration(2, "personal_details_setting", apply_v002),
     Migration(3, "job_search_preferences", apply_v003),
     Migration(4, "available_jobs", apply_v004),
+    Migration(C_SCHEDULER_VERSION, C_SCHEDULER_MIGRATION_NAME, apply_v005),
 )
 
 
