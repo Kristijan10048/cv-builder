@@ -10,6 +10,8 @@ from app import database
 @pytest.fixture(autouse=True)
 def isolated_database(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setenv("CV_BUILDER_LOCK_DIR", str(tmp_path / "locks"))
+    monkeypatch.setenv("CV_BUILDER_SCHEDULER_LOG_DIR", str(tmp_path / "worker-logs"))
     monkeypatch.setenv("CV_BUILDER_LOG_DIR", str(tmp_path / "logs"))
     monkeypatch.setenv("CV_BUILDER_LOG_LEVEL", "INFO")
     yield

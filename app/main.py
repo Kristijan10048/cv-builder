@@ -14,6 +14,7 @@ from .importer import download_page, parse_job_page
 from .job_search_preferences import router as job_search_preferences_router
 from .job_search import C_ROUTER as job_search_router
 from .job_search_locations import C_ROUTER as job_search_locations_router
+from .scheduler.api import C_ROUTER as scheduler_router
 from .request_logging import RequestLoggingMiddleware, close_logging, configure_logging
 from .models import (
     ApplicationInput,
@@ -46,6 +47,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.include_router(job_search_preferences_router)
 app.include_router(job_search_router)
 app.include_router(job_search_locations_router)
+app.include_router(scheduler_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 

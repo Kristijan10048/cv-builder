@@ -5,6 +5,7 @@ __pycache__/
 data/*.db
 data/*.db-shm
 data/*.db-wal
+/data/locks/
 /.idea/
 /.venv/
 /logs/
@@ -22,3 +23,4 @@ data/*.db-wal
 *.pfx
 credentials.json
 secrets.json
+*.7z

@@ -11,10 +11,13 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="/static/theme.js?v=20261016-dark-mode"></script>
   <link rel="stylesheet" href="/static/app.css?v=20261030-neutral-controls">
-  <script defer src="/static/app.js?v=20261030-pages"></script>
+  <link rel="stylesheet" href="/static/scheduled_tasks.css?v=20261103">
+  <script defer src="/static/ui_core.js?v=20261103"></script>
+  <script defer src="/static/app.js?v=20261103-scheduler"></script>
   <script defer src="/static/job-search-locations.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/job_search_preferences.js?v=20261009-location-dropdowns"></script>
   <script defer src="/static/available_jobs.js?v=20261014-jobs-language"></script>
+  <script defer src="/static/scheduled_tasks.js?v=20261103"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -31,6 +34,7 @@
         <div class="nav-primary">
           <button class="nav-item active" data-view="dashboard" aria-current="page" aria-label="Overview" title="Overview">{{ icon('overview') }}<span class="nav-text">Overview</span></button>
           <button class="nav-item" data-view="availableJobs" aria-label="Available Jobs" title="Available Jobs">{{ icon('jobs') }}<span class="nav-text">Available Jobs</span></button>
+          <button class="nav-item" data-view="scheduledTasks" aria-label="Scheduled Tasks" title="Scheduled Tasks">{{ icon('preferences') }}<span class="nav-text">Scheduled Tasks</span></button>
           <button class="nav-item" data-view="editor" aria-label="New application" title="New application">{{ icon('new') }}<span class="nav-text">New application</span></button>
           <button class="nav-item" data-view="applications" aria-label="Applications" title="Applications">{{ icon('applications') }}<span class="nav-text">Applications</span></button>
           <button class="nav-item" data-view="jobSearchPreferences" aria-label="Job Search Preferences" title="Job Search Preferences">{{ icon('preferences') }}<span class="nav-text">Search preferences</span></button>
@@ -147,6 +151,7 @@
 
         {% include "available_jobs.html" %}
         {% include "job_search_preferences.html" %}
+        {% include "scheduled_tasks.html" %}
 
         <section class="view" id="templatesView">
           <div class="section-heading page-heading"><div><p class="eyebrow">SOURCE MATERIAL</p><h2>Base documents</h2><p class="subcopy">These are the truthful source documents used when tailoring an application.</p></div></div>

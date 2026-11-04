@@ -1,6 +1,7 @@
 """Verify Glassdoor location formatting against the pinned JobSpy parser."""
 
 import logging
+from datetime import timedelta
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi.testclient import TestClient
@@ -13,6 +14,8 @@ from app.database_models import JobSearchPreferenceModel
 from app.job_search_adapter import JobSearchAdapter
 from app.job_search_glassdoor import C_GLASSDOOR_LOGGER_NAME, GlassdoorSearchGuard
 from app.main import app
+from app.scheduler.repository import ScheduleRepository
+from app.scheduler.triggers import SystemClock
 
 C_GLASSDOOR_CITY_ID = 2727242
 C_HTTP_OK = 200
@@ -230,8 +233,12 @@ class TestGlassdoorRateLimiting:
             assert logging.getLogger(C_GLASSDOOR_LOGGER_NAME).handlers == original_handlers
 
             # Advance the app clock, without waiting or claiming Glassdoor has reset.
-            cooldown_end = glassdoor_guard.retry_after + 1
-            monkeypatch.setattr(glassdoor_guard, "clock", lambda: cooldown_end)
+            with_schedule_repository = ScheduleRepository()
+            try:
+                cooldown_end = with_schedule_repository.get_board_cooldown("glassdoor") + timedelta(seconds=1)
+            finally:
+                with_schedule_repository.close()
+            monkeypatch.setattr(SystemClock, "now", lambda self: cooldown_end)
             client.post("/api/job-search", json=payload)
             assert len(http_requests) == request_count * 2
             assert logging.getLogger(C_GLASSDOOR_LOGGER_NAME).handlers == original_handlers

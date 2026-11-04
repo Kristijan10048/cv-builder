@@ -24,8 +24,12 @@ C_EMPTY_COUNTRY = ""
 C_BANGLADESH_ALIASES = frozenset({"bangladesh", "bd", "bgd"})
 
 
+class JobBoardValidationError(ValueError):
+    """Carry a known safe country/board validation message across the fetch boundary."""
+
+
 class BaseJobBoardCoordinator(ABC):
-    """Proposed SCH-02 seam for SCH-01/SCH-05 integration; not a frozen contract."""
+    """Frozen board seam; unavailable calls raise typed BoardUnavailableError."""
 
     @abstractmethod
     def search(self, scraper: Callable, arguments: dict) -> tuple[object, str | None]:
@@ -66,7 +70,10 @@ class JobSearchAdapter:
         self, preference: JobSearchPreferenceModel, site: str, results_wanted: int,
     ) -> tuple[list[AvailableJobModel], int]:
         """Fetch one board and return accepted postings and incomplete-record count."""
-        arguments = self.build_arguments(preference, site, results_wanted)
+        try:
+            arguments = self.build_arguments(preference, site, results_wanted)
+        except ValueError as exception:
+            raise JobBoardValidationError(str(exception)) from exception
         result_frame, warning = self.coordinator.search(self.scraper, arguments)
         accepted_jobs, skipped_count = self.normalize_records(result_frame, site, preference.keywords)
         if warning:

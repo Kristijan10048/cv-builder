@@ -33,9 +33,22 @@ class JobSearchServiceFactory:
         """Dispose an owned repository even on construction/fetch failure; borrow injections."""
         owns_repository = repository is None
         search_repository = self.repository_factory() if owns_repository else repository
+        coordination_repository = None
         try:
-            adapter = JobSearchAdapter(self.scraper, self.coordinator)
+            coordinator = self.coordinator
+            if coordinator is None:
+                from app import database
+                from app.database_locking import configuration_for_database
+                from app.scheduler.repository import ScheduleRepository
+                from .job_board_coordinator import SharedJobBoardCoordinator
+
+                coordination_repository = ScheduleRepository()
+                coordinator = SharedJobBoardCoordinator(
+                    configuration_for_database(database.DB_PATH), coordination_repository)
+            adapter = JobSearchAdapter(self.scraper, coordinator)
             yield JobSearchService(search_repository, adapter)
         finally:
+            if coordination_repository is not None:
+                coordination_repository.close()
             if owns_repository:
                 search_repository.close()

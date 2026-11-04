@@ -1,0 +1,25 @@
+.scheduler-status { padding: 16px 20px; margin-bottom: 16px; border-left: 4px solid var(--muted); }
+.scheduler-status[data-state="fresh"] { border-left-color: var(--success); }
+.scheduler-status[data-state="stale"] { border-left-color: var(--error); }
+.scheduler-form { padding: 24px; margin: 20px 0; }
+.scheduler-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.scheduler-boards { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: 16px; flex-wrap: wrap; }
+.scheduler-boards label { display: flex; align-items: center; gap: 7px; }
+.scheduler-boards input { width: auto; margin: 0; }
+.scheduler-list { display: grid; gap: 14px; margin-top: 20px; }
+.scheduler-card { padding: 22px; overflow-wrap: anywhere; }
+.scheduler-card h3 { margin: 0 0 8px; }
+.scheduler-card p { margin: 8px 0; }
+.scheduler-meta { color: var(--muted); font-size: 13px; }
+.scheduler-actions, .scheduler-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.scheduler-pagination { justify-content: center; margin-bottom: 22px; }
+#scheduleHistory { padding: 24px; }
+.scheduler-run { border-top: 1px solid var(--line); padding: 16px 0; overflow-wrap: anywhere; }
+.scheduler-run ul { padding-left: 20px; }
+#scheduleMessage { color: var(--muted); overflow-wrap: anywhere; }
+#scheduleMessage[data-error="true"] { color: var(--error); }
+@media (max-width: 650px) {
+  .scheduler-fields { grid-template-columns: 1fr; }
+  .scheduler-form, .scheduler-card, #scheduleHistory { padding: 16px; }
+  #scheduledTasksView .page-heading { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+}

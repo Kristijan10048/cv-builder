@@ -1,0 +1,32 @@
+<section class="view" id="scheduledTasksView" aria-labelledby="scheduledTasksHeading">
+  <div class="section-heading page-heading"><div><p class="eyebrow">AUTOMATIC JOB SEARCH</p><h2 id="scheduledTasksHeading">Scheduled Tasks</h2><p class="subcopy">Keep saved searches up to date, even when this browser is closed.</p></div><button class="primary" type="button" id="scheduleNew">New schedule</button></div>
+  <div class="scheduler-status panel" id="schedulerStatus" role="status" aria-live="polite">Checking worker…</div>
+  <p id="scheduleMessage" role="status" aria-live="polite"></p>
+  <p id="scheduleNoPreferences" class="hidden">Save a search in <button type="button" class="secondary" data-view="jobSearchPreferences">Search preferences</button> before creating a schedule.</p>
+  <form id="scheduleForm" class="panel scheduler-form hidden">
+    <div class="section-heading"><h3 id="scheduleFormHeading">New schedule</h3><button type="button" class="secondary" id="scheduleCancel">Cancel</button></div>
+    <div class="scheduler-fields">
+      <label>Name<input id="scheduleName" required maxlength="120" autocomplete="off"></label>
+      <label>Saved search<select id="schedulePreference" required></select></label>
+      <label>Results per board<input id="scheduleResults" type="number" min="1" max="1000" value="50" required></label>
+      <label>Repeat<select id="scheduleKind"><option value="interval">Every interval</option><option value="once">Once</option></select></label>
+      <label id="scheduleIntervalLabel">Interval in seconds<input id="scheduleSeconds" type="number" min="300" max="31536000" value="86400" required></label>
+      <label>First execution <span id="scheduleTimezone" class="field-help"></span><input id="scheduleStart" type="datetime-local" step="1" required></label>
+    </div>
+    <fieldset class="scheduler-boards"><legend>Job boards</legend>
+      {% for value, label in [('linkedin', 'LinkedIn'), ('indeed', 'Indeed'), ('glassdoor', 'Glassdoor'), ('zip_recruiter', 'ZipRecruiter'), ('bayt', 'Bayt'), ('bdjobs', 'BDJobs'), ('naukri', 'Naukri')] %}
+      <label><input type="checkbox" name="scheduleBoard" value="{{ value }}"{% if value == 'linkedin' %} checked{% endif %}>{{ label }}</label>
+      {% endfor %}
+    </fieldset>
+    <p class="field-help">Intervals measure elapsed time. Every 24 hours may shift its local clock time when daylight saving changes. Minimum interval: 5 minutes.</p>
+    <p class="field-help">Pausing or deleting cannot stop a search that is already running.</p>
+    <button class="primary" type="submit" id="scheduleSave">Save schedule</button>
+  </form>
+  <div id="scheduleList" class="scheduler-list" aria-live="polite"></div>
+  <div class="scheduler-pagination"><button class="secondary" type="button" id="schedulePrevious">Previous</button><span id="schedulePage"></span><button class="secondary" type="button" id="scheduleNext">Next</button></div>
+  <section id="scheduleHistory" class="panel hidden" aria-labelledby="scheduleHistoryHeading">
+    <div class="section-heading"><h3 id="scheduleHistoryHeading">Execution history</h3><button type="button" class="secondary" id="scheduleHistoryClose">Close history</button></div>
+    <div id="scheduleHistoryList"></div>
+    <div class="scheduler-pagination"><button class="secondary" type="button" id="historyPrevious">Previous</button><span id="historyPage"></span><button class="secondary" type="button" id="historyNext">Next</button></div>
+  </section>
+</section>

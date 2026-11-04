@@ -1,11 +1,12 @@
 # CV Builder task scheduler roadmap
 
-Status: SCH-01 implemented; SCH-02 extraction validated, with final acceptance
-gated on a missing SCH-01 board-interface amendment; remaining tickets pending. Updated
-2026-10-31. Contracts, configuration, fixtures and dependency pins are implemented;
-no scheduler worker or management routes have been started or implemented.
-See the [frozen contract](contracts.md), [SCH-01 handoff](tickets/SCH-01.md), and
-[SCH-02 handoff and integration proposal](tickets/SCH-02.md).
+Status: **SCH-01 through SCH-12 implemented and verified, 2026-11-03.**
+Completed together on the existing `Implement_scheduler` branch at the user's
+request. The board-interface amendment is resolved; migration 5, independent
+worker, API, UI, recovery and operations documentation are delivered.
+See [verification and implementation handoff](verification.md), the
+[frozen contract](contracts.md), and [operations guide](../scheduler_operations.md).
+The estimates and ticket-branch workflow below document the original plan.
 
 ## Outcome and first release
 
@@ -165,8 +166,8 @@ its input snapshot even when a preference or schedule is later deleted.
 
 ## Persistence and extension points
 
-All new tables have mapped classes and versioned migrations. Allocate the next
-available version at integration time; version 5 is only the current candidate.
+All new tables have mapped classes. Migration 5 (`task_scheduler`) implements the
+additive scheduler schema; versions 1–4 remain unchanged.
 
 | Proposed table/model | Required contents |
 | --- | --- |
@@ -257,17 +258,14 @@ abandoned runs interrupted. Do not claim that an executor timeout cancels scrapi
 
 ## Implementation tasks and dependency order
 
-SCH-01's delivered checks pass, but its board coordinator interface needs an
-amendment before SCH-02 final acceptance and affected SCH-05 integration. SCH-02
-code is extracted and validated; other tasks are pending. Estimates are hands-on planning
-ranges, excluding live board troubleshooting. Dependency IDs are completion gates,
-not just suggested reading. Independent branches may use the frozen contract
-fixtures before integration.
+All implementation gates are complete; the board coordinator amendment is recorded
+in contracts.md. The table retains the original estimates and dependency order.
+Current acceptance evidence and grouped test locations are in verification.md.
 
 | Task | Deliverable | Depends on | Estimate |
 | --- | --- | --- | --- |
 | [SCH-01](tickets/SCH-01.md) | Freeze contracts and configuration — complete | None | 0.5–1 day |
-| [SCH-02](tickets/SCH-02.md) | Reusable backend validated; board-interface integration gate remains | SCH-01 | 1–2 days |
+| [SCH-02](tickets/SCH-02.md) | Reusable backend and shared board interface — complete | SCH-01 | 1–2 days |
 | [SCH-03](tickets/SCH-03.md) | Persistence, migrations, repository | SCH-01 | 1.5–2.5 days |
 | [SCH-04](tickets/SCH-04.md) | Independent APScheduler runtime | SCH-03 | 1.5–2.5 days |
 | [SCH-05](tickets/SCH-05.md) | Job-fetch handler and board coordination | SCH-02, SCH-03 | 1–2 days |

@@ -4,23 +4,7 @@ let rawHtml = "";
 let importedData = "";
 let toastTimer;
 
-const api = async (url, options = {}) => {
-  const response = await fetch(url, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-  });
-  if (!response.ok) {
-    let message = "Something went wrong.";
-    try {
-      const detail = (await response.json()).detail;
-      message = Array.isArray(detail)
-        ? detail.map(item => `${item.loc?.slice(1).join(" ") || "Search"}: ${item.msg}`).join("; ")
-        : detail || message;
-    } catch (_) {}
-    throw new Error(message);
-  }
-  return response.status === 204 ? null : response.json();
-};
+const api = (url, options = {}) => window.CvUi.request(url, options);
 
 function toast(message, error = false) {
   const element = $("#toast");
@@ -33,10 +17,11 @@ function toast(message, error = false) {
 const titles = {
   dashboard: "Overview", editor: "Application builder", applications: "Applications",
   templates: "Base documents", profile: "Profile", settings: "Settings",
-  availableJobs: "Available Jobs", jobSearchPreferences: "Job Search Preferences"
+  availableJobs: "Available Jobs", jobSearchPreferences: "Job Search Preferences", scheduledTasks: "Scheduled Tasks"
 };
 
 async function showView(name) {
+  const entering = window.CvUi.enterView(name);
   $('main').classList.toggle('available-jobs-layout', name === 'availableJobs')
   // Use the shared header as a ribbon while keeping the results area compact.
   $('.topbar').classList.toggle('job-search-topbar', name === 'availableJobs')
@@ -53,6 +38,7 @@ async function showView(name) {
   });
   $("#pageTitle").textContent = titles[name];
   closeMenu();
+  await entering;
   if (name === "dashboard") await loadOverview();
   if (name === "applications") await loadApplications();
   if (name === "availableJobs") await loadAvailableJobs();
@@ -75,8 +61,7 @@ function rowMarkup(item) {
 
 function formatUtcDateTime(value, options = { dateStyle: "medium", timeStyle: "short" }) {
   if (!value) return "Not recorded";
-  const date = new Date(`${value.replace(" ", "T")}Z`);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, options);
+  return window.CvUi.formatDate(value, options);
 }
 
 function safeExternalUrl(value) {
@@ -454,6 +439,6 @@ function openMenu(){ $("#sidebar").classList.add("open"); $("#mobileOverlay").cl
 function closeMenu(){ $("#sidebar").classList.remove("open"); $("#mobileOverlay").classList.remove("visible"); $("#menuButton").setAttribute("aria-expanded", "false"); }
 $("#menuButton").addEventListener("click", openMenu);
 $("#mobileOverlay").addEventListener("click", closeMenu);
-function escapeHtml(value = "") { const div = document.createElement("div"); div.textContent = value; return div.innerHTML.replaceAll('"', "&quot;"); }
+function escapeHtml(value = "") { return window.CvUi.escapeHtml(value); }
 
 loadOverview().catch(error => toast(error.message, true));
