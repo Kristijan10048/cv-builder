@@ -28,6 +28,9 @@ C_CHILD_MODULE = "tests.scheduler_integration.worker"
 C_ENV_ROOT = "CV_BUILDER_TEST_ROOT"
 C_MODE = "CV_BUILDER_TEST_MODE"
 C_STOP = "stop"
+C_POWERSHELL_EXECUTABLES = ("powershell.exe", "pwsh")
+C_POWERSHELL_PARAMETER = "shell_name"
+C_POWERSHELL_UNAVAILABLE = "PowerShell executable is unavailable: {shell_name}"
 
 
 class ProcessHarness:
@@ -247,11 +250,14 @@ def test_worker_observes_persisted_board_cooldown_across_restarts(harness):
         repository.close()
 
 
-def test_powershell_launcher_validates_spaces_and_rejects_invalid_configuration(harness):
-    """Exercise the actual operator launcher without starting production searches."""
+@pytest.mark.parametrize(C_POWERSHELL_PARAMETER, C_POWERSHELL_EXECUTABLES)
+def test_powershell_launcher_validates_spaces_and_rejects_invalid_configuration(harness, shell_name):
+    """Exercise each installed PowerShell host without starting production searches."""
     if os.name != "nt":
         pytest.skip("Windows launcher acceptance requires Windows.")
-    shell = shutil.which("pwsh") or "powershell.exe"
+    shell = shutil.which(shell_name)
+    if shell is None:
+        pytest.skip(C_POWERSHELL_UNAVAILABLE.format(shell_name=shell_name))
     command = [shell, "-NoProfile", "-File", str(C_ROOT / "scripts" / "Start-Scheduler.ps1"),
                "-DatabasePath", str(harness.root / "database.db"), "-LockDirectory", str(harness.root / "locks"),
                "-LogDirectory", str(harness.root / "worker-logs"), "-ValidateOnly"]

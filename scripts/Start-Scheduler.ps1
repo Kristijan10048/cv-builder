@@ -34,7 +34,8 @@ try {
     }
     Push-Location -LiteralPath $schedulerProjectRoot
     try {
-        & $schedulerPython -c 'from app.scheduler.configuration import SchedulerConfiguration; from app.scheduler.runtime import SchedulerRuntime; SchedulerConfiguration.from_environment(); print("Scheduler configuration and imports OK.")'
+        # Python single quotes survive native argument passing in Windows PowerShell 5.1 and PowerShell 7.
+        & $schedulerPython -c "from app.scheduler.configuration import SchedulerConfiguration; from app.scheduler.runtime import SchedulerRuntime; SchedulerConfiguration.from_environment(); print('Scheduler configuration and imports OK.')"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         if (-not $ValidateOnly) {
             & $schedulerPython -m app.scheduler
