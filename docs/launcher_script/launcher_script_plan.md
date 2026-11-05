@@ -5,8 +5,11 @@ Status: planning only; no launcher implementation yet.
 ## Scope and proposed defaults
 
 - Manage `web` (Uvicorn running `app.main:app`) and `scheduler`
-  (`python -m app.scheduler`). These are the two application services described
-  in the README; assume the Jira coding agent and LM Studio are outside scope.
+  (`python -m app.scheduler`). These are the confirmed initial services.
+  Other test applications/services, including the Jira coding agent, are omitted
+  for now; LM Studio is outside launcher scope.
+- Run both services in a single Docker container initially. Keep service
+  definitions independent so they can be separated into containers in the future.
 - Support Windows locally and Linux inside Docker. Use the selected Python
   environment, resolve paths from the repository root, and pass the same
   database and lock settings to both services.
@@ -50,19 +53,22 @@ python launcher.py -status
    unhealthy, and unknown states. Reuse existing scheduler health data through its
    repository layer and provide a web readiness check. Keep status read-only.
    Capture startup errors and child output while retaining existing service logs.
-5. **Implement the agreed Docker lifecycle.** If the launcher runs inside a
-   container, add a foreground mode that forwards shutdown requests, reaps child
-   processes, and exits on an unexpected required-service failure. Define whether
-   one or both services run per container, how control commands reach the active
-   supervisor, and how database/lock volumes are shared. Configure web binding for
-   container access. Host-side Docker/Compose management is a separate scope choice.
+5. **Implement the agreed Docker lifecycle.** Run both services inside one
+   container, with a foreground supervisor that forwards shutdown requests, reaps
+   child processes, and exits on an unexpected required-service failure. Run the
+   container detached for background operation; the supervisor stays active inside
+   it. Define how control commands reach the supervisor and how database/lock
+   volumes are shared. Configure web binding for container access. Keep service
+   selection configurable to support separate containers later.
 6. **Verify and document.** Test single/all-service operations, duplicate and
    concurrent commands, stale/reused PIDs, failed startup, shutdown timeout, child
    cleanup, and scheduler independence using disposable data and test processes.
    Smoke-test Windows and the agreed Linux container setup. Document commands,
    configuration, logs, exit codes, and compatibility with `Start-Scheduler.ps1`.
 
-## Decisions to clarify before implementation
+## Original clarification questions
+
+The questions below are retained for context; answers are recorded at the end.
 
 1. **Service scope:** Are the initial services the web server and job-search
    scheduler, excluding the Jira coding agent and LM Studio?
@@ -74,3 +80,16 @@ python launcher.py -status
 
 Other behavior above is proposed rather than explicitly required by the specs,
 particularly health reporting, force-stop policy, and partial-failure handling.
+
+## Confirmed answers — 2026-11-05
+
+1. **Service scope:** Yes, manage only the scheduler and web server for now.
+   Omit other test applications/services, such as the Jira coding agent.
+2. **Docker topology:** Keep the initial setup simple: place both services in a
+   single Docker container. They may be separated into containers in the future.
+3. **Background operation:** Yes, services should run in the background.
+   Local startup returns control to the terminal. For Docker, the proposed
+   implementation uses a detached container with an active supervisor inside it.
+
+The choice of Dockerfile and/or Compose deliverables was not explicitly answered
+and remains a packaging detail to settle before implementation.
