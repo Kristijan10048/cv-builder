@@ -1,6 +1,6 @@
 # Launcher script implementation plan
 
-Status: planning only; no launcher implementation yet.
+Status: launcher implemented; see [usage and verification](launcher_usage.md).
 
 ## Scope and proposed defaults
 
@@ -101,3 +101,30 @@ Docker Compose, Docker image implementation, and other unrelated changes are
 outside this task. Image and Compose work will be implemented in a separate task.
 This plan covers the launcher and its Docker compatibility only; Docker packaging
 is no longer an open deliverable question for this task.
+
+## Implementation authorization and defaults — 2026-11-05
+
+The user confirmed the remaining defaults and authorized implementation:
+
+- Allow up to 120 seconds for graceful shutdown, with explicit `--force` required
+  for termination after timeout.
+- Show all services, including stopped ones, and distinguish process state from
+  application health.
+- Keep successful services running after a partial startup failure and report
+  failures with a nonzero exit code.
+
+The implementation adds `launcher.py`, reusable modules in `app/launcher`, offline
+lifecycle tests, and usage documentation. Docker image and Compose work remain
+outside scope. Linux/container integration verification requires a suitable
+environment and is recorded separately from Windows verification.
+
+## Verification record — 2026-11-05
+
+- Launcher suite: 33 tests passed on Windows, including real service subprocesses
+  using disposable databases and paths containing spaces.
+- Full repository suite: 413 tests and 59 subtests passed; one existing
+  `powershell.exe` scheduler-launcher test was blocked by the host's unsigned-script
+  execution policy. No machine execution-policy settings were changed.
+- JavaScript syntax checks and Git whitespace checks passed.
+- WSL is not installed on this host. Linux process options are covered by tests,
+  but an actual Linux/container smoke test has not been performed.

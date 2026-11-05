@@ -19,6 +19,22 @@ py -3.14 -m venv .venv
 
 Open `http://127.0.0.1:8000`.
 
+To manage the web server and job-search scheduler together in the background,
+install the current requirements and use the Python launcher:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe launcher.py -start --all
+.\.venv\Scripts\python.exe launcher.py -status
+.\.venv\Scripts\python.exe launcher.py -restart --service web
+.\.venv\Scripts\python.exe launcher.py -stop --all
+```
+
+The launcher uses the selected Python interpreter and disables web auto-reload.
+Stop any manually launched instance before starting the same service through the
+launcher. See the [launcher operations guide](docs/launcher_script/launcher_usage.md)
+for configuration, graceful shutdown, status, and foreground supervision.
+
 ## Scheduled job searches
 
 Use **Scheduled Tasks** to create interval or one-time searches, pause/resume them,
