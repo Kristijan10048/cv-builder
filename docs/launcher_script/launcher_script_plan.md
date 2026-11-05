@@ -128,3 +128,35 @@ environment and is recorded separately from Windows verification.
 - JavaScript syntax checks and Git whitespace checks passed.
 - WSL is not installed on this host. Linux process options are covered by tests,
   but an actual Linux/container smoke test has not been performed.
+
+## Status formatting requirement — 2026-11-05
+
+Display status rows with vertically aligned columns for service name, state,
+health, PID, and details. Size each column from the widest value in the displayed
+snapshot so alignment is preserved for different states, PID lengths, and future
+service names. Apply this formatting to both `-status` and `--status`.
+
+```text
+web      : stopped; health=unavailable; pid=-; not running under this launcher
+scheduler: stopped; health=unavailable; pid=-; not running under this launcher
+```
+
+## Shared command formatting — 2026-11-05
+
+Extend vertical alignment to all launcher command results: start, stop, restart,
+status, foreground service messages, and errors. Preserve immediate lifecycle
+progress output and both phases of restart. Reserve a common service-name width
+from the registry before streaming results; size additional status columns from
+the displayed snapshot. Command-wide errors use an aligned `launcher` label on
+stderr; command syntax/help retains the argument parser's standard layout.
+
+Centralize formatting in `app/launcher/output.py`, with a `BaseOutputFormatter`
+interface, generic `AlignedOutputFormatter`, and shared `LauncherOutput` writer.
+Future commands reuse named row values, templates, and calculated column widths
+instead of duplicating formatting code. Both the CLI and service manager use this
+writer. See the usage guide's extension section for the reuse contract and examples.
+
+Verification: all 33 launcher tests passed after the shared-output refactor.
+Manually checked start, stop, restart, mixed success/failure messages, mixed
+status values, a longer future service name, and custom command columns without
+starting application services during the formatting checks.

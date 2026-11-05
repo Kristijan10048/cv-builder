@@ -12,6 +12,7 @@ import psutil
 
 from . import constants as constants
 from .models import ProcessRecord, ServiceStatus
+from .output import LauncherOutput
 from .processes import create_process_controller
 from .services import ServiceRegistry
 
@@ -19,11 +20,12 @@ from .services import ServiceRegistry
 class ServiceManager:
     """Coordinate registered processes without taking ownership of manually started services."""
 
-    def __init__(self, configuration, registry=None, controller=None):
+    def __init__(self, configuration, registry=None, controller=None, output=None):
         """Inject registry and OS process behavior for deterministic verification."""
         self.configuration = configuration
         self.registry = registry or ServiceRegistry()
         self.controller = controller or create_process_controller()
+        self.output = output or LauncherOutput(self.registry.definitions)
         self.children = []
 
     @contextmanager
@@ -137,10 +139,10 @@ class ServiceManager:
                     try:
                         detail = self.stop(name, force)
                         stopped_names.add(name)
-                        print(constants.C_RESULT_FORMAT.format(name=name, detail=detail), flush=True)
+                        self.output.result(name, detail)
                     except (OSError, ValueError, RuntimeError, psutil.Error) as exception:
                         succeeded = False
-                        print(constants.C_RESULT_FORMAT.format(name=name, detail=exception), flush=True)
+                        self.output.result(name, exception)
             if action in (constants.C_START, constants.C_RESTART):
                 for name in ordered_names:
                     if action == constants.C_RESTART and name not in stopped_names:
@@ -150,10 +152,10 @@ class ServiceManager:
                             if self.status(dependency).state != constants.C_RUNNING:
                                 raise RuntimeError(dependency)
                         detail = self.start(name)
-                        print(constants.C_RESULT_FORMAT.format(name=name, detail=detail), flush=True)
+                        self.output.result(name, detail)
                     except (OSError, ValueError, RuntimeError, psutil.Error) as exception:
                         succeeded = False
-                        print(constants.C_RESULT_FORMAT.format(name=name, detail=exception), flush=True)
+                        self.output.result(name, exception)
         return constants.C_SUCCESS if succeeded else constants.C_FAILURE
 
     def supervise(self, names):
@@ -178,7 +180,7 @@ class ServiceManager:
                         break
                     try:
                         detail = self.start(name)
-                        print(constants.C_RESULT_FORMAT.format(name=name, detail=detail), flush=True)
+                        self.output.result(name, detail)
                     finally:
                         record = self.record(name)
                         if record is not None:
@@ -200,7 +202,7 @@ class ServiceManager:
                                 owned_records[name] = current_record
                                 active_records.append(current_record)
                             elif not current_record.stop_requested:
-                                print(constants.C_RESULT_FORMAT.format(name=name, detail=constants.C_UNEXPECTED_EXIT), flush=True)
+                                self.output.result(name, constants.C_UNEXPECTED_EXIT)
                                 exit_code = constants.C_FAILURE
                                 stop_requested.set()
                                 break
@@ -218,7 +220,7 @@ class ServiceManager:
                             if current_record is not None:
                                 self.stop(name)
                         except (OSError, RuntimeError, ValueError, psutil.Error) as exception:
-                            print(constants.C_RESULT_FORMAT.format(name=name, detail=exception), flush=True)
+                            self.output.result(name, exception)
                             exit_code = constants.C_FAILURE
                 self._reap_children()
             finally:

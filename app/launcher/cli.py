@@ -1,7 +1,6 @@
 """Public launcher argument validation and human-readable lifecycle output."""
 
 import argparse
-import sys
 
 import portalocker
 import psutil
@@ -9,6 +8,7 @@ import psutil
 from . import constants as constants
 from .manager import ServiceManager
 from .models import LauncherConfiguration
+from .output import LauncherOutput
 from .services import ServiceRegistry
 
 
@@ -18,6 +18,7 @@ class LauncherApplication:
     def __init__(self):
         """Build the trusted service catalog and argument parser without starting services."""
         self.registry = ServiceRegistry()
+        self.output = LauncherOutput(self.registry.definitions)
         self.parser = argparse.ArgumentParser(description=constants.C_DESCRIPTION)
         actions = self.parser.add_mutually_exclusive_group(required=True)
         for action in constants.C_ACTIONS:
@@ -40,20 +41,17 @@ class LauncherApplication:
             self.parser.error(constants.C_FOREGROUND_ERROR)
         names = [options.service] if options.service else list(self.registry.definitions)
         try:
-            manager = ServiceManager(LauncherConfiguration.from_environment(), self.registry)
+            manager = ServiceManager(LauncherConfiguration.from_environment(), self.registry, output=self.output)
             if options.action == constants.C_STATUS:
-                succeeded = True
-                for name in names:
-                    status = manager.status(name)
-                    print(constants.C_STATUS_FORMAT.format(name=name, state=status.state, health=status.health,
-                                                            pid=status.pid or constants.C_NO_PID, detail=status.detail))
-                    succeeded = succeeded and status.state in (constants.C_RUNNING, constants.C_STOPPED)
+                statuses = [manager.status(name) for name in names]
+                self.output.statuses(statuses)
+                succeeded = all(status.state in (constants.C_RUNNING, constants.C_STOPPED) for status in statuses)
                 return constants.C_SUCCESS if succeeded else constants.C_FAILURE
             if options.foreground:
                 return manager.supervise(self.registry.ordered(names))
             return manager.execute(options.action, names, options.force)
         except (OSError, ValueError, RuntimeError, portalocker.exceptions.LockException, psutil.Error) as exception:
-            print(str(exception), file=sys.stderr)
+            self.output.error(exception)
             return constants.C_FAILURE
         except KeyboardInterrupt:
             return constants.C_FAILURE

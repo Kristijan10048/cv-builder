@@ -23,7 +23,13 @@ also accepts a double-dash alias, such as `--start` or `--status`.
 
 - Start, stop, and restart require `--service NAME` or `--all`.
 - Status defaults to all registered services, including stopped services, and can
-  be restricted with `--service NAME`.
+  be restricted with `--service NAME`. Service, state, health, PID, and detail
+  columns are vertically aligned using the widest displayed values.
+- All commands share aligned output. Start, stop, restart, and foreground service
+  results use the same service-name column as status, including failure messages.
+  Results appear as each operation finishes; restart retains both stop and start
+  results. Command-wide errors use the `launcher` label on stderr. Argument help
+  and syntax errors retain the standard argument-parser layout.
 - Local startup creates hidden background processes and returns after checking
   readiness. Closing the terminal does not stop them. Uvicorn reload is disabled.
 - Starting a healthy running service or stopping a stopped service succeeds
@@ -116,6 +122,36 @@ planned initial topology is one container for both services; service selection
 also supports future separation. No container packaging is created here.
 
 ## Extending and verifying
+
+Console formatting is centralized in `app/launcher/output.py`:
+
+- `BaseOutputFormatter` defines the reusable formatter interface.
+- `AlignedOutputFormatter.format_rows(rows, template, minimum_widths)` accepts
+  dictionaries of named values and a format template. It calculates each column's
+  width across the batch, respecting optional minimum widths. A field named
+  `name` provides `{name}` and `{name_width}` to the template; the same convention
+  works for any other field. Use `{name:<{name_width}}` for left alignment.
+- `LauncherOutput` shares that formatter between the CLI and service manager.
+  It reserves the widest registered service name (including the `launcher` error
+  label) before printing, keeping separately emitted results aligned. Status
+  sizes its additional columns from the complete snapshot.
+
+For a new command, use `output.result(service_name, message)` for service results,
+`output.error(message)` for command-wide errors, or `output.write_rows(rows,
+template)` for additional columns. Define new templates as `C_` constants and
+include the matching width placeholders. No command-name branching or new
+padding logic is needed in the formatter. The service manager also accepts an
+injected `output` object, and `LauncherOutput` accepts a formatter and output
+stream for reuse outside the normal console.
+
+Example lifecycle output:
+
+```text
+scheduler: stopped
+web      : stopped
+web      : running
+scheduler: running
+```
 
 Add a `ServiceDefinition` and a `BaseServiceRuntime` implementation to the trusted
 registry in `app/launcher/services.py`. The runtime supplies foreground execution,
