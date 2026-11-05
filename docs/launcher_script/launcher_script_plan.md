@@ -8,8 +8,10 @@ Status: planning only; no launcher implementation yet.
   (`python -m app.scheduler`). These are the confirmed initial services.
   Other test applications/services, including the Jira coding agent, are omitted
   for now; LM Studio is outside launcher scope.
-- Run both services in a single Docker container initially. Keep service
-  definitions independent so they can be separated into containers in the future.
+- Keep the launcher compatible with the planned single Docker container running
+  both services. Keep service definitions independent for future separation.
+- Docker image creation, Dockerfiles, Compose configuration, container deployment,
+  and unrelated changes are outside scope and belong to a separate task.
 - Support Windows locally and Linux inside Docker. Use the selected Python
   environment, resolve paths from the repository root, and pass the same
   database and lock settings to both services.
@@ -53,18 +55,20 @@ python launcher.py -status
    unhealthy, and unknown states. Reuse existing scheduler health data through its
    repository layer and provide a web readiness check. Keep status read-only.
    Capture startup errors and child output while retaining existing service logs.
-5. **Implement the agreed Docker lifecycle.** Run both services inside one
-   container, with a foreground supervisor that forwards shutdown requests, reaps
-   child processes, and exits on an unexpected required-service failure. Run the
-   container detached for background operation; the supervisor stays active inside
-   it. Define how control commands reach the supervisor and how database/lock
-   volumes are shared. Configure web binding for container access. Keep service
-   selection configurable to support separate containers later.
+5. **Keep the launcher Docker-compatible.** Support Linux process control,
+   configurable paths and web binding, and shared database/lock settings. Provide
+   a foreground supervision mode suitable for a future container entry point,
+   with shutdown forwarding and child-process reaping, alongside local background
+   startup. Keep service selection configurable for future separation. Container
+   packaging, volumes, detached deployment, and host-side container lifecycle
+   commands belong to the separate Docker task.
 6. **Verify and document.** Test single/all-service operations, duplicate and
    concurrent commands, stale/reused PIDs, failed startup, shutdown timeout, child
    cleanup, and scheduler independence using disposable data and test processes.
-   Smoke-test Windows and the agreed Linux container setup. Document commands,
-   configuration, logs, exit codes, and compatibility with `Start-Scheduler.ps1`.
+   Smoke-test Windows and Linux launcher behavior where available; record any
+   platform verification limits. End-to-end image/Compose validation belongs to
+   the separate Docker task. Document launcher commands, configuration, logs,
+   exit codes, and compatibility with `Start-Scheduler.ps1`.
 
 ## Original clarification questions
 
@@ -88,8 +92,12 @@ particularly health reporting, force-stop policy, and partial-failure handling.
 2. **Docker topology:** Keep the initial setup simple: place both services in a
    single Docker container. They may be separated into containers in the future.
 3. **Background operation:** Yes, services should run in the background.
-   Local startup returns control to the terminal. For Docker, the proposed
-   implementation uses a detached container with an active supervisor inside it.
+   Local startup returns control to the terminal. Future Docker deployment can
+   run detached with an active supervisor inside; deployment is a separate task.
 
-The choice of Dockerfile and/or Compose deliverables was not explicitly answered
-and remains a packaging detail to settle before implementation.
+## Scope clarification — 2026-11-05
+
+Docker Compose, Docker image implementation, and other unrelated changes are
+outside this task. Image and Compose work will be implemented in a separate task.
+This plan covers the launcher and its Docker compatibility only; Docker packaging
+is no longer an open deliverable question for this task.
