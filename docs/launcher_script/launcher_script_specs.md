@@ -1,0 +1,12 @@
+ ## Create a Python script to start the application services
+  - The script should have generic implementation:
+    - For now there are only two services in the app, however in the future more services can be added
+  - The script should be compatible with docker. 
+    - In case where the app will be running inside docker a container
+  - Script parameters:
+    - The scrit should have flags to: Start, stop and restart a specific service. 
+    - It should be possible with a single command to start, stop and restart all services also
+    - The script should have a -status flag so that it will display the statuses of the running services
+  - Make a small implementation plan and write it in this folder. Do not implement it yet. 
+    - The plan should include short summary abot implementation steps.
+    
