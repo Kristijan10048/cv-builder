@@ -10,11 +10,14 @@ from .v003_job_search_preferences import apply as apply_v003
 from .v004_available_jobs import apply as apply_v004
 from .v005_scheduler import apply as apply_v005
 from .v006_scheduler_worker_table import apply as apply_v006
+from .v007_clean_job_titles import apply as apply_v007
 
 C_SCHEDULER_VERSION = 5
 C_SCHEDULER_MIGRATION_NAME = "task_scheduler"
 C_WORKER_TABLE_VERSION = 6
 C_WORKER_TABLE_MIGRATION_NAME = "scheduler_worker_table_name"
+C_JOB_TITLE_CLEANUP_VERSION = 7
+C_JOB_TITLE_CLEANUP_MIGRATION_NAME = "clean_job_titles"
 
 
 @dataclass(frozen=True)
@@ -31,6 +34,7 @@ MIGRATIONS = (
     Migration(4, "available_jobs", apply_v004),
     Migration(C_SCHEDULER_VERSION, C_SCHEDULER_MIGRATION_NAME, apply_v005),
     Migration(C_WORKER_TABLE_VERSION, C_WORKER_TABLE_MIGRATION_NAME, apply_v006),
+    Migration(C_JOB_TITLE_CLEANUP_VERSION, C_JOB_TITLE_CLEANUP_MIGRATION_NAME, apply_v007),
 )
 
 

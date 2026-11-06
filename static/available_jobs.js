@@ -3,7 +3,6 @@ let jobsRequest = 0;
 let fetchingJobs = false;
 let jobsSearchTimer;
 const boardNames = { linkedin: "LinkedIn", indeed: "Indeed", glassdoor: "Glassdoor", zip_recruiter: "ZipRecruiter", bayt: "Bayt", bdjobs: "BDJobs", naukri: "Naukri" };
-const C_JOB_TITLE_GENDER_SUFFIX_PATTERN = /\s*\(\s*m\s*\/\s*w\s*\/\s*d\s*\)\s*$/i;
 
 // Keep widths on columns, so replacing result rows never resets a user's sizing.
 function enableJobColumnResizing() {
@@ -118,15 +117,13 @@ async function loadAvailableJobs() {
 }
 
 function availableJobMarkup(item) {
-  // Remove the gender suffix from displayed titles, including previously fetched jobs.
-  const cleanedJobTitle = (item.job_title || "").replace(C_JOB_TITLE_GENDER_SUFFIX_PATTERN, "");
   const languageRequirements = (item.language_requirements || []).join(', ')
   const languageMarkup = languageRequirements ? escapeHtml(languageRequirements) : '<span class="table-empty-value">Not specified</span>'
   const source = safeExternalUrl(item.job_url);
   const link = source ? `<a href="${escapeHtml(source.href)}" target="_blank" rel="noopener noreferrer">View job &#8599;</a>` : '<span class="table-empty-value">Unavailable</span>';
   return `<tr class="application-table-row available-job-row">
     <td data-label="Company"><strong>${escapeHtml(item.company || "Not listed")}</strong></td>
-    <td data-label="Title">${escapeHtml(cleanedJobTitle)}</td>
+    <td data-label="Title">${escapeHtml(item.job_title)}</td>
     <td data-label="Location">${escapeHtml(item.location || (item.is_remote ? "Remote" : "Not listed"))}</td>
     <td data-label="Language">${languageMarkup}</td>
     <td data-label="Source">${escapeHtml(boardNames[item.site] || item.site)}</td>
