@@ -7,6 +7,7 @@ from sqlalchemy import ForeignKey, Integer, JSON, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column
 
 from .job_language_requirements import RegexLanguageRequirementExtractor
+from .job_title_cleanup import RegexJobTitleCleaner
 
 C_LANGUAGE_REQUIREMENTS_KEY = "language_requirements"
 
@@ -148,7 +149,7 @@ class AvailableJobModel(DatabaseModel):
         return {
             "site": self.site,
             "job_url": self.job_url,
-            "job_title": self.job_title,
+            "job_title": RegexJobTitleCleaner().clean(self.job_title),
             "company": self.company,
             "location": self.location,
             "description": self.description,
