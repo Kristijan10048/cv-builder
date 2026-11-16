@@ -11,6 +11,8 @@ function updateSearchPreferenceCount() {
 
 function renderSearchPreferences() {
   updateSearchPreferenceCount();
+  // Keep the fetch tab in sync after CRUD, including deletion of its selected profile.
+  if (refreshJobSearchProfiles(savedSearchPreferences)) loadJobsPage(1);
   $("#searchPreferenceList").innerHTML = savedSearchPreferences.length
     ? savedSearchPreferences.map(item => {
       const location = [item.city, item.country].filter(Boolean).join(", ") || "Any location";

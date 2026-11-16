@@ -101,17 +101,24 @@ function updateFetchButton() {
   $("#fetchJobsButton").disabled = fetchingJobs || !$("#jobSearchPreference").value || !$("input[name='jobBoard']:checked");
 }
 
+/** Refresh saved profile options without resetting a valid selection or fetch settings. */
+function refreshJobSearchProfiles(preferences) {
+  const select = $("#jobSearchPreference");
+  const selected = select.value;
+  select.innerHTML = '<option value="">All fetched jobs</option>' + preferences.map(item =>
+    `<option value="${item.id}">${escapeHtml([item.job_title, item.city, item.country].filter(Boolean).join(" · "))}</option>`
+  ).join("");
+  select.value = preferences.some(item => String(item.id) === selected) ? selected : "";
+  const selectionChanged = select.value !== selected;
+  if (selectionChanged) jobsPage = 1;
+  updateFetchButton();
+  return selectionChanged;
+}
+
 async function loadAvailableJobs() {
   try {
     const preferences = await api("/api/job-search-preferences");
-    const select = $("#jobSearchPreference");
-    const selected = select.value;
-    select.innerHTML = '<option value="">All fetched jobs</option>' + preferences.map(item =>
-      `<option value="${item.id}">${escapeHtml([item.job_title, item.city, item.country].filter(Boolean).join(" · "))}</option>`
-    ).join("");
-    select.value = preferences.some(item => String(item.id) === selected) ? selected : "";
-    if (select.value !== selected) jobsPage = 1;
-    updateFetchButton();
+    refreshJobSearchProfiles(preferences);
     await loadJobsPage();
   } catch (error) { toast(error.message, true); }
 }
