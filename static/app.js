@@ -21,13 +21,16 @@ const titles = {
 };
 
 async function showView(name) {
+  // The existing sidebar shortcut now opens the editor within Available Jobs.
+  const openSearchPreferences = name === "jobSearchPreferences";
+  if (openSearchPreferences) name = "availableJobs";
   const entering = window.CvUi.enterView(name);
   $('main').classList.toggle('available-jobs-layout', name === 'availableJobs')
   // Use the shared header as a ribbon while keeping the results area compact.
   $('.topbar').classList.toggle('job-search-topbar', name === 'availableJobs')
   $('#topbarHeading').classList.toggle('sr-only', name === 'availableJobs')
   $('.topbar-actions').classList.toggle('hidden', name === 'availableJobs')
-  $('#jobSearchForm').classList.toggle('hidden', name !== 'availableJobs')
+  $('#jobSearchTools').classList.toggle('hidden', name !== 'availableJobs')
   $$(".view").forEach(view => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
   $$(".nav-item").forEach(item => {
@@ -37,12 +40,15 @@ async function showView(name) {
     else item.removeAttribute("aria-current");
   });
   $("#pageTitle").textContent = titles[name];
+  if (openSearchPreferences) {
+    window.jobSearchMenu.setExpanded(true);
+    window.jobSearchMenu.selectTab("jobSearchPreferencesTab");
+  }
   closeMenu();
   await entering;
   if (name === "dashboard") await loadOverview();
   if (name === "applications") await loadApplications();
   if (name === "availableJobs") await loadAvailableJobs();
-  if (name === "jobSearchPreferences") await loadJobSearchPreferences();
   if (name === "templates") await loadTemplates();
   if (name === "profile") await loadProfile();
   if (name === "settings") await loadSettings();
