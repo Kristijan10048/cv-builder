@@ -107,6 +107,17 @@ def test_all_four_boards_run_concurrently_with_saved_filters(client, monkeypatch
         assert raw["min_amount"] is None
 
 
+@pytest.mark.parametrize("description", ["", "First line\n\n" + "Full description. " * 1500, '<script>alert("posting")</script>\nC# & .NET'])
+def test_listing_includes_complete_stored_description(client, monkeypatch, description):
+    """Return full posting text, including empty and HTML-like content, for the preview."""
+    saved = preference(client)
+    monkeypatch.setattr(job_search, "scrape_jobs", lambda **kwargs: frame(description=description))
+    assert fetch(client, saved, ["indeed"]).status_code == 200
+    response = client.get("/api/available-jobs")
+    assert response.status_code == 200
+    assert response.json()["items"][0]["description"] == description.strip()
+
+
 def test_installed_jobspy_adapter_and_schema(client, monkeypatch):
     # Exercise the real pinned library, replacing only its HTTP scraper.
     import jobspy
