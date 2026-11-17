@@ -139,7 +139,7 @@ class ServiceManager:
                     try:
                         detail = self.stop(name, force)
                         stopped_names.add(name)
-                        self.output.result(name, detail)
+                        self.output.result(name, detail, outcome=constants.C_STOPPED)
                     except (OSError, ValueError, RuntimeError, psutil.Error) as exception:
                         succeeded = False
                         self.output.result(name, exception)
@@ -152,10 +152,10 @@ class ServiceManager:
                             if self.status(dependency).state != constants.C_RUNNING:
                                 raise RuntimeError(dependency)
                         detail = self.start(name)
-                        self.output.result(name, detail)
+                        self.output.result(name, detail, outcome=constants.C_RUNNING)
                     except (OSError, ValueError, RuntimeError, psutil.Error) as exception:
                         succeeded = False
-                        self.output.result(name, exception)
+                        self.output.result(name, exception, outcome=constants.C_FAILED_TO_START)
         return constants.C_SUCCESS if succeeded else constants.C_FAILURE
 
     def supervise(self, names):
@@ -180,7 +180,10 @@ class ServiceManager:
                         break
                     try:
                         detail = self.start(name)
-                        self.output.result(name, detail)
+                        self.output.result(name, detail, outcome=constants.C_RUNNING)
+                    except (OSError, ValueError, RuntimeError, psutil.Error) as exception:
+                        self.output.result(name, exception, outcome=constants.C_FAILED_TO_START)
+                        raise
                     finally:
                         record = self.record(name)
                         if record is not None:
@@ -218,7 +221,8 @@ class ServiceManager:
                         try:
                             current_record = self.record(name)
                             if current_record is not None:
-                                self.stop(name)
+                                detail = self.stop(name)
+                                self.output.result(name, detail, outcome=constants.C_STOPPED)
                         except (OSError, RuntimeError, ValueError, psutil.Error) as exception:
                             self.output.result(name, exception)
                             exit_code = constants.C_FAILURE

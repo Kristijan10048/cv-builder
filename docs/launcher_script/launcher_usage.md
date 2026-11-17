@@ -42,6 +42,38 @@ also accepts a double-dash alias, such as `--start` or `--status`.
   `1` for lifecycle failure or starting/stopping/unhealthy/unknown status; `2` for
   invalid command syntax.
 
+## Terminal appearance
+
+Every valid command prints a header such as
+`CV Builder Launcher | commit a1b2c3d` before its results. The abbreviated hash is
+the current checkout's HEAD, resolved from the repository root even when the
+launcher is invoked from another directory. It does not identify the revision
+of a service that was already running. Supported interactive terminals also
+receive the same window/tab title. Help and argument errors retain their standard
+layout without the header.
+
+Status and lifecycle output use green for `running`, yellow for `stopped`, and
+red for `failed to start`. Other states retain the default terminal color, and
+health remains a separate field. The words "label" and "color" are not printed
+as column headings; colors decorate the status text in the existing aligned rows.
+
+For example, a successful start prints `web: running` (with alignment padding),
+while a failed attempt prints `web: failed to start; <diagnostic details>`.
+An already-running service reports `running; already running`. Failed startup is
+an operation result; subsequent status reports the actual observed process state,
+including a process still starting after a readiness timeout.
+
+Redirected output and noninteractive container logs remain plain text without
+color or title escape sequences. Set `NO_COLOR` to disable colors, or `TERM=dumb`
+to disable both color and title control. Capabilities are checked separately for
+stdout and stderr. Windows consoles enable virtual-terminal processing when
+supported; unsupported consoles fall back to plain text. On Linux, title control
+is enabled for xterm, screen, tmux, and rxvt terminal families.
+
+If Git or repository metadata is unavailable, or the two-second lookup times out,
+the header says `commit unavailable`; service operations continue normally.
+No Git installation or `.git` directory is required inside a Docker image.
+
 ## Shutdown and ownership
 
 Stop requests use a secret-protected loopback endpoint and the service's normal
@@ -143,6 +175,14 @@ include the matching width placeholders. No command-name branching or new
 padding logic is needed in the formatter. The service manager also accepts an
 injected `output` object, and `LauncherOutput` accepts a formatter and output
 stream for reuse outside the normal console.
+
+Pass an explicit `outcome=constants.C_RUNNING`, `constants.C_STOPPED`, or
+`constants.C_FAILED_TO_START` to `output.result(...)` for styled lifecycle results.
+Outcome selection belongs to the manager; the formatter does not inspect message
+text or service names to decide colors. `StyledLabel` retains plain visible width
+until formatting applies padding, then surrounds only the label with ANSI codes.
+`LauncherOutput` also accepts injectable `terminal` and `revision_provider`
+objects implementing the base interfaces in `app/launcher/presentation.py`.
 
 Example lifecycle output:
 

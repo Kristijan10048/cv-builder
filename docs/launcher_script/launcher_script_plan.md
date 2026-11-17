@@ -331,3 +331,44 @@ Markdown table borders are for this document only.
   terminal title control is unsupported or output is redirected.
 - Keep future plan updates timestamped and appended at the bottom where possible.
 - This update changes documentation only and does not authorize implementation.
+
+## Implementation and verification - 2026-11-17 10:52:43 +01:00 (Europe/Berlin)
+
+Status: terminal appearance update implemented following the user's approval.
+This entry supersedes the earlier "awaiting review" status and planning-only
+restriction for the terminal appearance update. Earlier records remain historical.
+
+- Added a bounded Git revision provider and terminal capability interfaces in
+  `app/launcher/presentation.py`. The CLI prints the checkout hash once per valid
+  invocation and sets the terminal title where supported. Missing Git/HEAD and
+  lookup failures use `commit unavailable` without blocking service operations.
+- Extended the shared output formatter with green running, yellow stopped, and
+  red failed-start text. Visible text determines status-column widths before ANSI
+  styling. Lifecycle operations pass explicit outcomes, including foreground
+  startup failures and cleanup results; later status still reports actual state.
+- Preserved the existing aligned output layout. As clarified during review,
+  "Status label" and "Label color" are explanatory preview headings only and
+  are not emitted by the CLI.
+- Added stream-specific terminal detection, Windows virtual-terminal support,
+  `NO_COLOR` and `TERM=dumb` handling, and plain output for redirected logs.
+  Updated `launcher_usage.md` with behavior, examples, and extension guidance.
+
+Verification:
+
+- Final run of `python -m pytest tests/test_launcher.py -q -k
+  'not TestActualServiceProcesses and not TestControlProtocol'`: **51 passed,
+  7 deselected**. Coverage includes revision fallback/timeout, a real CLI call
+  from another working directory, status alignment, generic service colors,
+  independent output streams, terminal opt-outs, and start/restart/foreground
+  failure semantics.
+- The full launcher suite was also attempted: **7 failures** in the local HTTP
+  control and real-service integration tests. The control test reports Windows
+  socket access denied (`WinError 10013`), reproduced in isolation; the six
+  real-service tests fail startup/readiness checks or time out. End-to-end
+  lifecycle verification remains incomplete in this restricted environment.
+  Rerun `python -m pytest tests/test_launcher.py -q` where local socket connections
+  are permitted. Do not treat the earlier historical green suite as verification
+  of this implementation.
+- Git whitespace checks passed. Actual visual checks in Windows/Linux terminal
+  windows and Linux/container integration were not performed; terminal decoration
+  was verified through automated output and capability tests.

@@ -92,6 +92,31 @@ C_LOG_FILENAME = "{name}.launcher.log"
 C_TEMP_SUFFIX = ".tmp"
 C_WRITE_MODE = "w"
 C_APPEND_BINARY_MODE = "ab"
+C_FAILED_TO_START = "failed to start"
+C_TITLE_FORMAT = "CV Builder Launcher | commit {revision}"
+C_REVISION_UNAVAILABLE = "unavailable"
+C_GIT_REVISION_COMMAND = ("git", "rev-parse", "--short", "HEAD")
+C_GIT_TIMEOUT = 2
+C_GIT_HASH_CHARACTERS = "0123456789abcdef"
+C_GIT_HASH_MINIMUM = 4
+C_GIT_HASH_MAXIMUM = 64
+C_ENV_NO_COLOR = "NO_COLOR"
+C_ENV_TERM = "TERM"
+C_TERM_DUMB = "dumb"
+C_TITLE_TERMINALS = ("xterm", "screen", "tmux", "rxvt")
+C_ANSI_RESET = "\x1b[0m"
+C_ANSI_GREEN = "\x1b[32m"
+C_ANSI_YELLOW = "\x1b[33m"
+C_ANSI_RED = "\x1b[31m"
+C_STATUS_COLORS = {
+    C_RUNNING: C_ANSI_GREEN,
+    C_STOPPED: C_ANSI_YELLOW,
+    C_FAILED_TO_START: C_ANSI_RED,
+}
+C_TERMINAL_TITLE_FORMAT = "\x1b]0;{title}\x07"
+C_ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+C_WINDOWS_KERNEL_LIBRARY = "kernel32"
+C_OUTCOME_DETAIL_FORMAT = "{label}; {detail}"
 C_LOCK_MODE = "a"
 C_CONTROL_URL = "http://127.0.0.1:{port}{path}"
 C_WEB_URL = "http://{host}:{port}/"
