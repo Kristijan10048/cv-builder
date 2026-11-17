@@ -68,3 +68,7 @@ No blocking questions. The split ratio, mobile stacking, and refresh behavior ab
 - Hide **Language, Source, and Date Fetched while the description preview is open**, including on mobile. Keep Company, Title, Location, Job link, and Applied visible. Closing restores all eight columns and their previous widths.
 - Column sizing now distributes space only among visible columns. This supersedes the earlier requirement to keep all columns visible beside the description; stored data and API fields remain unchanged.
 - Verified with **7 passing JavaScript tests** and desktop/mobile browser checks, including exact width restoration. [Updated screenshot](job_description_view_compact.jpg).
+
+### Wider description — 2026-11-17 13:51 CET
+
+- Changed the desktop split to **40% jobs table / 60% right-side description**, superseding the previous ratio. The five visible table columns can scroll horizontally when needed. Mobile stacking and column restoration remain unchanged. Earlier screenshots show the previous ratio.

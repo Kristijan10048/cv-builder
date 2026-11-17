@@ -175,7 +175,7 @@ main { padding: 32px clamp(24px, 3vw, 48px) 64px; max-width: 1440px; margin: 0 a
 .available-job-row{cursor:default}.job-match-score{display:inline-block;justify-self:start;padding:5px 9px;border-radius:20px;background:var(--mint);color:var(--success);font-size:12px;font-weight:700}.available-jobs-table td a{display:inline-block;min-width:85px}.available-jobs-table .status-badge{display:inline-block}
 .available-jobs-table th { position: relative; padding-right: 24px; }
 .available-jobs-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
-.available-jobs-workspace.preview-open { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.available-jobs-workspace.preview-open { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
 .preview-open .available-jobs-table .job-secondary-column { display: none; }
 .available-jobs-results { min-width: 0; }
 .available-jobs-results .job-pagination { flex-wrap: wrap; gap: 12px; }

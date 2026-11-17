@@ -23,4 +23,8 @@
 ### Table visibility update — 2026-11-17 13:49 CET
 
 - While a job description is open, hide Language, Source, and Date Fetched from the jobs table. Restore these columns when the preview closes. The remaining columns use the available table width.
+
+### Description width update — 2026-11-17 13:51 CET
+
+- Allocate **60% to the description on the right** and **40% to the jobs table on the left** on desktop. This replaces the earlier 60% table / 40% description split; mobile stacking stays unchanged.
   
