@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="760" viewBox="0 0 1120 760" role="img" aria-labelledby="title description">
+  <title id="title">Available Jobs: proposed description preview</title>
+  <desc id="description">An open preview places the job title and scrollable description on the left and the existing jobs table on the right. Closing the preview restores the full-width table.</desc>
+  <style>
+    text { font-family: 'Segoe UI', sans-serif; fill: #262626; font-size: 15px; }
+    .heading { font-size: 23px; font-weight: 600; }
+    .label { font-size: 12px; fill: #686868; }
+    .strong { font-weight: 600; }
+    .link { fill: #554969; text-decoration: underline; }
+    .card { fill: #fff; stroke: #d5d5d5; }
+    .line { stroke: #e2e2e2; }
+  </style>
+  <rect width="1120" height="760" fill="#f7f7f7"/>
+  <text x="28" y="36" class="heading">Preview open</text>
+  <text x="1090" y="34" text-anchor="end" class="label">PROPOSED DESKTOP LAYOUT</text>
+  <rect x="28" y="55" width="1064" height="54" rx="7" class="card"/>
+  <text x="46" y="88">Search fetched jobs</text>
+  <text x="380" y="88">All boards</text>
+  <text x="1068" y="88" text-anchor="end" class="label">Existing filters and fetch controls</text>
+  <rect x="28" y="125" width="414" height="332" rx="8" class="card"/>
+  <text x="46" y="154" class="label">JOB DESCRIPTION</text>
+  <rect x="357" y="137" width="66" height="30" rx="5" fill="#f1f1f1" stroke="#dedede"/>
+  <text x="390" y="157" text-anchor="middle">Close</text>
+  <text x="46" y="193" class="heading">C# Software Developer</text>
+  <line x1="46" y1="211" x2="423" y2="211" class="line"/>
+  <text x="46" y="242">Build and maintain software for</text>
+  <text x="46" y="266">industrial simulation and automation.</text>
+  <text x="46" y="307">Responsibilities</text>
+  <text x="46" y="336">Develop C#/.NET applications.</text>
+  <text x="46" y="360">Collaborate with the engineering team.</text>
+  <text x="46" y="384">Improve reliability and maintainability.</text>
+  <text x="46" y="432" class="label">Full stored text; scroll to continue reading</text>
+  <rect x="429" y="222" width="5" height="208" rx="2" fill="#ededed"/>
+  <rect x="429" y="222" width="5" height="67" rx="2" fill="#aaa"/>
+  <rect x="458" y="125" width="634" height="273" rx="8" class="card"/>
+  <path d="M459 166H1091" class="line"/>
+  <text x="474" y="151" class="label">COMPANY</text>
+  <text x="626" y="151" class="label">TITLE</text>
+  <text x="920" y="151" class="label">LOCATION</text>
+  <rect x="459" y="167" width="632" height="56" fill="#eeeaf2"/>
+  <text x="474" y="201" class="strong">Example GmbH</text>
+  <text x="626" y="201" class="link">C# Software Developer</text>
+  <text x="920" y="201">Düsseldorf</text>
+  <text x="474" y="257">Sample AG</text>
+  <text x="626" y="257" class="link">Simulation Developer</text>
+  <text x="920" y="257">Remote</text>
+  <line x1="459" y1="279" x2="1091" y2="279" class="line"/>
+  <text x="474" y="313">Demo GmbH</text>
+  <text x="626" y="313" class="link">.NET Developer</text>
+  <text x="920" y="313">Köln</text>
+  <text x="474" y="360" class="label">Scroll horizontally for the remaining columns</text>
+  <rect x="474" y="379" width="601" height="5" rx="2" fill="#ededed"/>
+  <rect x="474" y="379" width="300" height="5" rx="2" fill="#aaa"/>
+  <text x="474" y="435" class="label">20 jobs per page</text>
+  <text x="1074" y="435" text-anchor="end">Previous    Page 1 of 3    Next</text>
+  <text x="28" y="501" class="heading">After Close — original full-width list</text>
+  <rect x="28" y="520" width="1064" height="45" rx="7" class="card"/>
+  <text x="46" y="548">Search fetched jobs</text>
+  <text x="380" y="548">All boards</text>
+  <rect x="28" y="580" width="1064" height="108" rx="8" class="card"/>
+  <text x="46" y="606" class="label">COMPANY</text>
+  <text x="209" y="606" class="label">TITLE</text>
+  <text x="450" y="606" class="label">LOCATION</text>
+  <text x="575" y="606" class="label">LANGUAGE</text>
+  <text x="689" y="606" class="label">SOURCE</text>
+  <text x="790" y="606" class="label">DATE FETCHED</text>
+  <text x="920" y="606" class="label">JOB LINK</text>
+  <text x="1015" y="606" class="label">APPLIED</text>
+  <line x1="29" y1="620" x2="1091" y2="620" class="line"/>
+  <text x="46" y="658">Example GmbH</text>
+  <text x="209" y="658" class="link">C# Software Developer</text>
+  <text x="450" y="658">Düsseldorf</text>
+  <text x="575" y="658">German</text>
+  <text x="689" y="658">LinkedIn</text>
+  <text x="790" y="658">17 Nov 2026</text>
+  <text x="920" y="658" class="link">View job</text>
+  <text x="1015" y="658">No</text>
+  <text x="28" y="727" class="label">Illustrative data. On mobile, the preview stacks above the jobs list.</text>
+</svg>
