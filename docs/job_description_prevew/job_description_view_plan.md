@@ -62,3 +62,9 @@ No blocking questions. The split ratio, mobile stacking, and refresh behavior ab
 - Added `static/job_description_preview.js` for preview state and interactions. Navigation cleanup uses the existing `CvUi.registerView` lifecycle, so `static/app.js` required no modification. Updated the relevant asset versions.
 - Validation: **25 Python tests and 9 JavaScript tests passed**. Browser checks with isolated sample data verified opening/switching/closing, Enter/Escape, exact resized-column restoration, empty and HTML-like descriptions, filter removal, navigation cleanup, and the 390px mobile layout. One pre-existing FastAPI/Starlette deprecation warning remains.
 - [Implemented desktop screenshot](job_description_view_implemented.jpg). Earlier “implementation has not started” notes are historical; this entry records completion. No outstanding clarification is needed.
+
+### Simplified preview table — 2026-11-17 13:49 CET
+
+- Hide **Language, Source, and Date Fetched while the description preview is open**, including on mobile. Keep Company, Title, Location, Job link, and Applied visible. Closing restores all eight columns and their previous widths.
+- Column sizing now distributes space only among visible columns. This supersedes the earlier requirement to keep all columns visible beside the description; stored data and API fields remain unchanged.
+- Verified with **7 passing JavaScript tests** and desktop/mobile browser checks, including exact width restoration. [Updated screenshot](job_description_view_compact.jpg).

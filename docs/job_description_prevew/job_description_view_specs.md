@@ -19,4 +19,8 @@
 - Show the jobs table on the **left (60%)** and the job title with full description on the **right (40%)**. This supersedes the original left-side description requirement.
 - Use an **× icon-only close button**, with “Close job preview” as its accessible label and tooltip. Closing restores the original full-width page layout.
 - Selected design: [right-side preview](job_description_view_preview_right.svg). Keep the remaining planned behavior unchanged; implementation is a separate next step.
+
+### Table visibility update — 2026-11-17 13:49 CET
+
+- While a job description is open, hide Language, Source, and Date Fetched from the jobs table. Restore these columns when the preview closes. The remaining columns use the available table width.
   

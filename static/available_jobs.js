@@ -9,7 +9,8 @@ function enableJobColumnResizing() {
   const table = $(".available-jobs-table");
   const headers = Array.from(table.querySelectorAll("thead th"));
   const columns = document.createElement("colgroup");
-  headers.forEach(() => columns.append(document.createElement("col")));
+  const columnElements = headers.map(() => document.createElement("col"));
+  columns.append(...columnElements);
   table.querySelector("thead").before(columns);
   const minWidth = 110;
   const container = table.closest(".application-table-wrap");
@@ -17,9 +18,17 @@ function enableJobColumnResizing() {
   let preferredWidths;
   let drag;
 
+  function visibleColumnIndices() {
+    const previewOpen = table.closest(".available-jobs-workspace").classList.contains("preview-open");
+    return headers.flatMap((header, index) =>
+      previewOpen && header.classList.contains("job-secondary-column") ? [] : [index]);
+  }
   function applyWidths() {
-    widths.forEach((width, index) => { columns.children[index].style.width = `${width}px`; });
-    table.style.width = `${Math.max(container.clientWidth, headers.length * minWidth)}px`;
+    const visibleIndices = visibleColumnIndices();
+    // Keep the colgroup aligned with visible cells; hidden columns must take no space.
+    columns.replaceChildren(...visibleIndices.map(index => columnElements[index]));
+    widths.forEach((width, index) => { columnElements[index].style.width = `${width}px`; });
+    table.style.width = `${Math.max(container.clientWidth, visibleIndices.length * minWidth)}px`;
     table.classList.add("columns-resized");
   }
   function initializeWidths() {
@@ -31,22 +40,30 @@ function enableJobColumnResizing() {
   function fitAvailableSpace() {
     if (!container.clientWidth || window.matchMedia("(max-width: 700px)").matches) return;
     if (!widths) widths = headers.map(header => Math.max(minWidth, header.getBoundingClientRect().width));
-    const total = Math.max(container.clientWidth, headers.length * minWidth);
-    const spare = total - headers.length * minWidth;
+    const visibleIndices = visibleColumnIndices();
+    const total = Math.max(container.clientWidth, visibleIndices.length * minWidth);
+    const spare = total - visibleIndices.length * minWidth;
     // Retain proportions even when the split makes every column hit its minimum.
     if (!preferredWidths) preferredWidths = [...widths];
-    const weights = preferredWidths.map(width => Math.max(0, width - minWidth));
+    const weights = visibleIndices.map(index => Math.max(0, preferredWidths[index] - minWidth));
     const sum = weights.reduce((a, b) => a + b, 0);
-    widths = weights.map(weight => minWidth + spare * (sum ? weight / sum : 1 / headers.length));
+    visibleIndices.forEach((index, position) => {
+      widths[index] = minWidth + spare * (sum ? weights[position] / sum : 1 / visibleIndices.length);
+    });
     applyWidths();
   }
   function resizeColumn(index, requestedWidth, original = widths) {
-    const total = original.reduce((a, b) => a + b, 0);
-    const selected = Math.min(total - minWidth * (headers.length - 1), Math.max(minWidth, requestedWidth));
-    const remainingSpare = total - selected - minWidth * (headers.length - 1);
-    const otherSpare = original.reduce((sum, width, i) => sum + (i === index ? 0 : Math.max(0, width - minWidth)), 0);
-    widths = original.map((width, i) => i === index ? selected :
-      minWidth + remainingSpare * (otherSpare ? Math.max(0, width - minWidth) / otherSpare : 1 / (headers.length - 1)));
+    const visibleIndices = visibleColumnIndices();
+    const otherIndices = visibleIndices.filter(columnIndex => columnIndex !== index);
+    const total = visibleIndices.reduce((sum, columnIndex) => sum + original[columnIndex], 0);
+    const selected = Math.min(total - minWidth * otherIndices.length, Math.max(minWidth, requestedWidth));
+    const remainingSpare = total - selected - minWidth * otherIndices.length;
+    const otherSpare = otherIndices.reduce((sum, columnIndex) => sum + Math.max(0, original[columnIndex] - minWidth), 0);
+    widths = [...original];
+    widths[index] = selected;
+    otherIndices.forEach(columnIndex => {
+      widths[columnIndex] = minWidth + remainingSpare * (otherSpare ? Math.max(0, original[columnIndex] - minWidth) / otherSpare : 1 / otherIndices.length);
+    });
     preferredWidths = [...widths];
     applyWidths();
   }
@@ -153,9 +170,9 @@ function availableJobMarkup(item) {
     <td data-label="Company"><strong>${escapeHtml(item.company || "Not listed")}</strong></td>
     <td data-label="Title"><button type="button" class="job-title-button" data-job-id="${escapeHtml(item.id)}" aria-controls="jobDescriptionPreview" aria-expanded="false">${escapeHtml(item.job_title)}</button></td>
     <td data-label="Location">${escapeHtml(item.location || (item.is_remote ? "Remote" : "Not listed"))}</td>
-    <td data-label="Language">${languageMarkup}</td>
-    <td data-label="Source">${escapeHtml(boardNames[item.site] || item.site)}</td>
-    <td data-label="Date Fetched"><time>${escapeHtml(formatUtcDateTime(item.fetched_at))}</time></td>
+    <td data-label="Language" class="job-secondary-column">${languageMarkup}</td>
+    <td data-label="Source" class="job-secondary-column">${escapeHtml(boardNames[item.site] || item.site)}</td>
+    <td data-label="Date Fetched" class="job-secondary-column"><time>${escapeHtml(formatUtcDateTime(item.fetched_at))}</time></td>
     <td data-label="Job link">${link}</td>
     <td data-label="Applied"><span class="status-badge ${item.applied ? "status-Applied" : "status-Draft"}">${item.applied ? "Yes" : "No"}</span></td>
   </tr>`;
