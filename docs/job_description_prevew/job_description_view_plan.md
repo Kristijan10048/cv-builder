@@ -1,0 +1,38 @@
+# Job description preview implementation plan
+
+Status: proposed; implementation has not started.
+
+## Behavior
+
+- Make each title in **Available Jobs** a keyboard-accessible button styled as a link.
+- Clicking a title opens an in-page panel on the **left**, showing the title and full stored description; the jobs table stays on the **right**. The existing external job link keeps its current behavior.
+- Clicking another title replaces the preview. A **Close** button or Escape closes it and restores the full-width table, current filters, page, scroll position, and user-adjusted column widths. Return keyboard focus to the selected title when available.
+- Display plain text safely, preserving line breaks and wrapping long content. Use a scrollable description area and show “No description available” for empty descriptions. “Full” means all text already fetched and stored; opening a preview does not fetch the source website.
+
+## Proposed defaults
+
+- Desktop: approximately **40% preview / 60% jobs**, with horizontal scrolling inside the table when needed; keep all existing columns.
+- At widths of **700px or less**, stack the preview above the existing mobile jobs layout.
+- Keep filters and fetch controls above the split; pagination stays with the jobs list.
+- On a successful list refresh, update the preview if the selected job remains in the results; otherwise close it. Clear the preview when leaving Available Jobs.
+
+## Graphical preview
+
+![Proposed desktop layout, open and closed](job_description_view_preview.svg)
+
+Schematic only: the open table shows a subset of columns to illustrate its scrollable viewport. All existing columns remain available.
+
+## Implementation steps
+
+1. **Expose the stored description.** Add `description` to `AvailableJobModel.to_list_item()` in `app/database_models.py`, following the existing constant conventions. The repository query already reads it, so no migration or new endpoint is needed. Reuse `/api/available-jobs`; retain the current page's items by ID in the UI.
+2. **Add the layout.** Update `templates/available_jobs.html` and `static/app.css` with a hidden preview region, title, Close button, scrollable text, and responsive split container. Match existing theme variables and focus styles.
+3. **Connect interactions.** Update `static/available_jobs.js` for title activation, selected-job state, safe `textContent` rendering, close/Escape handling, and refresh behavior. Preserve the table's column-width proportions across split changes; restore its pre-open widths on close. Integrate navigation cleanup in `static/app.js` and update affected asset version tokens in `templates/index.html`.
+4. **Verify.** Check the API returns complete and empty descriptions. Check open/switch/close, keyboard focus, long text, HTML-like text rendered literally, filters/pagination, navigation, desktop/mobile layouts, and column resizing/restoration. Extend the existing API test and add focused UI regression coverage for selection and restoration behavior.
+
+## Clarifications
+
+No blocking questions. The split ratio, mobile stacking, and refresh behavior above are proposed defaults for review.
+
+## Change history
+
+- **2026-11-17 12:30 CET** — Created the initial plan and graphical preview from `job_description_view_specs.md` and the current implementation. Future updates will be appended below with timestamps; later entries supersede earlier decisions.
