@@ -41,3 +41,16 @@ No blocking questions. The split ratio, mobile stacking, and refresh behavior ab
 
 - Replace the visible **Close** button text with an **× icon** in the behavior and layout described above. Use an icon-only button with `aria-label="Close job preview"` and a matching tooltip; keep keyboard activation, Escape, and focus restoration unchanged.
 - Updated the graphical preview to show the icon button. This supersedes the earlier text-button design; implementation has not started.
+
+### Alternative preview — 2026-11-17 12:43 CET
+
+- Added a comparison layout with the **jobs table on the left (60%)** and the **description on the right (40%)**, keeping the icon-only close button. The original preview remains available; the side choice is pending review.
+
+![Alternative desktop layout with description on the right](job_description_view_preview_right.svg)
+
+### Confirmed layout — 2026-11-17 12:45 CET
+
+- The right-side preview is the selected design: **jobs table on the left (60%)**, **job title and full description on the right (40%)**.
+- Keep the **× icon-only close button**, with “Close job preview” as its accessible label and tooltip. Closing restores the full-width jobs table.
+- Use [the right-side graphical preview](job_description_view_preview_right.svg) as the implementation reference. The earlier left-side layout is retained only for history; the side choice is no longer pending.
+- This decision supersedes the earlier left/right placement in Behavior and applies to the layout implementation step. All other planned behavior remains unchanged. Implementation has not started.
