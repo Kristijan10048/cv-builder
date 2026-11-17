@@ -1,6 +1,7 @@
 """Offline launcher verification using isolated storage and actual managed processes."""
 
 from dataclasses import replace
+from io import StringIO
 import os
 from pathlib import Path
 import socket
@@ -17,7 +18,9 @@ import pytest
 from app.launcher import constants as constants
 from app.launcher.cli import LauncherApplication
 from app.launcher.manager import ServiceManager
-from app.launcher.models import LauncherConfiguration, ProcessRecord
+from app.launcher.models import LauncherConfiguration, ProcessRecord, ServiceStatus
+from app.launcher.output import LauncherOutput
+from app.launcher.presentation import GitRevisionProvider, TerminalCapabilities
 from app.launcher.processes import PosixProcessController, WindowsProcessController, create_process_controller
 from app.launcher.runner import ServiceControlServer
 from app.launcher.services import ServiceDefinition, ServiceRegistry, WebServiceRuntime
@@ -51,6 +54,179 @@ C_LONG_STOP_OPTION = "--stop"
 C_OMITTED_SERVICE = "jira"
 C_PYTEST_VALUE = "value"
 C_PYTEST_ARGUMENTS = "arguments"
+C_TEST_REVISION = "a1b2c3d"
+C_TEST_LONG_SERVICE = "future_long_service_name"
+C_TEST_TERM = "xterm-256color"
+C_TEST_ESCAPE = "\x1b"
+C_TEST_HEALTH_SEPARATOR = "; health="
+C_TEST_COLOR_PARAMETER = "state,color"
+C_TEST_RESULT_PARAMETER = "returncode,revision"
+C_TEST_REVISION_ERRORS = "exception"
+C_TEST_ACTION_PARAMETER = "action"
+C_TEST_TERMINAL_PARAMETERS = "interactive,environment,expected"
+C_TEST_INVALID_HASH = "not-a-hash"
+C_TEST_INVALID_TITLE = "a1b2c3d\x1b]0;unsafe\x07"
+C_TEST_CWD_ARGUMENT = "cwd"
+C_TEST_TIMEOUT_ARGUMENT = "timeout"
+C_TEST_OUTCOME_ARGUMENT = "outcome"
+C_TEST_WINDOWS_CONTROL_METHOD = "_enable_windows_control"
+C_TEST_STDERR_ATTRIBUTE = "stderr"
+C_TEST_START_FAILURE_PATTERN = "startup failed"
+
+
+class TestLauncherPresentation:
+    """Verify terminal decoration without starting services or depending on host colors."""
+
+    @pytest.mark.parametrize(C_TEST_RESULT_PARAMETER, [
+        (constants.C_SUCCESS, C_TEST_REVISION),
+        (constants.C_FAILURE, C_TEST_REVISION),
+        (constants.C_SUCCESS, constants.C_EMPTY),
+        (constants.C_SUCCESS, C_TEST_INVALID_HASH),
+        (constants.C_SUCCESS, C_TEST_INVALID_TITLE),
+    ])
+    def test_revision_lookup(self, tmp_path, returncode, revision):
+        """Use the configured root and accept only successful display-safe hashes."""
+        runner = Mock(return_value=Mock(returncode=returncode, stdout=revision))
+        provider = GitRevisionProvider(tmp_path, runner)
+        expected = C_TEST_REVISION if returncode == constants.C_SUCCESS and revision == C_TEST_REVISION else constants.C_REVISION_UNAVAILABLE
+        assert provider.revision() == expected
+        assert runner.call_args.args == (constants.C_GIT_REVISION_COMMAND,)
+        assert runner.call_args.kwargs[C_TEST_CWD_ARGUMENT] == tmp_path
+        assert runner.call_args.kwargs[C_TEST_TIMEOUT_ARGUMENT] == constants.C_GIT_TIMEOUT
+
+    @pytest.mark.parametrize(C_TEST_REVISION_ERRORS, [
+        FileNotFoundError(), OSError(),
+        subprocess.TimeoutExpired(constants.C_GIT_REVISION_COMMAND, constants.C_GIT_TIMEOUT),
+    ])
+    def test_revision_fallback(self, exception):
+        """Missing Git and a bounded lookup failure must not block service commands."""
+        provider = GitRevisionProvider(runner=Mock(side_effect=exception))
+        assert provider.revision() == constants.C_REVISION_UNAVAILABLE
+
+    @pytest.mark.parametrize(C_TEST_TERMINAL_PARAMETERS, [
+        (True, {constants.C_ENV_TERM: C_TEST_TERM}, True),
+        (False, {constants.C_ENV_TERM: C_TEST_TERM}, False),
+        (True, {constants.C_ENV_TERM: constants.C_TERM_DUMB}, False),
+        (True, {constants.C_ENV_TERM: C_TEST_TERM, constants.C_ENV_NO_COLOR: constants.C_EMPTY}, False),
+    ])
+    def test_color_policy(self, interactive, environment, expected, monkeypatch):
+        """Respect stream-specific interactivity and explicit color opt-outs."""
+        terminal = TerminalCapabilities(environment)
+        monkeypatch.setattr(terminal, C_TEST_WINDOWS_CONTROL_METHOD, Mock(return_value=True))
+        stream = Mock(isatty=Mock(return_value=interactive))
+        assert terminal.supports_color(stream) == expected
+        if constants.C_ENV_NO_COLOR not in environment:
+            assert terminal.supports_title(stream) == expected
+
+    def test_unsupported_stream_falls_back(self):
+        """Streams without terminal APIs remain usable as plain-text destinations."""
+        terminal = TerminalCapabilities({})
+        assert not terminal.supports_color(object())
+        assert not terminal.supports_title(object())
+
+    def test_no_color_keeps_supported_title(self, monkeypatch):
+        """Disabling color should not suppress a supported title update."""
+        terminal = TerminalCapabilities({constants.C_ENV_TERM: C_TEST_TERM, constants.C_ENV_NO_COLOR: constants.C_EMPTY})
+        monkeypatch.setattr(terminal, C_TEST_WINDOWS_CONTROL_METHOD, Mock(return_value=True))
+        stream = Mock(isatty=Mock(return_value=True))
+        assert terminal.supports_title(stream)
+        assert not terminal.supports_color(stream)
+
+    @pytest.mark.parametrize(C_TEST_COLOR_PARAMETER, list(constants.C_STATUS_COLORS.items()))
+    def test_semantic_result_colors(self, state, color):
+        """Any service uses the same outcome colors and resets after the label."""
+        stream = StringIO()
+        terminal = Mock(supports_color=Mock(return_value=True))
+        output = LauncherOutput([C_TEST_LONG_SERVICE], stream=stream, terminal=terminal)
+        output.result(C_TEST_LONG_SERVICE, state, outcome=state)
+        assert color + state + constants.C_ANSI_RESET in stream.getvalue()
+        assert stream.getvalue().count(constants.C_ANSI_RESET) == constants.C_ONE
+
+    def test_status_alignment_and_neutral_states(self):
+        """Escape codes must not shift health columns, including future service names."""
+        statuses = [
+            ServiceStatus(constants.C_WEB, constants.C_RUNNING, constants.C_HEALTHY, C_TEST_PID),
+            ServiceStatus(C_TEST_LONG_SERVICE, constants.C_STOPPED),
+            ServiceStatus(constants.C_SCHEDULER, constants.C_UNKNOWN),
+        ]
+        colored_stream = StringIO()
+        plain_stream = StringIO()
+        terminal = Mock(supports_color=Mock(return_value=True))
+        names = [status.name for status in statuses]
+        LauncherOutput(names, stream=colored_stream, terminal=terminal).statuses(statuses)
+        LauncherOutput(names, stream=plain_stream).statuses(statuses)
+        stripped = colored_stream.getvalue()
+        for sequence in (*constants.C_STATUS_COLORS.values(), constants.C_ANSI_RESET):
+            stripped = stripped.replace(sequence, constants.C_EMPTY)
+        assert stripped == plain_stream.getvalue()
+        assert len({line.index(C_TEST_HEALTH_SEPARATOR) for line in stripped.splitlines()}) == constants.C_ONE
+        assert C_TEST_ESCAPE not in colored_stream.getvalue().splitlines()[-constants.C_ONE]
+
+    def test_header_title_and_independent_streams(self, monkeypatch):
+        """Style stdout and stderr according to their own capabilities and print one revision."""
+        standard_output = StringIO()
+        error_output = StringIO()
+        monkeypatch.setattr(sys, C_TEST_STDERR_ATTRIBUTE, error_output)
+        provider = Mock(revision=Mock(return_value=C_TEST_REVISION))
+        terminal = Mock(supports_title=Mock(return_value=True),
+                        supports_color=Mock(side_effect=lambda stream: stream is standard_output))
+        output = LauncherOutput([constants.C_WEB], stream=standard_output, terminal=terminal, revision_provider=provider)
+        output.header()
+        output.result(constants.C_WEB, constants.C_RUNNING, outcome=constants.C_RUNNING)
+        output.result(constants.C_WEB, constants.C_STOPPED, stream=error_output, outcome=constants.C_STOPPED)
+        title = constants.C_TITLE_FORMAT.format(revision=C_TEST_REVISION)
+        assert standard_output.getvalue().startswith(constants.C_TERMINAL_TITLE_FORMAT.format(title=title) + title)
+        assert constants.C_ANSI_GREEN in standard_output.getvalue()
+        assert C_TEST_ESCAPE not in error_output.getvalue()
+        provider.revision.assert_called_once_with()
+
+    def test_redirected_header_and_fallback(self):
+        """Redirected logs contain a useful header and no terminal control sequences."""
+        stream = StringIO()
+        provider = Mock(revision=Mock(return_value=constants.C_REVISION_UNAVAILABLE))
+        output = LauncherOutput([constants.C_WEB], stream=stream, revision_provider=provider)
+        output.header()
+        output.statuses([ServiceStatus(constants.C_WEB, constants.C_STOPPED)])
+        assert constants.C_TITLE_FORMAT.format(revision=constants.C_REVISION_UNAVAILABLE) in stream.getvalue()
+        assert C_TEST_ESCAPE not in stream.getvalue()
+
+    def test_real_cli_revision_from_other_directory(self, launcher_configuration):
+        """The public command identifies this checkout even when called elsewhere."""
+        result = run_cli([C_STATUS_OPTION])
+        title = constants.C_TITLE_FORMAT.format(revision=GitRevisionProvider().revision())
+        assert result.returncode == constants.C_SUCCESS
+        assert result.stdout.splitlines()[constants.C_ZERO] == title
+        assert C_TEST_ESCAPE not in result.stdout + result.stderr
+
+    @pytest.mark.parametrize(C_TEST_ACTION_PARAMETER, [constants.C_START, constants.C_RESTART])
+    def test_failed_start_outcome_does_not_change_status(self, launcher_configuration, action):
+        """Failed start and restart report red-eligible outcomes without persisting fake state."""
+        output = Mock()
+        manager = ServiceManager(launcher_configuration, output=output)
+        manager.start = Mock(side_effect=RuntimeError(constants.C_START_FAILED))
+        assert manager.execute(action, [constants.C_WEB]) == constants.C_FAILURE
+        assert output.result.call_args.kwargs[C_TEST_OUTCOME_ARGUMENT] == constants.C_FAILED_TO_START
+        assert manager.status(constants.C_WEB).state == constants.C_STOPPED
+
+    def test_stop_failure_has_no_start_failure_label(self, launcher_configuration):
+        """A failed stop blocks restart and remains a stop diagnostic."""
+        output = Mock()
+        manager = ServiceManager(launcher_configuration, output=output)
+        manager.stop = Mock(side_effect=RuntimeError(constants.C_STOP_TIMEOUT))
+        manager.start = Mock()
+        assert manager.execute(constants.C_RESTART, [constants.C_WEB]) == constants.C_FAILURE
+        assert not output.result.call_args.kwargs
+        manager.start.assert_not_called()
+
+    def test_foreground_start_failure_label(self, launcher_configuration):
+        """Foreground startup exposes the same semantic failure before cleanup."""
+        output = Mock()
+        manager = ServiceManager(launcher_configuration, output=output)
+        manager.start = Mock(side_effect=RuntimeError(constants.C_START_FAILED))
+        with pytest.raises(RuntimeError, match=C_TEST_START_FAILURE_PATTERN):
+            manager.supervise([constants.C_WEB])
+        assert output.result.call_args.kwargs[C_TEST_OUTCOME_ARGUMENT] == constants.C_FAILED_TO_START
+        assert manager.record(constants.C_WEB) is None
 
 
 @pytest.fixture

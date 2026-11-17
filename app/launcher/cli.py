@@ -41,6 +41,7 @@ class LauncherApplication:
             self.parser.error(constants.C_FOREGROUND_ERROR)
         names = [options.service] if options.service else list(self.registry.definitions)
         try:
+            self.output.header()
             manager = ServiceManager(LauncherConfiguration.from_environment(), self.registry, output=self.output)
             if options.action == constants.C_STATUS:
                 statuses = [manager.status(name) for name in names]
