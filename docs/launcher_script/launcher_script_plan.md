@@ -1,6 +1,126 @@
 # Launcher script implementation plan
 
-Status: launcher implemented; see [usage and verification](launcher_usage.md).
+Status: base launcher implemented; see [usage and verification](launcher_usage.md).
+The terminal appearance update below is proposed and awaiting plan approval.
+The earlier implementation authorization applies to the base launcher only.
+
+## Terminal appearance update - 2026-11-17 (proposed)
+
+Implement the terminal-look requirements from
+[the updated specifications](launcher_script_specs.md) as an extension of the
+existing shared output layer. This section is the current work plan; the earlier
+sections below retain the base launcher design and verification history.
+No application implementation is part of this planning update.
+
+### Proposed behavior
+
+- **Commit title:** Show `CV Builder Launcher | commit <short HEAD hash>` once
+  before command results. Also set the terminal window/tab title to this text
+  when the terminal supports it. This covers both interpretations of "title";
+  the visible header remains useful when the terminal controls its own tab title.
+  Resolve the checked-out repository's HEAD, independent of the caller's working
+  directory, with a bounded, read-only Git command. Use Git's short hash (normally
+  seven or more characters). This identifies the current checkout, not necessarily
+  the revision used by an already-running service.
+- **Missing Git metadata:** Display `commit unavailable` if Git is missing, HEAD
+  cannot be resolved, or the lookup times out. Continue the requested operation.
+  Docker compatibility must not depend on Git or a `.git` directory being shipped
+  in the image; adding build-time revision metadata is outside this update.
+- **Generic status colors:** Use one mapping shared by all registered services
+  and commands, including future services. Keep readable labels alongside color.
+  Apply color to the label only, retaining the existing aligned columns and detail
+  text. Keep process state separate from health.
+
+| Label / outcome | Proposed color | Meaning |
+| --- | --- | --- |
+| `stopped` | Yellow | Service is stopped. |
+| `running` | Green | Service is running; health remains a separate column. |
+| `failed to start` | Red | The current start attempt failed, including the start phase of restart. |
+| `starting`, `stopping` | Default terminal color | Transitional process states. |
+| `unhealthy`, `unknown`, other labels | Default terminal color | Preserve existing state and health distinctions. |
+
+- **Failure semantics:** `failed to start` is an operation-result label, not a new
+  persisted process state. Display it immediately with the existing diagnostic
+  detail. A later status command reports the actual observed state, which may be
+  stopped or still starting after a readiness timeout. Do not infer success or
+  failure by matching message text. Stop failures must not be labelled as startup
+  failures. Retain current exit codes, partial-success behavior, and diagnostics.
+- **Terminal compatibility:** Enable color and title control only on supported
+  interactive terminals, with Windows and Linux handling behind a shared terminal
+  capability abstraction. Respect `NO_COLOR` for colors and `TERM=dumb` for
+  terminal styling/control. Detect the actual destination independently for stdout
+  and stderr. Redirected output and container logs retain the plain-text header
+  and labels, with no ANSI color or title-control sequences. Unsupported terminals
+  fall back to readable plain text without failing the command.
+- **Output flow:** Print the header after argument validation and before executing
+  a valid command. Preserve standard argument-parser help and syntax errors,
+  immediate lifecycle progress, both restart phases, and foreground messages.
+  No screen clearing, animated dashboard, or continuous refresh is required.
+
+### Graphical CLI preview
+
+Illustrative rendered preview of `python launcher.py -status`:
+
+> **CV Builder Launcher | commit a1b2c3d**
+
+| Service | State | Health | PID | Details |
+| --- | --- | --- | --- | --- |
+| web | 🟢 **running** | healthy | 14280 | Ready |
+| scheduler | 🟡 **stopped** | unavailable | - | not running under this launcher |
+
+Illustrative startup failure from `python launcher.py -start --service scheduler`:
+
+> **CV Builder Launcher | commit a1b2c3d**
+>
+> scheduler: 🔴 **failed to start**; startup failed; inspect &lt;launcher log path&gt;
+
+The colored markers represent colored label text in the real terminal; emoji and
+Markdown table borders will not be emitted. The actual CLI retains its existing
+aligned row layout and separators. The hash, PID, and readiness detail above are
+illustrative. The terminal window/tab title matches the visible header where
+supported. With styling disabled, the same words and alignment remain readable.
+
+### Implementation steps after approval
+
+1. **Add commit-title support.** Introduce an injectable revision provider and
+   terminal capability adapter with base interfaces. Resolve HEAD once per CLI
+   invocation from the repository root with a timeout and graceful fallback.
+   Route header/title rendering through `LauncherOutput`; keep the Git lookup
+   independent of service management and database access.
+2. **Extend shared formatting.** Extend `app/launcher/output.py` with semantic
+   label styling and a generic color mapping. Calculate column widths and padding
+   using unstyled text, then apply/reset color around labels so escape sequences
+   cannot change alignment or leak color into following output. Keep custom row
+   templates and longer future service names supported. Centralize new strings,
+   style codes, and timeout values as `C_` constants and document new classes and
+   functions in line with the repository conventions.
+3. **Connect command outcomes.** Have `app/launcher/manager.py` pass explicit
+   operation outcomes to the shared writer for start, stop, restart, and foreground
+   results. Preserve diagnostic details and distinguish failed startup from other
+   errors. Integrate the once-per-command header in `app/launcher/cli.py`; status
+   continues using the existing `ServiceStatus` process and health fields.
+4. **Verify and document.** Extend `tests/test_launcher.py` to cover the three
+   required colors, plain-text fallbacks, stdout/stderr capability differences,
+   `NO_COLOR`, `TERM=dumb`, title support, missing Git/HEAD and lookup timeout,
+   invocation from another directory, ANSI-safe column alignment, and an extra
+   service with a longer name. Cover failed start/restart and verify that later
+   status still reflects actual process state. Run the launcher regression suite;
+   visually check supported Windows and Linux terminals where available and record
+   verification limits. Update `launcher_usage.md` with examples and fallbacks.
+
+### Acceptance criteria
+
+- Every valid command displays the current checkout's abbreviated commit hash
+  (or the documented fallback), with a matching terminal title where supported.
+- Stopped labels are yellow, running labels green, and failed-start labels red
+  in supported interactive terminals across all services without service-specific
+  formatting branches.
+- Styling preserves column alignment, readable diagnostics, immediate progress,
+  process/health distinctions, and existing lifecycle behavior.
+- Redirected output has no terminal control sequences; missing Git and unsupported
+  styling never prevent service operations.
+- Review and approve this proposed update before implementation. The historical
+  test results below are evidence for the base launcher only, not this update.
 
 ## Scope and proposed defaults
 
@@ -160,3 +280,54 @@ Verification: all 33 launcher tests passed after the shared-output refactor.
 Manually checked start, stop, restart, mixed success/failure messages, mixed
 status values, a longer future service name, and custom command columns without
 starting application services during the formatting checks.
+
+## Plan update - 2026-11-17 10:38:21 +01:00 (Europe/Berlin)
+
+Status: proposed; awaiting review before implementation.
+
+The latest [specifications](launcher_script_specs.md) add documentation requirements
+to the terminal appearance update. The implementation steps and behavior proposed
+above remain applicable, with these clarifications:
+
+- Append future plan updates at the bottom of this file whenever possible,
+  preserving earlier decisions and verification history. Include a timestamp with
+  the timezone in each update. If a later decision replaces an earlier one,
+  identify the superseded requirement explicitly in the appended update.
+- Print the current Git commit hash in the visible CLI header, as well as the
+  terminal title where supported. The preview must show that printed header;
+  updating only the window/tab title does not meet this requirement.
+- Retain the shared service-independent colors: yellow for stopped, green for
+  running, and red for a failed start. Keep the previously proposed plain-text
+  fallback and `commit unavailable` behavior.
+
+### Updated graphical CLI preview
+
+Example command: `python launcher.py -status`
+
+> **CV Builder Launcher | commit a1b2c3d**
+
+| Service | Status label | Label color | Health | PID | Details |
+| --- | --- | --- | --- | --- | --- |
+| web | **running** | Green | healthy | 14280 | Ready |
+| scheduler | **stopped** | Yellow | unavailable | - | not running under this launcher |
+
+Example command: `python launcher.py -start --service scheduler`
+
+> **CV Builder Launcher | commit a1b2c3d**
+
+| Service | Result label | Label color | Details |
+| --- | --- | --- | --- |
+| scheduler | **failed to start** | Red | startup failed; inspect &lt;launcher log path&gt; |
+
+The header above is printed terminal output. The hash `a1b2c3d`, PID, and readiness
+detail are illustrative; implementation resolves the actual current HEAD once per
+invocation. The preview's color column describes the label styling and is not an
+additional CLI column. Actual output retains the existing aligned row layout;
+Markdown table borders are for this document only.
+
+### Additional verification
+
+- Verify that the printed header contains the resolved commit hash even when
+  terminal title control is unsupported or output is redirected.
+- Keep future plan updates timestamped and appended at the bottom where possible.
+- This update changes documentation only and does not authorize implementation.
