@@ -36,3 +36,8 @@ No blocking questions. The split ratio, mobile stacking, and refresh behavior ab
 ## Change history
 
 - **2026-11-17 12:30 CET** — Created the initial plan and graphical preview from `job_description_view_specs.md` and the current implementation. Future updates will be appended below with timestamps; later entries supersede earlier decisions.
+
+### Update — 2026-11-17 12:37 CET
+
+- Replace the visible **Close** button text with an **× icon** in the behavior and layout described above. Use an icon-only button with `aria-label="Close job preview"` and a matching tooltip; keep keyboard activation, Escape, and focus restoration unchanged.
+- Updated the graphical preview to show the icon button. This supersedes the earlier text-button design; implementation has not started.
