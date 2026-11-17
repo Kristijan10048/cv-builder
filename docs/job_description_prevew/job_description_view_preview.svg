@@ -19,8 +19,11 @@
   <text x="1068" y="88" text-anchor="end" class="label">Existing filters and fetch controls</text>
   <rect x="28" y="125" width="414" height="332" rx="8" class="card"/>
   <text x="46" y="154" class="label">JOB DESCRIPTION</text>
-  <rect x="357" y="137" width="66" height="30" rx="5" fill="#f1f1f1" stroke="#dedede"/>
-  <text x="390" y="157" text-anchor="middle">Close</text>
+  <g role="img" aria-label="Close job preview">
+    <title>Close job preview</title>
+    <rect x="391" y="136" width="32" height="32" rx="5" fill="#f1f1f1" stroke="#dedede"/>
+    <path d="M402 147L412 157M412 147L402 157" fill="none" stroke="#262626" stroke-width="2" stroke-linecap="round"/>
+  </g>
   <text x="46" y="193" class="heading">C# Software Developer</text>
   <line x1="46" y1="211" x2="423" y2="211" class="line"/>
   <text x="46" y="242">Build and maintain software for</text>
