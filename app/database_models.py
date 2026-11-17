@@ -160,7 +160,7 @@ class AvailableJobModel(DatabaseModel):
         }
 
     def to_list_item(self, applied: bool) -> dict:
-        """Serialize listing fields with language requirements derived from the stored brief."""
+        """Serialize listings with the complete stored description for the inline preview."""
         return {
             "id": self.id,
             "site": self.site,
@@ -168,6 +168,7 @@ class AvailableJobModel(DatabaseModel):
             "job_title": self.job_title,
             "company": self.company,
             "location": self.location,
+            "description": self.description,
             C_LANGUAGE_REQUIREMENTS_KEY: RegexLanguageRequirementExtractor().extract(self.description),
             "date_posted": self.date_posted,
             "job_type": self.job_type,

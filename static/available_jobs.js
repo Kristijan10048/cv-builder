@@ -14,6 +14,7 @@ function enableJobColumnResizing() {
   const minWidth = 110;
   const container = table.closest(".application-table-wrap");
   let widths;
+  let preferredWidths;
   let drag;
 
   function applyWidths() {
@@ -32,7 +33,9 @@ function enableJobColumnResizing() {
     if (!widths) widths = headers.map(header => Math.max(minWidth, header.getBoundingClientRect().width));
     const total = Math.max(container.clientWidth, headers.length * minWidth);
     const spare = total - headers.length * minWidth;
-    const weights = widths.map(width => Math.max(0, width - minWidth));
+    // Retain proportions even when the split makes every column hit its minimum.
+    if (!preferredWidths) preferredWidths = [...widths];
+    const weights = preferredWidths.map(width => Math.max(0, width - minWidth));
     const sum = weights.reduce((a, b) => a + b, 0);
     widths = weights.map(weight => minWidth + spare * (sum ? weight / sum : 1 / headers.length));
     applyWidths();
@@ -44,6 +47,7 @@ function enableJobColumnResizing() {
     const otherSpare = original.reduce((sum, width, i) => sum + (i === index ? 0 : Math.max(0, width - minWidth)), 0);
     widths = original.map((width, i) => i === index ? selected :
       minWidth + remainingSpare * (otherSpare ? Math.max(0, width - minWidth) / otherSpare : 1 / (headers.length - 1)));
+    preferredWidths = [...widths];
     applyWidths();
   }
   function finishDrag() {
@@ -94,8 +98,25 @@ function enableJobColumnResizing() {
     finishDrag();
     fitAvailableSpace();
   }).observe(container);
+  return {
+    capture() {
+      finishDrag();
+      initializeWidths();
+      return { widths: widths && [...widths], preferredWidths: preferredWidths && [...preferredWidths] };
+    },
+    restore(snapshot) {
+      finishDrag();
+      widths = snapshot.widths && [...snapshot.widths];
+      preferredWidths = snapshot.preferredWidths && [...snapshot.preferredWidths];
+      fitAvailableSpace();
+    },
+  };
 }
-enableJobColumnResizing();
+const jobColumnSizing = enableJobColumnResizing();
+const jobDescriptionPreview = new window.JobDescriptionPreview($("#availableJobsView"), jobColumnSizing);
+window.CvUi.registerView("availableJobs", {
+  leave: () => jobDescriptionPreview.close({ restoreFocus: false, restoreScroll: false }),
+});
 
 function updateFetchButton() {
   $("#fetchJobsButton").disabled = fetchingJobs || !$("#jobSearchPreference").value || !$("input[name='jobBoard']:checked");
@@ -130,7 +151,7 @@ function availableJobMarkup(item) {
   const link = source ? `<a href="${escapeHtml(source.href)}" target="_blank" rel="noopener noreferrer">View job &#8599;</a>` : '<span class="table-empty-value">Unavailable</span>';
   return `<tr class="application-table-row available-job-row">
     <td data-label="Company"><strong>${escapeHtml(item.company || "Not listed")}</strong></td>
-    <td data-label="Title">${escapeHtml(item.job_title)}</td>
+    <td data-label="Title"><button type="button" class="job-title-button" data-job-id="${escapeHtml(item.id)}" aria-controls="jobDescriptionPreview" aria-expanded="false">${escapeHtml(item.job_title)}</button></td>
     <td data-label="Location">${escapeHtml(item.location || (item.is_remote ? "Remote" : "Not listed"))}</td>
     <td data-label="Language">${languageMarkup}</td>
     <td data-label="Source">${escapeHtml(boardNames[item.site] || item.site)}</td>
@@ -155,6 +176,7 @@ async function loadJobsPage(page = jobsPage) {
     $("#availableJobsList").innerHTML = data.items.length ? data.items.map(availableJobMarkup).join("") :
       '<tr><td colspan="8"><div class="empty-state"><strong>No matching jobs</strong>Fetch jobs for a saved search or adjust your filters.</div></td></tr>'
     $("#availableJobsNote").textContent = data.total ? `${(data.page - 1) * data.page_size + 1}–${Math.min(data.page * data.page_size, data.total)} of ${data.total} fetched jobs` : "No matching fetched jobs.";
+    jobDescriptionPreview.setItems(data.items);
     $("#jobsPageLabel").textContent = `Page ${data.page} of ${data.total_pages}`;
     $("#jobsPrevious").disabled = !data.has_previous;
     $("#jobsNext").disabled = !data.has_next;

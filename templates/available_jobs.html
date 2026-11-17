@@ -11,20 +11,32 @@
   <p id="jobSearchStatus" role="status" aria-live="polite" class="subcopy job-search-status"></p>
   <p id="jobSearchWarnings" role="alert" class="preference-error hidden"></p>
   <p class="subcopy" id="availableJobsNote" aria-live="polite">No fetched jobs yet.</p>
-  <div class="application-table-wrap">
-    <table class="application-table available-jobs-table" aria-describedby="availableJobsNote">
-      <caption class="sr-only">Fetched job postings</caption><thead><tr>
-        <th scope="col">Company</th><th scope="col">Title</th><th scope="col">Location</th>
-        <th scope="col" title="Explicit language requirements detected in the job description">Language</th>
-        <th scope="col">Source</th><th scope="col">Date Fetched</th><th scope="col">Job link</th><th scope="col">Applied</th>
-      </tr></thead>
-      <tbody id="availableJobsList"><tr><td colspan="8"><div class="empty-state"><strong>No fetched jobs yet</strong>Select a saved search and fetch jobs to explore opportunities.</div></td></tr></tbody>
-    </table>
+  <div class="available-jobs-workspace" id="availableJobsWorkspace">
+    <div class="available-jobs-results">
+      <div class="application-table-wrap">
+        <table class="application-table available-jobs-table" aria-describedby="availableJobsNote">
+          <caption class="sr-only">Fetched job postings</caption><thead><tr>
+            <th scope="col">Company</th><th scope="col">Title</th><th scope="col">Location</th>
+            <th scope="col" title="Explicit language requirements detected in the job description">Language</th>
+            <th scope="col">Source</th><th scope="col">Date Fetched</th><th scope="col">Job link</th><th scope="col">Applied</th>
+          </tr></thead>
+          <tbody id="availableJobsList"><tr><td colspan="8"><div class="empty-state"><strong>No fetched jobs yet</strong>Select a saved search and fetch jobs to explore opportunities.</div></td></tr></tbody>
+        </table>
+      </div>
+      <nav class="job-pagination" aria-label="Available jobs pages">
+        <label>Jobs per page<select id="availableJobsPageSize"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select></label>
+        <div><button type="button" class="secondary" id="jobsPrevious" disabled>Previous</button>
+          <span id="jobsPageLabel" role="status">Page 1 of 1</span>
+          <button type="button" class="secondary" id="jobsNext" disabled>Next</button></div>
+      </nav>
+    </div>
+    <section class="job-description-preview" id="jobDescriptionPreview" aria-labelledby="jobDescriptionTitle" hidden>
+      <div class="job-description-header">
+        <span class="subcopy">Job description</span>
+        <button type="button" class="icon-button job-description-close" id="jobDescriptionClose" aria-label="Close job preview" title="Close job preview">{{ icon('close') }}</button>
+      </div>
+      <h3 id="jobDescriptionTitle" tabindex="-1"></h3>
+      <div class="job-description-content" id="jobDescriptionContent" tabindex="0" role="region" aria-label="Full job description"></div>
+    </section>
   </div>
-  <nav class="job-pagination" aria-label="Available jobs pages">
-    <label>Jobs per page<select id="availableJobsPageSize"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select></label>
-    <div><button type="button" class="secondary" id="jobsPrevious" disabled>Previous</button>
-      <span id="jobsPageLabel" role="status">Page 1 of 1</span>
-      <button type="button" class="secondary" id="jobsNext" disabled>Next</button></div>
-  </nav>
 </section>

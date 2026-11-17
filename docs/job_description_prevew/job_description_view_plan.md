@@ -54,3 +54,11 @@ No blocking questions. The split ratio, mobile stacking, and refresh behavior ab
 - Keep the **× icon-only close button**, with “Close job preview” as its accessible label and tooltip. Closing restores the full-width jobs table.
 - Use [the right-side graphical preview](job_description_view_preview_right.svg) as the implementation reference. The earlier left-side layout is retained only for history; the side choice is no longer pending.
 - This decision supersedes the earlier left/right placement in Behavior and applies to the layout implementation step. All other planned behavior remains unchanged. Implementation has not started.
+
+### Implementation completed — 2026-11-17 13:01 CET
+
+- Implemented the selected **60% jobs / 40% right-side description** layout, clickable titles, the **×** close button, Escape, focus restoration, and mobile stacking. Closing restores the previous column widths and scroll position without resetting filters or pagination.
+- The existing jobs API now returns the full stored description. Text is rendered literally with preserved line breaks; empty descriptions show a fallback message. No database migration or additional source fetch is required.
+- Added `static/job_description_preview.js` for preview state and interactions. Navigation cleanup uses the existing `CvUi.registerView` lifecycle, so `static/app.js` required no modification. Updated the relevant asset versions.
+- Validation: **25 Python tests and 9 JavaScript tests passed**. Browser checks with isolated sample data verified opening/switching/closing, Enter/Escape, exact resized-column restoration, empty and HTML-like descriptions, filter removal, navigation cleanup, and the 390px mobile layout. One pre-existing FastAPI/Starlette deprecation warning remains.
+- [Implemented desktop screenshot](job_description_view_implemented.jpg). Earlier “implementation has not started” notes are historical; this entry records completion. No outstanding clarification is needed.
